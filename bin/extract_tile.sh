@@ -93,9 +93,12 @@ export TEMPLATE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | 
 export TILE_FILE_PATH=$(readlink -f "$TILE_FILE")
 export WORKSPACE=$(dirname $TILE_FILE_PATH)
 
-if [ ! -d $WORKSPACE/../templates/$TEMPLATE_VERSION ]; then
+export TEMPLATE_DIR=$SCRIPTPATH/../templates/$TEMPLATE_VERSION 
+
+if [ ! -d $TEMPLATE_DIR ]; then
    echo 
    echo "Required templates seem to be missing for version $TEMPLATE_VERSION"
+   echo "Unable to locate templates , expected in $TEMPLATE_DIR"
    missing_required=1;
 fi
 
