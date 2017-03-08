@@ -214,16 +214,18 @@ and become available for use in PCFDev.
 
 _You can use 'cf' from cli-tools, or directly from your host computer, they both access the same PCFDev instance_
 
-For example if you deployed the default Shared-VMR you will do this:
+For example if you deployed the default Shared-VMR , a "shared" service plan will be available and you can do this:
 
 ~~~~
 cf m
 cf create-service solace-messaging shared test_shared_instance
-...
+cf services
+cf delete-service -f test_shared_instance
+cf services
 ~~~~
 
-Go ahead download and test the Solace Sample Apps 
-
+Ideally you will bind the service you created to an application and use it.
+You can go ahead download and test the Solace Sample Apps, or create some of your own.
 
 # Other usefull info
 
