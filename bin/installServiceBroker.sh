@@ -6,7 +6,7 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 source $SCRIPTPATH/cf-common.sh
 
 export SB_JAR=$WORKSPACE/releases/solace-messaging.jar
-export SB_MANIFEST=$SCRIPTPATH/../templates/solace-messaging-manifest.yml
+export SB_MANIFEST=$SCRIPTPATH/../templates/service-broker-manifest.yml
 
 ## Check we have the files..
 
@@ -27,6 +27,8 @@ export SECURITY_USER_PASSWORD=$( cat $SB_MANIFEST  | grep SECURITY_USER_PASSWORD
 set -e
 
 pcfdev_login
+
+switchToOrgAndSpace $SB_ORG $SB_SPACE
 
 lookupServiceBrokerDetails
 
@@ -86,11 +88,16 @@ cf bind-service $SB_APP solace_messaging-p-mysql
 
 cf restage $SB_APP
 
-## solacedemo
-cf create-service-broker solace-messaging $SECURITY_USER_NAME $SECURITY_USER_PASSWORD https://solace-messaging.local.pcfdev.io
-cf enable-service-access solace-messaging
+## Install solace-messaging as a service if not found in the marketplace
 
-echo "Service broker is install and solace-messaging is now a service"
+export SOLACE_MESSAGING_FOUND=$( cf m | grep -v Getting | grep solace-messaging | wc -l )
+
+if [ "$SOLACE_MESSAGING_FOUND" -eq "0" ]; then
+  cf create-service-broker solace-messaging $SECURITY_USER_NAME $SECURITY_USER_PASSWORD https://solace-messaging.local.pcfdev.io
+  cf enable-service-access solace-messaging
+fi
+
+echo "Service broker is installed and solace-messaging is now a service"
 
 cf marketplace
 

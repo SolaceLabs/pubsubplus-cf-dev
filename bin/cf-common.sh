@@ -91,13 +91,8 @@ function lookupServiceBrokerDetails() {
     log "Servicebroker $SB_APP is not running"
  fi
 
-  ## Remove at some point..
- log "ServiceBroker $SB_APP env: "
- cf env $SB_APP
-
  else
    log "Could not find solace-messaging in the current cloud-foundry environment"
-   return 1
  fi
 
 }
@@ -234,13 +229,6 @@ function switchToTestOrgAndSpace() {
  switchToOrgAndSpace $TEST_ORG $TEST_SPACE
 
 }
-
-function switchToLongTestOrgAndSpace() {
-
- switchToOrgAndSpace $LONG_TEST_ORG $LONG_TEST_SPACE
-
-}
-
 
 function enableAndShowInMarketPlace() {
 
