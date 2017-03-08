@@ -34,6 +34,7 @@ Directly on your compter, you need to:
 * Install latest [Git](https://git-scm.com/downloads)
 * Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
 * Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
+* Shell access, use your prefered shell. 
 
 ### Clone this project and start up its cli-tools vm
 
@@ -52,7 +53,7 @@ cd solace-cf-dev
 cd cli-tools
 vagrant ssh
 
-echo "I am running inside cli=tools vm"
+echo "I am running inside cli-tools vm"
 exit
 ~~~~
 
@@ -98,28 +99,23 @@ cd bosh-lite
 ~~~~
 
 * Then start bosh-lite  
-** Use VM_MEMORY=5000 if you want to host a single VMR
-** Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
+ - Use VM_MEMORY=5000 if you want to host a single VMR
+ - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
 
 ~~~~
 VM_MEMORY=5000 vagrant up --provider=virtualbox
 ~~~~
 
 * VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
-** bosh-lite/bin/add-route 
-** bosh-lite/bin/add-route.bat 
+ - bosh-lite/bin/add-route 
+ - bosh-lite/bin/add-route.bat 
 
 ### The Solace Pivotal Tile
 
-- The Solace Pivotal Tile is available for download from PivNet (https://network.pivotal.io/products/solace-messaging/).
-- [ Solace Pivotal Tile Documentation ] (http://docs.pivotal.io/partners/solace-messaging/)
-- Some Lucky designers may have early access to a unreleased tile version, you can use that too.
-
-As provided, the Solace Pivotal Tile file contains all what is required to install Solace Messaging as service on a Pivotal Cloud Foundry deployment.
-
-If extracted and with the help of this project, the contents of that file can be used to install Solace Messaging as a service having:
-* The Solace Service Broker installed in PCFDev.
-* The Solace VMRs deployed in BOSH-lite.
+* The Solace Pivotal Tile is available for download from PivNet (https://network.pivotal.io/products/solace-messaging/).
+* [ Solace Pivotal Tile Documentation ] (http://docs.pivotal.io/partners/solace-messaging/)
+- _You may use Solace Tiles for which we have matching [templates](./templates), 
+   Installation will not work without templates to match the tile version_
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
@@ -129,7 +125,6 @@ For my example I have downloaded version 0.4.0 and placed it in:
 solace-cf-dev/workspace/solace-messaging-0.4.0.pivotal
 ~~~~
 
-_This project needs bosh manifests [templates](./templates/) to match the solace-messaging tile version. Installation will not work without templates to match the tile version_
 
 ## Connecting the dots
 
@@ -147,7 +142,7 @@ vagrant ssh
 
 The pivotal file is a zip file. We need to peel this onion to get the parts we need.
 
-An extract_tile.sh script is provided in this project, use it:
+Use extract_tile.sh to extract the relevant contents we need.
 
 ~~~~
 cd workspace
@@ -165,14 +160,14 @@ installServiceBroker.sh
 
 ### Step 3. Deploy VMR(s) to BOSH-lite
 
-Example deploy a Shared-VMR with the cert template, which install a self-signed server certificate.
+Example deploy a Shared-VMR with the cert template, which uses a self-signed server certificate.
 
 ~~~~
 bosh_deploy.sh -p Shared-VMR -t cert
 ~~~~
 
 
-Example deploy a Medium-HA-VMR using the ha template, which requests 3 instances and uses a server certificate.
+Example deploy a Medium-HA-VMR using the ha template, which requests 3 VMR instances and uses a self-signed server certificate.
 
 ~~~~
 bosh_deploy.sh -p Medium-HA-VMR -t ha
