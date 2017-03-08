@@ -21,11 +21,11 @@ With this approach we keep a high level of containment within VMs and isolation 
 At the end you will have these VMs:
 
 * cli-tools for providing a reliable environment to run the scripts of this project.
-** Tiny 1GB of ram or maybe less, just enough to run some scripts..
+ - Tiny 1GB of ram or maybe less, just enough to run some scripts..
 * PCF Dev for hosting the solace service broker and applications
-** Size to your liking, defaults of PCF are ok, you can make it bigger if you want larger space for your apps.
+ - Size to your liking, defaults of PCF are ok, you can make it bigger if you want larger space for your apps.
 * BOSH-lite for hosting VMRs
-** Size as recommended below to fit the VMRs
+ - Size as recommended below to fit the VMRs
 
 ### Common tools
 
