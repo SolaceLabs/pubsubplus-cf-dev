@@ -29,7 +29,7 @@ At the end you will have these VMs:
 ### Common tools
 
 Directly on your compter, you need to:
-1. Git
+1. Install latest [Git](https://git-scm.com/downloads)
 2. Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
 3. Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
 
