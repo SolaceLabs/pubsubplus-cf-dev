@@ -216,112 +216,6 @@ function getServiceBrokerRouters() {
 
 ####################################### TEST FUNCTIONS ###########################################
 
-function unbindService() {
-	log "Listing of Services, before Unbinding service $1 $2"
-	cf services
-        FOUND=`cf services | grep $1 | grep $2 | wc -l`
-	log "Found $FOUND, before Unbinding service $1  $2"
-	if [ "$FOUND" -gt "0" ]; then
-  		cf unbind-service $1 $2
-		log "Deleted binding $1 $2"
-	else
-		log "Binding not found $1 $2"
-	fi
-}
-
-function waitForServiceDelete() {
-
-## Waits for a service to be deleted
-REMAINING=`cf services | grep $1 | wc -l`
-export DELETE_FAILED=`cf services | grep $1 | grep "delete failed" | wc -l`
-export DELETE_INPROGRESS=`cf services | grep $1 | grep "delete in progress" | wc -l`
-MAXWAIT=30
-while [ "$REMAINING" -gt "0" ] && [ "$MAXWAIT" -gt "0" ]; do
-  log "Waiting for delete of $1 to finish ($REMAINING), timeout counter: $MAXWAIT , InProgress: $DELETE_INPROGRESS, DeleteFailed: $DELETE_FAILED"
-
-  if [ "$DELETE_FAILED" -eq "1" ]; then
-     log "delete of $1 failed"
-     cf services
-     break
-  fi
-
-  sleep 10 
-  cf services
-  REMAINING=`cf services | grep $1 | wc -l`
-  export DELETE_FAILED=`cf services | grep $1 | grep "delete failed" | wc -l`
-  export DELETE_INPROGRESS=`cf services | grep $1 | grep "delete in progress" | wc -l`
-  let MAXWAIT=MAXWAIT-1
-  checkServiceBrokerServicePlanStats " Watching async delete of $1 ($REMAINING), timeout counter: $MAXWAIT"
-done
-
-if [ "$DELETE_FAILED" -eq "1" ] && [ "$EXIT_ON_TEST_FAIL" -eq "1" ]; then
-    return 1
-fi
-
-}
-
-function forceDeleteApp() {
-	log "Listing of apps before deleting application $1"
-	cf apps
-        FOUND=`cf apps | grep $1 | wc -l`
-	log "Found $FOUND, before deleting application "$1
-	if [ "$FOUND" -gt "0" ]; then
-	 	cf delete $1 -f
-		log "Deleted application $1"
-	else
-		log "Application not found $1"
-	fi
-}
-
-
-function forceUnbindService() {
-
-        FOUND_BINDING_APP_COUNT=`cf services | grep solace-messaging | grep $1 | wc -l `
-        FOUND_BINDING_APP=`cf services | grep solace-messaging | grep $1 | awk '{ print $4 }'`
-	if [ "$FOUND_BINDING_APP_COUNT" -gt "0" ] && [ "$FOUND_BINDING_APP" != "create" ]; then
-		log "Service $1 has binding to $FOUND_BINDING_APP"
-		unbindService $FOUND_BINDING_APP $1
-	else
-		log "Service $1 has no app binding to $FOUND_BINDING_APP"
-	fi
-
-}
-
-function forceDeleteService() {
-
-	forceUnbindService $1
-
-	log "Listing of services before Deleting service $1"
-	cf services
-        FOUND=`cf services | grep solace-messaging | grep $1 | wc -l`
-	log "Found $FOUND, before Deleting service $1"
-
-	if [ "$FOUND" -gt "0" ]; then
-	 	cf delete-service $1 -f
-		log "Deleted service $1"
-		waitForServiceDelete $1
-	else
-		log "Service not found $1"
-	fi
-}
-
-function forceDeleteServiceNoWait() {
-
-	forceUnbindService $1
-
-	log "Listing of services before Deleting service $1"
-	cf services
-        FOUND=`cf services | grep $1 | wc -l`
-	log "Found $FOUND, before Deleting service $1"
-
-	if [ "$FOUND" -gt "0" ]; then
-	 	cf delete-service $1 -f
-		log "Deleted service $1"
-	else
-		log "Service not found $1"
-	fi
-}
-
 function switchToOrgAndSpace() {
 
  # Create (will proceed even if it exists)
@@ -348,7 +242,7 @@ function switchToLongTestOrgAndSpace() {
 }
 
 
-function testMarketPlace() {
+function enableAndShowInMarketPlace() {
 
  ## Checking Marketplace
  log "Enabling access to the Solace Service Broker provided service: solace-messaging"
@@ -401,5 +295,13 @@ function switchToServiceBrokerTarget() {
 function restartServiceBroker() {
  	switchToServiceBrokerTarget
 	cf restart $SB_APP
+}
+
+
+function pcfdev_login() {
+
+ cf api https://api.local.pcfdev.io --skip-ssl-validation
+ cf auth admin admin
+
 }
 
