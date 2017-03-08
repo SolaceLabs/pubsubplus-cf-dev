@@ -112,6 +112,11 @@ echo "TEMPLATE_VERSION  $TEMPLATE_VERSION"
 
 echo "Extracting contents to $WORKSPACE/releases"
 
+if [ -d $WORKSPACE/releases ]; then
+ echo "Clean up of old releases"
+ rm -rf $WORKSPACE/releases
+fi
+
 unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
 
 ( 
