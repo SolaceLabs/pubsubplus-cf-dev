@@ -5,14 +5,17 @@ on a local computer having enough resources.
 
 RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 
-There are many options that may be explored on how to accomplish this goal, the ideal would be a single VM
-with all the tools. 
+## Current and future state
 
-The first version of this project will focus on re-using existing tools standalone without attempting to merge them.
+The initial version of this project will focus on re-using existing tools standalone without attempting to merge them.
+The project also includes a subset of scripts that can use benefit from refactoring in a single solid codebase.
+
+A future version of the project may attempt to use a single VM with all the tools. 
 
 ## Requirements
 
 Each of the following requirements for tools and software products needs to be satisfied.
+
 A key goal is to keep what is installed directly on your host computer to a minimum, while containing everying else inside VMs.
 With this approach we keep a high level of containment within VMs and isolation from the host system.
 
@@ -27,12 +30,12 @@ At the end you will have these VMs:
 
 ### Common tools
 
-Directly on your compter, you need to:
+Directly on your computer, you need to:
 
 * Install latest [Git](https://git-scm.com/downloads)
 * Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
 * Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
-* Shell access, use your prefered shell. 
+* Shell access, use your preferred shell. 
 
 ### Clone this project and start up its cli-tools vm
 
@@ -84,7 +87,7 @@ Optionally, you may follow the full [Getting started with pivotal cloud foundry 
 
 We will use [BOSH-lite] (https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
 
-But first you need to install [BOSH-lite]
+But first you need to install [BOSH-lite] (https://github.com/cloudfoundry/bosh-lite) :
 
 * By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
 * Clone bosh-lite in the workspace of this project.
@@ -107,6 +110,8 @@ VM_MEMORY=5000 vagrant up --provider=virtualbox
 * VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
  - bosh-lite/bin/add-route 
  - bosh-lite/bin/add-route.bat 
+
+_Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
 ### The Solace Pivotal Tile
 
@@ -147,21 +152,25 @@ cd workspace
 extract_tile.sh -t solace-messaging-0.4.0.pivotal
 ~~~~
 
+You will find the relevant contents extracted to ~workspace/releases
+
 ### Step 2. Install the Solace Service Broker on PCF Dev
 
-A Script in cli-tools can do this for you.
-It will
-- Login to PCFDev
-- Install Service broker
-- Bind service broker to a mysql database
+installServiceBroker.sh script in cli-tools can do this for you:
+- login to PCFDev
+- install Service broker
+- bind service broker to a mysql database
 - add solace-messaging as a service in PCFDev
-- Show the contents of the marketplace at the end of the installation.
+- show the contents of the marketplace at the end of the installation.
 
 ~~~~
 installServiceBroker.sh 
 ~~~~
 
+
 ### Step 3. Deploy VMR(s) to BOSH-lite
+
+_Deploy only one and only once, if not sure just use the default with no parameters_
 
 Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
 
@@ -181,8 +190,7 @@ Example deploy a Medium-HA-VMR using the ha template, which requests 3 VMR insta
 bosh_deploy.sh -p Medium-HA-VMR -t ha
 ~~~~
 
-_Keep in mind that not all Tile Releases contain all plans.
-
+_Keep in mind that not all Tile Releases contain all solace-messaging service plans.
 And that you may only deploy a single type pool (-p) to BOSH-lite.
 The flag for the pool name (-p) will correspond to a service plan in the marketplace_
 
@@ -198,7 +206,6 @@ Pool name to service plan mapping:
  * medium-ha
 - Large-HA-VMR
  * large-ha
-
 
 ### Step 4. Go ahead and use the solace-messaging service
 
@@ -220,10 +227,30 @@ Go ahead download and test the Solace Sample Apps
 
 # Other usefull info
 
+## How to login and access PCFDev
+
+~~~~
+cf api https://api.local.pcfdev.io --skip-ssl-validation
+cf auth admin admin
+~~~~
+
+## How to see what is offered in the marketplace
+
+~~~~
+cf marketplace
+~~~~
+
+Or better yet, in short form:
+~~~~
+cf m
+~~~~
+
+
 ## Service Broker
 
 You can use your browser to examine a [ basic service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
-You will need username and password ( solacedemo )
+
+You will need username and password: solacedemo is the default as set in [service-broker-manifest.yml](templates/service-broker-manifest.yml)
 
 You can also run a script that will fetch a variety of information from the service broker
 ~~~~
