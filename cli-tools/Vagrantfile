@@ -1,0 +1,221 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Vagrantfile API/syntax version. Don't touch unless you know what you're doing!
+VAGRANTFILE_API_VERSION = "2" if not defined? VAGRANTFILE_API_VERSION
+
+require 'yaml'
+if File.file?('config.yml')
+  conf = YAML.load_file('config.yml')
+else
+  raise "Configuration file 'config.yml' does not exist."
+end
+
+$add_manager_to_hosts= <<SETHOSTS
+if ! grep -Fxq "#{conf['ip_address_manager']} #{conf['hostname_manager']}" /etc/hosts
+then
+    echo #{conf['ip_address_manager']} #{conf['hostname_manager']} >> /etc/hosts
+fi
+SETHOSTS
+
+$install_and_config_workstation=<<INSTALL_AND_CONFIGURE
+sudo gem install colorize
+sudo locale-gen en_CA.UTF-8
+apt-get update
+sudo apt-get -y install zsh
+sudo chsh -s $(which zsh)
+sudo gem install bosh_cli --no-ri --no-rdoc
+sudo apt-get -y install subversion
+sudo apt-get -y install rake
+sudo apt-get -y install git
+
+echo "Adding cf"
+sudo curl -s -L "https://cli.run.pivotal.io/stable?release=linux64-binary&source=github" | tar -zx && mv cf /usr/bin/cf
+which cf
+
+echo "Adding Python tools"
+sudo apt-get -y install python-virtualenv
+sudo apt-get -y install python-pip
+sudo pip install shyaml
+
+# echo "Adding tile-generator"
+# virtualenv -p python2 tile-generator
+# source tile-generator/bin/activate
+# pip install tile-generator
+# echo '' >> .profile
+# echo '# Required to access the tile-generator' >> .profile
+# echo 'source tile-generator/bin/activate' >> .profile
+
+echo "Adding Java"
+sudo add-apt-repository ppa:openjdk-r/ppa -y
+sudo apt-get update   
+sudo apt-get -y install openjdk-8-jdk 
+sudo apt-get -y install openjdk-8-jre
+sudo apt-get -y install ant
+
+sudo apt-get -y install watch
+
+echo "Adding supporting perl modules used by rs-* scripts"
+sudo apt-get -y install libexpect-perl
+sudo apt-get -y install libterm-readkey-perl
+
+echo "Installing Docker Prerequisites"
+# Following instructions from https://docs.docker.com/engine/installation/linux/ubuntulinux
+
+# sudo apt-get -y install apt-transport-https ca-certificates
+# sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
+# echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee /etc/apt/sources.list.d/docker.list
+# sudo apt-get update
+# sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual
+# echo "Installing Docker"
+# sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-trusty
+# echo "Allowing the use of Docker without sudo"
+# sudo groupadd docker
+# sudo usermod -aG docker vagrant
+
+echo '' >> .profile
+echo '# Using solace-cf-dev/.profile' >> .profile
+echo '[[ -e ~/solace-cf-dev/.profile ]] && source ~/solace-cf-dev/.profile || echo "~/solace-cf-dev/.profile was not found"' >> .profile
+echo '' >> .profile
+
+INSTALL_AND_CONFIGURE
+
+Vagrant.configure(2) do |config|
+
+  config.vm.synced_folder "../workspace", "/home/vagrant/workspace",type: "nfs"
+  # provider configuration: vmware
+  config.vm.provider "vmware_fusion" do |v|
+    v.vmx["memsize"]  = conf['vm.ram'] || 1024
+  end
+
+  config.vm.box = conf['box_name'] || 'ubuntu/trusty-cloud-init'
+  config.vm.box_url = conf['box_url'] if conf['box_url']
+  config.vm.hostname = conf["host_name"] || "vagranthost"
+
+  config.vm.provider "virtualbox" do |v|
+    v.name = conf['vm.name'] || "vagrant.devcli"
+    v.customize ["modifyvm", :id, "--memory", conf['vm.ram'] || 1024]
+    # time sync
+    v.customize [ "guestproperty", "set", :id, "/VirtualBox/GuestAdd/VBoxService/--timesync-set-threshold", 10000 ]
+  end
+
+  # NOTE(berendt): This solves the Ubuntu-specific Vagrant issue 1673.
+  #                https://github.com/mitchellh/vagrant/issues/1673
+  config.ssh.shell = "bash -c 'BASH_ENV=/etc/profile exec bash'"
+
+  # plugins
+  if Vagrant.has_plugin?("vagrant-cachier")
+    config.cache.scope = :box
+  end
+
+  # use bridge
+  if conf["use_bridge"] == false
+      # not bridged
+      if conf["ip_address"]
+        # ip address specified
+        config.vm.network :private_network, ip: conf["ip_address"]
+        config.vm.provision :shell, :inline => $add_manager_to_hosts
+      else
+        # no ip address specified, use dhcp
+        config.vm.network :private_network, type: "dhcp"
+      end
+    else
+      # we do an L2 bridge directly onto the physical network, which means
+      # that your OpenStack hosts (manager, compute) are directly in the
+      # same network as your physical host. Your OpenStack guests (2nd
+      # level guests that you create in nova) will be also on the same L2,
+      # however they will be in a different address space (10.0.0.0/24 by
+      # default).
+      #
+      # :use_dhcp_assigned_default_route true is important to let your
+      # guests actually route all the way out to the real internet.
+      config.vm.network :public_network, :bridge => conf['bridge_int'], :use_dhcp_assigned_default_route => true
+  end
+
+  # plugins
+  if Vagrant.has_plugin?("vagrant-hostmanager")
+    config.hostmanager.ignore_private_ip = false
+    config.hostmanager.include_offline = true
+    config.hostmanager.enabled = true
+    config.hostmanager.manage_host = true
+    if conf["use_bridge"] == false
+      # not bridged
+      config.hostmanager.ip_resolver = proc do |machine|
+        result = ""
+        begin
+          machine.communicate.execute("ifconfig eth1") do |type, data|
+            result << data if type == :stdout
+          end
+          # NOTE: This catches the exception when host is still
+          # not ssh reachable.
+          # https://github.com/smdahlen/vagrant-hostmanager/issues/121
+        rescue
+          result = "# NOT-UP"
+        end
+        (ip = /inet addr:(\d+\.\d+\.\d+\.\d+)/.match(result)) && ip[1]
+      end
+    end
+  end
+
+  #Install and configure the workstation
+  config.vm.provision :shell, :inline => $install_and_config_workstation
+  # config.vm.provision :shell, :inline => $run_always, run: 'always'
+  config.vm.provision :shell, path: "on_startup.sh", run: 'always'
+
+
+
+
+  # The url from where the 'config.vm.box' box will be fetched if it
+  # doesn't already exist on the user's system.
+
+
+  # Create a forwarded port mapping which allows access to a specific port
+  # within the machine from a port on the host machine. In the example below,
+  # accessing "localhost:8080" will access port 80 on the guest machine.
+  # config.vm.network "forwarded_port", guest: 80, host: 8080
+
+  # Create a private network, which allows host-only access to the machine
+  # using a specific IP.
+  # config.vm.network "private_network", ip: "192.168.33.10"
+
+  # Create a public network, which generally matched to bridged network.
+  # Bridged networks make the machine appear as another physical device on
+  # your network.
+  # config.vm.network "public_network"
+
+  # Share an additional folder to the guest VM. The first argument is
+  # the path on the host to the actual folder. The second argument is
+  # the path on the guest to mount the folder. And the optional third
+  # argument is a set of non-required options.
+  # config.vm.synced_folder "../data", "/vagrant_data"
+
+  # Provider-specific configuration so you can fine-tune various
+  # backing providers for Vagrant. These expose provider-specific options.
+  # Example for VirtualBox:
+  #
+  # config.vm.provider "virtualbox" do |vb|
+  #   # Display the VirtualBox GUI when booting the machine
+  #   vb.gui = true
+  #
+  #   # Customize the amount of memory on the VM:
+  #   vb.memory = "1024"
+  # end
+  #
+  # View the documentation for the provider you are using for more
+  # information on available options.
+
+  # Define a Vagrant Push strategy for pushing to Atlas. Other push strategies
+  # such as FTP and Heroku are also available. See the documentation at
+  # https://docs.vagrantup.com/v2/push/atlas.html for more information.
+  # config.push.define "atlas" do |push|
+  #   push.app = "YOUR_ATLAS_USERNAME/YOUR_APPLICATION_NAME"
+  # end
+
+  # Enable provisioning with a shell script. Additional provisioners such as
+  # Puppet, Chef, Ansible, Salt, and Docker are also available. Please see the
+  # documentation for more information about their specific syntax and use.
+  # config.vm.provision "shell", inline: <<-SHELL
+  #   sudo apt-get update
+  #   sudo apt-get install -y apache2
+  # SHELL
+end

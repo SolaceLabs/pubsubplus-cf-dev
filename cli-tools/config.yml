@@ -1,0 +1,16 @@
+box_name: "ubuntu/trusty64"
+#box_url:
+host_name: solace-cf-dev.cli-tools
+vm.name: solace-cf-dev.cli-tools
+vm.ram: 1024
+
+# It is possible to use a hostonly-network instead of a bridged network when
+# setting the parameter use_bridge to false.
+use_bridge: false
+# What interface on the host should be used for a bridge will often be eth0,
+# but vagrant needs to know for sure. This needs to be the full string
+# descriptor of the interface. On some systems this can be something annoying
+# like 'en1: Wi-Fi (Airport)'. Vagrant will not use this setting unless you get
+# it exactly right.
+bridge_int: en5
+ip_address: 10.0.10.30
