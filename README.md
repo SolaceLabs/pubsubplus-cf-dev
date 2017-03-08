@@ -225,7 +225,7 @@ cf services
 ~~~~
 
 Ideally you will bind the service you created to an application and use it.
-You can go ahead download and test the Solace Sample Apps, or create some of your own.
+You can go ahead download and test the [Solace Sample Apps](https://github.com/SolaceLabs/sl-cf-solace-messaging-demo), or create some of your own.
 
 # Other usefull info
 
