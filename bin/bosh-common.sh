@@ -2,7 +2,6 @@
 
 export MY_BIN_HOME=`dirname $0`
 export MY_HOME=$MY_BIN_HOME/..
-export WORKSPACE=$HOME/workspace
 
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
 export TEMPLATE_PREFIX=${TEMPLATE_PREFIX:-"solace-vmr-warden-deployment"}
@@ -163,17 +162,17 @@ fi
 
 function uploadAndDeployRelease() {
 
-RELEASE_FILE=`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`
+SOLACE_VMR_BOSH_RELEASE_FILE=`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`
 
-echo "in function uploadAndDeployRelease. RELEASE_FILE: $RELEASE_FILE"
+echo "in function uploadAndDeployRelease. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
 
-if [ -f $RELEASE_FILE ]; then
+if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
- echo "Will upload release $RELEASE_FILE"
+ echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
 
- bosh upload release $RELEASE_FILE | tee -a $LOG_FILE
+ bosh upload release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
 
  echo "Calling bosh deployment"
 
@@ -295,10 +294,10 @@ case $POOL_NAME in
     ;;
 esac
 
-export RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
-export RELEASE_VERSION=$(basename $RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
 
-export TEMPLATE_FILE="$MY_HOME/templates/$RELEASE_VERSION/${TEMPLATE_PREFIX}${TEMPLATE_POSTFIX}.yml.template"
+export TEMPLATE_FILE="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION/${TEMPLATE_PREFIX}${TEMPLATE_POSTFIX}.yml.template"
 export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
 
 if [ -f $TEMPLATE_FILE ]; then
@@ -307,9 +306,8 @@ else
  export NUM_INSTANCES=0
 fi
 
-
 echo "$0 - Settings"
-echo "    SOLACE VMR     $RELEASE_VERSION - $RELEASE_FILE"
+echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
 echo "    Deployment     $DEPLOYMENT_NAME"
 echo "    VMR JOB NAME   $VMR_JOB_NAME"
 echo "    NUM_INSTANCES  $NUM_INSTANCES"
