@@ -3,14 +3,12 @@
 This project provides instructions and tools to support installing and using a Solace Pivotal Tile 
 on a local computer having enough resources.
 
-TODO: Confirm sizing....
 RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 
 There are many options that may be explored on how to accomplish this goal, the ideal would be a single VM
 with all the tools. 
 
 The first version of this project will focus on re-using existing tools standalone without attempting to merge them.
-
 
 ## Requirements
 
@@ -21,7 +19,7 @@ With this approach we keep a high level of containment within VMs and isolation 
 At the end you will have these VMs:
 
 * cli-tools for providing a reliable environment to run the scripts of this project.
- - Tiny 1GB of ram or maybe less, just enough to run some scripts..
+ - 1GB of ram or less, just enough to run some scripts. You can adjust ram in [config.yml](cli-tools/config.yml)
 * PCF Dev for hosting the solace service broker and applications
  - Size to your liking, defaults of PCF are ok, you can make it bigger if you want larger space for your apps.
 * BOSH-lite for hosting VMRs
@@ -151,21 +149,31 @@ extract_tile.sh -t solace-messaging-0.4.0.pivotal
 
 ### Step 2. Install the Solace Service Broker on PCF Dev
 
-A Script in cli-tools can do this:
+A Script in cli-tools can do this for you.
+It will
+- Login to PCFDev
+- Install Service broker
+- Bind service broker to a mysql database
+- add solace-messaging as a service in PCFDev
+- Show the contents of the marketplace at the end of the installation.
 
-TODO: Implement this..
 ~~~~
 installServiceBroker.sh 
 ~~~~
 
 ### Step 3. Deploy VMR(s) to BOSH-lite
 
-Example deploy a Shared-VMR with the cert template, which uses a self-signed server certificate.
+Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
 
 ~~~~
-bosh_deploy.sh -p Shared-VMR -t cert
+bosh_deploy.sh
 ~~~~
 
+Example deploy a Community-VMR with the cert template, which uses a self-signed server certificate.
+
+~~~~
+bosh_deploy.sh -p Community-VMR -t cert
+~~~~
 
 Example deploy a Medium-HA-VMR using the ha template, which requests 3 VMR instances and uses a self-signed server certificate.
 
@@ -173,11 +181,127 @@ Example deploy a Medium-HA-VMR using the ha template, which requests 3 VMR insta
 bosh_deploy.sh -p Medium-HA-VMR -t ha
 ~~~~
 
+_Keep in mind that not all Tile Releases contain all plans.
+
+And that you may only deploy a single type pool (-p) to BOSH-lite.
+The flag for the pool name (-p) will correspond to a service plan in the marketplace_
+
+Pool name to service plan mapping:
+
+- Shared-VMR
+ * shared
+- Large-VMR
+ * large
+- Community-VMR
+ * community
+- Medium-HA-VMR
+ * medium-ha
+- Large-HA-VMR
+ * large-ha
+
+
+### Step 4. Go ahead and use the solace-messaging service
+
+At this stage, solace-messaging is a service in PCFDev, and the BOSH-lite VMR deployment will auto register with the service broker
+and become available for use in PCFDev.
+
+_You can use 'cf' from cli-tools, or directly from your host computer, they both access the same PCFDev instance_
+
+For example if you deployed the default Shared-VMR you will do this:
+
+~~~~
+cf m
+cf create-service solace-messaging shared test_shared_instance
+...
+~~~~
+
+Go ahead download and test the Solace Sample Apps 
+
+
+# Other usefull info
 
 ## Service Broker
 
-TODO: ...
+You can use your browser to examine a [ basic service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
+You will need username and password ( solacedemo )
+
+You can also run a script that will fetch a variety of information from the service broker
+~~~~
+getServiceBrokerInfo.sh
+~~~~
+
+## How to suspend and resume VMs
+
+Any of the VMS we have can be suspended and later on resumed.
+
+### Suspending all VMS
+~~~~
+cd solace-cf-dev
+cd workspace
+
+cd cli-tools
+vagrant suspend
+
+cd ../bosh-lite
+vagrant suspend
+
+cf dev suspend
+~~~~
+
+### Resuming all VMS
+~~~~
+cd solace-cf-dev
+cd workspace
+
+cd cli-tools
+vagrant resume
+
+cd ../bosh-lite
+vagrant resume
+
+cf dev resume
+~~~~
 
 ## How to cleanup
 
-TODO: ...
+### To remove a deployment from BOSH-lite
+
+Use the same parametes with bosh_cleanup.sh as the one you used with bosh_deploy.sh .
+If you remove a deployment from BOSH-lite the service-broker inventory will be out-of-sync with the deployment.
+Just re-install the service broker to reset everything.
+
+~~~~
+bosh_cleanup.sh -p Shared-VMR -t cert
+installServiceBroker.sh 
+~~~~
+
+### How to delete BOSH-lite VM
+
+On your host computer (not cli-tools)
+
+~~~~
+cd solace-cf-dev
+cd workspace
+cd bosh-lite
+vagrant destroy
+~~~~
+
+### How to delete cli-tools VM
+
+On your host computer (not cli-tools)
+
+~~~~
+cd solace-cf-dev
+cd workspace
+cd cli-tools
+vagrant destroy
+~~~~
+
+### How to delete PCF Dev
+
+On your host computer (not cli-tools)
+
+~~~~
+cf dev destroy
+~~~~
+
