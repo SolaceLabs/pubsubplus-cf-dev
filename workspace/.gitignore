@@ -1,3 +1,4 @@
 releases/
+bosh-lite/
 *.pivotal
 *.yml

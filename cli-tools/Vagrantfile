@@ -56,7 +56,7 @@ sudo apt-get -y install libexpect-perl
 sudo apt-get -y install libterm-readkey-perl
 
 echo '' >> .profile
-echo 'export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO:-"https://github.com/SolaceDev/solace-messaging-cf-dev.git"}' >> .profile
+echo 'export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO:-"https://github.com/SolaceLabs/solace-messaging-cf-dev.git"}' >> .profile
 echo 'echo "Will use solace-messaging-cf-dev from git repo $SOLACE_MESSAGING_CF_DEV_REPO"' >> .profile
 
 echo 'if [ ! -d ~/solace-messaging-cf-dev ]; then' >> .profile

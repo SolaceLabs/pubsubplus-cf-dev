@@ -22,9 +22,9 @@ With this approach we keep a high level of containment within VMs and isolation 
 At the end you will have these VMs:
 
 * cli-tools for providing a reliable environment to run the scripts of this project.
- - 1GB of ram or less, just enough to run some scripts. You can adjust ram in [config.yml](cli-tools/config.yml)
+ - Tested with 512mb of ram, just enough to run some scripts. You may want to increase the ram if you want to test applications from this VM. You can adjust ram in [config.yml](cli-tools/config.yml)
 * PCF Dev for hosting the solace service broker and applications
- - Size to your liking, defaults of PCF are ok, you can make it bigger if you want larger space for your apps.
+ - Tested with 4GB, but you can size to your liking if you want larger space for your apps.
 * BOSH-lite for hosting VMRs
  - Size as recommended below to fit the VMRs
 
@@ -73,10 +73,10 @@ But first you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follo
 
 * Install [cf cli - The Cloud Foundry Command Line Interface] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
 * Install [PCF Plugin which is used by cf cli] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
-* Start PCF Dev. 
+* Start PCF Dev, using 4GB of ram. You may choose to adjust this.
 
 ~~~~
-cf dev start
+cf dev start -m 4096
 ~~~~
 
 At this point PCFDev is locally installed and ready host applications and services.
@@ -261,7 +261,7 @@ getServiceBrokerInfo.sh
 
 ## How to suspend and resume VMs
 
-Any of the VMS we have can be suspended and later on resumed.
+Any of the VMS we have can be suspended and resumed at a later time.
 
 ### Suspending all VMS
 ~~~~
@@ -291,13 +291,39 @@ vagrant resume
 cf dev resume
 ~~~~
 
+
+## Working with VMR in the BOSH-lite deployment
+
+### Listing the VMs
+
+From the cli-tools vm:
+
+~~~~
+bosh vms
+~~~~
+
+### Access the VMR cli
+
+Get the list of vms, to find the IP address of the VMR instance you want:
+~~~~
+bosh vms
+~~~~
+
+Now ssh to the VMR, the default password is 'admin'.
+_You can find the admin password and other goodies in the generated manifest in ~workspace/bosh-solace-manifest.yml_
+
+~~~~
+ssh -p 2222 admin@10.244.0.3
+~~~~
+
 ## How to cleanup
 
 ### To remove a deployment from BOSH-lite
 
-Use the same parametes with bosh_cleanup.sh as the one you used with bosh_deploy.sh .
-If you remove a deployment from BOSH-lite the service-broker inventory will be out-of-sync with the deployment.
-Just re-install the service broker to reset everything.
+Use the same parametes with bosh_cleanup.sh as the one you did with bosh_deploy.sh.
+
+_If you remove a deployment from BOSH-lite the service-broker inventory will be out-of-sync with the deployment.
+Just re-install the service broker to reset everything._
 
 ~~~~
 bosh_cleanup.sh -p Shared-VMR -t cert
