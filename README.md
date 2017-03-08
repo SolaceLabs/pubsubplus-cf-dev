@@ -19,19 +19,21 @@ A key goal is to keep what is installed directly on your host computer to a mini
 With this approach we keep a high level of containment within VMs and isolation from the host system.
 
 At the end you will have these VMs:
-1. cli-tools for providing a reliable environment to run the scripts of this project.
-* Tiny 1GB of ram or maybe less, just enough to run some scripts..
-2. PCF Dev for hosting the solace service broker and applications
-* Size to your liking, defaults of PCF are ok, you can make it bigger if you want larger space for your apps.
-3. BOSH-lite for hosting VMRs
-* Size as recommended below to fit the VMRs
+
+* cli-tools for providing a reliable environment to run the scripts of this project.
+** Tiny 1GB of ram or maybe less, just enough to run some scripts..
+* PCF Dev for hosting the solace service broker and applications
+** Size to your liking, defaults of PCF are ok, you can make it bigger if you want larger space for your apps.
+* BOSH-lite for hosting VMRs
+** Size as recommended below to fit the VMRs
 
 ### Common tools
 
 Directly on your compter, you need to:
-1. Install latest [Git](https://git-scm.com/downloads)
-2. Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
-3. Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
+
+* Install latest [Git](https://git-scm.com/downloads)
+* Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
+* Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
 
 ### Clone this project and start up its cli-tools vm
 
@@ -67,9 +69,10 @@ Our goal is to to add solace-messaging as a service in PCFDev.
 
 But first you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
 
-1. Install [cf cli - The Cloud Foundry Command Line Interface] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
-2. Install [PCF Plugin which is used by cf cli] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
-3. Start PCF Dev. 
+* Install [cf cli - The Cloud Foundry Command Line Interface] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
+* Install [PCF Plugin which is used by cf cli] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
+* Start PCF Dev. 
+
 ~~~~
 cf dev start
 ~~~~
@@ -84,8 +87,8 @@ We will use [BOSH-lite] (https://github.com/cloudfoundry/bosh-lite) to deploy th
 
 But first you need to install [BOSH-lite]
 
-1. By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
-2. Clone bosh-lite in the workspace of this project.
+* By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
+* Clone bosh-lite in the workspace of this project.
 
 ~~~~
 cd solace-cf-dev
@@ -94,17 +97,17 @@ git clone https://github.com/cloudfoundry/bosh-lite
 cd bosh-lite
 ~~~~
 
-3. Then start bosh-lite  
-* Use VM_MEMORY=5000 if you want to host a single VMR
-* Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
+* Then start bosh-lite  
+** Use VM_MEMORY=5000 if you want to host a single VMR
+** Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
 
 ~~~~
 VM_MEMORY=5000 vagrant up --provider=virtualbox
 ~~~~
 
-4. VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
-* bosh-lite/bin/add-route 
-* bosh-lite/bin/add-route.bat 
+* VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
+** bosh-lite/bin/add-route 
+** bosh-lite/bin/add-route.bat 
 
 ### The Solace Pivotal Tile
 
@@ -126,7 +129,7 @@ For my example I have downloaded version 0.4.0 and placed it in:
 solace-cf-dev/workspace/solace-messaging-0.4.0.pivotal
 ~~~~
 
-_This project needs bosh manifests templates to match the specifics of each solace-messaging tile release, templates must ve present for an installation to work_
+_This project needs bosh manifests [templates](./templates/) to match the solace-messaging tile version. Installation will not work without templates to match the tile version_
 
 ## Connecting the dots
 
