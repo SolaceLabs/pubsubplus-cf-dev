@@ -1,7 +1,7 @@
 box_name: "ubuntu/trusty64"
 #box_url:
-host_name: solace-cf-dev.cli-tools
-vm.name: solace-cf-dev.cli-tools
+host_name: solace-messaging-cf-dev.cli-tools
+vm.name: solace-messaging-cf-dev.cli-tools
 vm.ram: 1024
 
 # It is possible to use a hostonly-network instead of a bridged network when

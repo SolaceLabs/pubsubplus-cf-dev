@@ -1,4 +1,4 @@
-# SOLACE-CF-DEV
+# SOLACE-MESSAGING-CF-DEV
 
 This project provides instructions and tools to support installing and using a Solace Pivotal Tile 
 on a local computer having enough resources.
@@ -42,15 +42,15 @@ Directly on your computer, you need to:
 On your computer, clone this project and start up the cli-tools vm. We will come back to use it in later steps.
 
 ~~~~
-git clone https://github.com/SolaceDev/solace-cf-dev.git
-cd solace-cf-dev
+git clone https://github.com/SolaceLabs/solace-messaging-cf-dev.git
+cd solace-messaging-cf-dev
 cd cli-tools
 vagrant up
 ~~~~
 
 Just an example on how to run commands in cli-tools vm, which you need to do later.
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd cli-tools
 vagrant ssh
 
@@ -93,7 +93,7 @@ But first you need to install [BOSH-lite] (https://github.com/cloudfoundry/bosh-
 * Clone bosh-lite in the workspace of this project.
 
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd workspace
 git clone https://github.com/cloudfoundry/bosh-lite
 cd bosh-lite
@@ -125,7 +125,7 @@ Please download the Solace Pivotal Tile and keep it around for later use.
 For my example I have downloaded version 0.4.0 and placed it in:
 
 ~~~~
-solace-cf-dev/workspace/solace-messaging-0.4.0.pivotal
+solace-messaging-cf-dev/workspace/solace-messaging-0.4.0.pivotal
 ~~~~
 
 
@@ -136,7 +136,7 @@ Now we have all the tools, the VMs created, and we can start using them.
 ## Do the steps below using the cli-tools VM 
 
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd cli-tools
 vagrant ssh
 ~~~~
@@ -265,7 +265,7 @@ Any of the VMS we have can be suspended and later on resumed.
 
 ### Suspending all VMS
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd workspace
 
 cd cli-tools
@@ -279,7 +279,7 @@ cf dev suspend
 
 ### Resuming all VMS
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd workspace
 
 cd cli-tools
@@ -309,7 +309,7 @@ installServiceBroker.sh
 On your host computer (not cli-tools)
 
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd workspace
 cd bosh-lite
 vagrant destroy
@@ -320,7 +320,7 @@ vagrant destroy
 On your host computer (not cli-tools)
 
 ~~~~
-cd solace-cf-dev
+cd solace-messaging-cf-dev
 cd workspace
 cd cli-tools
 vagrant destroy
