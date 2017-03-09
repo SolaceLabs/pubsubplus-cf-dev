@@ -7,8 +7,8 @@ RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 
 ## Current and future state
 
-The initial version of this project will focus on re-using existing tools standalone without attempting to merge them.
-The project also includes a subset of scripts that can use benefit from refactoring in a single solid codebase.
+The initial version of this project will focus on re-using existing tools as standalone without attempting to merge them.
+The project also includes a subset of scripts that can may benefit from refactoring in a single solid codebase.
 
 A future version of the project may attempt to use a single VM with all the tools. 
 
@@ -16,19 +16,25 @@ A future version of the project may attempt to use a single VM with all the tool
 
 Each of the following requirements for tools and software products needs to be satisfied.
 
-A key goal is to keep what is installed directly on your host computer to a minimum, while containing everying else inside VMs.
+A key goal is to keep what is installed directly on your host computer to a minimum, while containing everything else inside VMs.
 With this approach we keep a high level of containment within VMs and isolation from the host system.
 
 At the end you will have these VMs:
 
-* cli-tools for providing a reliable environment to run the scripts of this project.
- - Tested with 512mb of ram, just enough to run some scripts. You may want to increase the ram if you want to test applications from this VM. You can adjust ram in [config.yml](cli-tools/config.yml)
-* PCF Dev for hosting the solace service broker and applications
- - Tested with 4GB, but you can size to your liking if you want larger space for your apps.
-* BOSH-lite for hosting VMRs
- - Size as recommended below to fit the VMRs
+* cli-tools to provide a reliable environment to run the scripts of this project.
+ - Tested with 512mb of ram, just enough to run some scripts. 
+ - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
+* PCF Dev for hosting the solace service broker and your applications.
+ - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
+* BOSH-lite for hosting VMRs.
+ - Size as recommended below to fit the VMRs.
 
-### Common tools
+### Requirements Step 0 - Internet Access
+
+While there may be no need for internet access once the setup is completed, it is certainly required during the setup.
+All the steps during the setup will access the internet to download and install correctly.
+
+### Requirements Step 1 - Common tools
 
 Directly on your computer, you need to:
 
@@ -37,7 +43,7 @@ Directly on your computer, you need to:
 * Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
 * Shell access, use your preferred shell. 
 
-### Clone this project and start up its cli-tools vm
+### Requirements Step 2 - Clone this project and start up its cli-tools vm
 
 On your computer, clone this project and start up the cli-tools vm. We will come back to use it in later steps.
 
@@ -59,7 +65,7 @@ exit
 ~~~~
 
 
-### PCFDev
+### Requirements Step 3 - PCFDev
 
 PCFDev provides a local installation of cloud foundry in a box to help test applications.
 
@@ -79,11 +85,11 @@ But first you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follo
 cf dev start -m 4096
 ~~~~
 
-At this point PCFDev is locally installed and ready host applications and services.
+At this point PCFDev is locally installed and ready to host applications and services.
 
 Optionally, you may follow the full [Getting started with pivotal cloud foundry introduction guide](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/introduction), as you would learn how to install a test application in PCFDev.
 
-### BOSH-lite
+### Requirements Step 4 - BOSH-lite
 
 We will use [BOSH-lite] (https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
 
@@ -113,7 +119,7 @@ VM_MEMORY=5000 vagrant up --provider=virtualbox
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
-### The Solace Pivotal Tile
+### Requirements Step 5 - The Solace Pivotal Tile
 
 * The Solace Pivotal Tile is available for download from PivNet (https://network.pivotal.io/products/solace-messaging/).
 * [ Solace Pivotal Tile Documentation ] (http://docs.pivotal.io/partners/solace-messaging/)
@@ -128,8 +134,7 @@ For my example I have downloaded version 0.4.0 and placed it in:
 solace-messaging-cf-dev/workspace/solace-messaging-0.4.0.pivotal
 ~~~~
 
-
-## Connecting the dots
+## Deployment - Connecting the dots
 
 Now we have all the tools, the VMs created, and we can start using them.
 
@@ -141,7 +146,7 @@ cd cli-tools
 vagrant ssh
 ~~~~
 
-### Step 1. Extract the contents of the Solace Pivotal Tile
+### Deployment Step 1 - Extract the contents of the Solace Pivotal Tile
 
 The pivotal file is a zip file. We need to peel this onion to get the parts we need.
 
@@ -154,7 +159,7 @@ extract_tile.sh -t solace-messaging-0.4.0.pivotal
 
 You will find the relevant contents extracted to ~workspace/releases
 
-### Step 2. Install the Solace Service Broker on PCF Dev
+### Deployment Step 2 - Install the Solace Service Broker on PCF Dev
 
 installServiceBroker.sh script in cli-tools can do this for you:
 - login to PCFDev
@@ -168,7 +173,7 @@ installServiceBroker.sh
 ~~~~
 
 
-### Step 3. Deploy VMR(s) to BOSH-lite
+### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
 
 _Deploy only one and only once, if not sure just use the default with no parameters_
 
@@ -207,7 +212,7 @@ Pool name to service plan mapping:
 - Large-HA-VMR
  * large-ha
 
-### Step 4. Go ahead and use the solace-messaging service
+## Using the Deployment
 
 At this stage, solace-messaging is a service in PCFDev, and the BOSH-lite VMR deployment will auto register with the service broker
 and become available for use in PCFDev.
@@ -227,7 +232,7 @@ cf services
 Ideally you will bind the service you created to an application and use it.
 You can go ahead download and test the [Solace Sample Apps](https://github.com/SolaceLabs/sl-cf-solace-messaging-demo), or create some of your own.
 
-# Other usefull info
+# Other usefull commands and tools
 
 ## How to login and access PCFDev
 
@@ -247,12 +252,11 @@ Or better yet, in short form:
 cf m
 ~~~~
 
-
 ## Service Broker
 
-You can use your browser to examine a [ basic service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
+You can use your browser to examine the deployed [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
 
-You will need username and password: solacedemo is the default as set in [service-broker-manifest.yml](templates/service-broker-manifest.yml)
+You will need a username and password: solacedemo is the default as set in [service-broker-manifest.yml](templates/service-broker-manifest.yml)
 
 You can also run a script that will fetch a variety of information from the service broker
 ~~~~
@@ -261,7 +265,8 @@ getServiceBrokerInfo.sh
 
 ## How to suspend and resume VMs
 
-Any of the VMS we have can be suspended and resumed at a later time.
+The VMS we created can be suspended and resumed at a later time. 
+This way you don't need to recreate them. Their state is saved to disk.
 
 ### Suspending all VMS
 ~~~~
