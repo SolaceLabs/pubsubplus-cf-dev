@@ -55,28 +55,18 @@ echo "Adding supporting perl modules used by rs-* scripts"
 sudo apt-get -y install libexpect-perl
 sudo apt-get -y install libterm-readkey-perl
 
-echo "Installing Docker Prerequisites"
-# Following instructions from https://docs.docker.com/engine/installation/linux/ubuntulinux
+echo '' >> .profile
+echo 'export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO:-"https://github.com/SolaceLabs/solace-messaging-cf-dev.git"}' >> .profile
+echo 'echo "Will use solace-messaging-cf-dev from git repo $SOLACE_MESSAGING_CF_DEV_REPO"' >> .profile
 
-# sudo apt-get -y install apt-transport-https ca-certificates
-# sudo apt-key adv --keyserver hkp://ha.pool.sks-keyservers.net:80 --recv-keys 58118E89F3A912897C070ADBF76221572C52609D
-# echo "deb https://apt.dockerproject.org/repo ubuntu-trusty main" | sudo tee /etc/apt/sources.list.d/docker.list
-# sudo apt-get update
-# sudo apt-get -y install linux-image-extra-$(uname -r) linux-image-extra-virtual
-# echo "Installing Docker"
-# sudo apt-get -y install docker-engine=1.12.6-0~ubuntu-trusty
-# echo "Allowing the use of Docker without sudo"
-# sudo groupadd docker
-# sudo usermod -aG docker vagrant
-
-echo 'if [ ! -d ~/solace-cf-dev ]; then' >> .profile
-echo ' echo "Fetching solace-cf-dev inside cli-tools"' >> .profile 
-echo ' git clone https://github.com/SolaceDev/solace-cf-dev.git' >> .profile
+echo 'if [ ! -d ~/solace-messaging-cf-dev ]; then' >> .profile
+echo ' echo "Fetching solace-messaging-cf-dev inside cli-tools"' >> .profile 
+echo ' git clone $SOLACE_MESSAGING_CF_DEV_REPO' >> .profile
 echo 'fi' >> .profile
 
 echo '' >> .profile
-echo '# Using solace-cf-dev/.profile' >> .profile
-echo '[[ -e ~/solace-cf-dev/.profile ]] && source ~/solace-cf-dev/.profile || echo "~/solace-cf-dev/.profile was not found"' >> .profile
+echo '# Using solace-messaging-cf-dev/.profile' >> .profile
+echo '[[ -e ~/solace-messaging-cf-dev/.profile ]] && source ~/solace-messaging-cf-dev/.profile || echo "~/solace-messaging-cf-dev/.profile was not found"' >> .profile
 echo '' >> .profile
 
 INSTALL_AND_CONFIGURE

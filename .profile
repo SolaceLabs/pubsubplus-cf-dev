@@ -1,16 +1,16 @@
 ##
 
-export PATH=$HOME/solace-cf-dev/bin:$PATH
-
-# ( cd $HOME/solace-cf-dev; git pull )
+export PATH=$HOME/solace-messaging-cf-dev/bin:$PATH
 
 ## Just in case
-chmod +x $HOME/solace-cf-dev/bin/*.sh
+chmod +x $HOME/solace-messaging-cf-dev/bin/*.sh
 
+## Just to get bosh-lite going with any fuss
 if [ ! -f $HOME/.bosh_config ]; then
-  cp $HOME/solace-cf-dev/templates/bosh_config $HOME/.bosh_config
+  cp $HOME/solace-messaging-cf-dev/templates/bosh_config $HOME/.bosh_config
 fi
 
+# Used by most scripts
 export WORKSPACE=$HOME/workspace
 
 
