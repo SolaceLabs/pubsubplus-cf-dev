@@ -54,6 +54,7 @@ cd cli-tools
 vagrant up
 ~~~~
 
+
 Just an example on how to run commands in cli-tools vm, which you need to do later.
 ~~~~
 cd solace-messaging-cf-dev
@@ -64,6 +65,8 @@ echo "I am running inside cli-tools vm"
 exit
 ~~~~
 
+_The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
+another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM_
 
 ### Requirements Step 3 - PCFDev
 
