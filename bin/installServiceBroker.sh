@@ -6,7 +6,12 @@ SCRIPTPATH=$(dirname "$SCRIPT")
 source $SCRIPTPATH/cf-common.sh
 
 export SB_JAR=$WORKSPACE/releases/solace-messaging.jar
-export SB_MANIFEST=$SCRIPTPATH/../templates/service-broker-manifest.yml
+
+export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+
+## Use a specific manifest that matches the tile version.
+export SB_MANIFEST=$SCRIPTPATH/../templates/$SOLACE_VMR_BOSH_RELEASE_VERSION/service-broker-manifest.yml
 
 ## Check we have the files..
 
