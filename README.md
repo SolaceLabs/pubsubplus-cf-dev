@@ -43,6 +43,12 @@ Directly on your computer, you need to:
 * Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
 * Shell access, use your preferred shell. 
 
+_The setup was last tested on Windows host with 32GB of RAM, using:_
+- git version 2.8.2.windows.1
+- cf version 6.21.1+6fd3c9f-2016-08-10
+- Vagrant 1.9.1
+- VirtualBox Version 5.1.10 r112026 (Qt5.6.2)
+
 ### Requirements Step 2 - Clone this project and start up its cli-tools vm
 
 On your computer, clone this project and start up the cli-tools vm. We will come back to use it in later steps.
