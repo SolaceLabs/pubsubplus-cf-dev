@@ -175,7 +175,7 @@ installServiceBroker.sh
 
 ### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
 
-_Deploy only one and only once, if not sure just use the default with no parameters_
+_Deploy only one and only once, you must use cleanup_bosh.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
 
 Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
 
@@ -196,7 +196,7 @@ bosh_deploy.sh -p Medium-HA-VMR -t ha
 ~~~~
 
 _Keep in mind that not all Tile Releases contain all solace-messaging service plans.
-And that you may only deploy a single type pool (-p) to BOSH-lite.
+And that you may only deploy a single service plan which is controlled by the pool name (-p) to BOSH-lite.
 The flag for the pool name (-p) will correspond to a service plan in the marketplace_
 
 Pool name to service plan mapping:
@@ -232,7 +232,7 @@ cf services
 Ideally you will bind the service you created to an application and use it.
 You can go ahead download and test the [Solace Sample Apps](https://github.com/SolaceLabs/sl-cf-solace-messaging-demo), or create some of your own.
 
-# Other usefull commands and tools
+# Other useful commands and tools
 
 ## How to login and access PCFDev
 
@@ -256,7 +256,7 @@ cf m
 
 You can use your browser to examine the deployed [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
 
-You will need a username and password: solacedemo is the default as set in [service-broker-manifest.yml](templates/service-broker-manifest.yml)
+You will need a username and password: solacedemo is the default as set in service-broker-manifest.yml obtained from [templates](./templates)
 
 You can also run a script that will fetch a variety of information from the service broker
 ~~~~
@@ -325,7 +325,7 @@ ssh -p 2222 admin@10.244.0.3
 
 ### To remove a deployment from BOSH-lite
 
-Use the same parametes with bosh_cleanup.sh as the one you did with bosh_deploy.sh.
+Use the same parameters with bosh_cleanup.sh as the one you did with bosh_deploy.sh.
 
 _If you remove a deployment from BOSH-lite the service-broker inventory will be out-of-sync with the deployment.
 Just re-install the service broker to reset everything._
