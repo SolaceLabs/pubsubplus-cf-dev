@@ -18,14 +18,17 @@ Currently used as is for the deployment of the service broker in PCFDev.
 
 The provided bosh manifest templates currently define a single VMR job for a bosh deployment.
 
-Template substitutions allows
+Template substitutions allows:
+
 - Control the job name
 - Control the pool name parameter which ends up mapping it to a service plan.
 - The docker vmr image to use, which is also mapped to the pool name.
 
+
 Template have static settings:
+
 - The number of instances, the default is 1 for most templates
-- Cerificates which are present in some templates
+- Certificates which are present in some templates but not others.
 - networking
 - passwords
 
