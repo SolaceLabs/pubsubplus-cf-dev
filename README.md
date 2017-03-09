@@ -8,7 +8,7 @@ RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 ## Current and future state
 
 The initial version of this project will focus on re-using existing tools as standalone without attempting to merge them.
-The project also includes a subset of scripts that can may benefit from refactoring in a single solid codebase.
+The project also includes a subset of scripts that may benefit from refactoring in a single solid codebase.
 
 A future version of the project may attempt to use a single VM with all the tools. 
 
