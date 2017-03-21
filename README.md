@@ -12,7 +12,7 @@ The project also includes a subset of scripts that may benefit from refactoring 
 
 A future version of the project may attempt to use a single VM with all the tools. 
 
-## Requirements
+## Hardware Requirements
 
 Each of the following requirements for tools and software products needs to be satisfied.
 
@@ -29,12 +29,12 @@ At the end you will have these VMs:
 * BOSH-lite for hosting VMRs.
  - Size as recommended below to fit the VMRs.
 
-### Requirements Step 0 - Internet Access
+## Installation 
+
+### Installation Requirements 
 
 While there may be no need for internet access once the setup is completed, it is certainly required during the setup.
 All the steps during the setup will access the internet to download and install correctly.
-
-### Requirements Step 1 - Common tools
 
 Directly on your computer, you need to:
 
@@ -49,7 +49,7 @@ _The setup was last tested on Windows host with 32GB of RAM, using:_
 - Vagrant 1.9.1
 - VirtualBox Version 5.1.10 r112026 (Qt5.6.2)
 
-### Requirements Step 2 - Clone this project and start up its cli-tools vm
+### Installation Step 1 - Clone this project and start up its cli-tools vm
 
 On your computer, clone this project and start up the cli-tools vm. We will come back to use it in later steps.
 
@@ -74,7 +74,7 @@ exit
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
 another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM_
 
-### Requirements Step 3 - PCFDev
+### Installation Step 2 - PCFDev
 
 PCFDev provides a local installation of cloud foundry in a box to help test applications.
 
@@ -86,8 +86,8 @@ Our goal is to to add solace-messaging as a service in PCFDev.
 
 But first you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
 
-* Install [cf cli - The Cloud Foundry Command Line Interface] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
-* Install [PCF Plugin which is used by cf cli] (https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
+* Install [cf cli - The Cloud Foundry Command Line Interface](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
+* Install [PCF Plugin which is used by cf cli](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
 * Start PCF Dev, using 4GB of ram. You may choose to adjust this.
 
 ~~~~
@@ -98,11 +98,11 @@ At this point PCFDev is locally installed and ready to host applications and ser
 
 Optionally, you may follow the full [Getting started with pivotal cloud foundry introduction guide](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/introduction), as you would learn how to install a test application in PCFDev.
 
-### Requirements Step 4 - BOSH-lite
+### Installation Step 3 - BOSH-lite
 
-We will use [BOSH-lite] (https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
+We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
 
-But first you need to install [BOSH-lite] (https://github.com/cloudfoundry/bosh-lite) :
+But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) :
 
 * By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
 * Clone bosh-lite in the workspace of this project.
@@ -128,7 +128,10 @@ VM_MEMORY=5000 vagrant up --provider=virtualbox
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
-### Requirements Step 5 - The Solace Pivotal Tile
+## Solace Messaging Deployment
+### Deployment - Prerequisites
+
+#### The Solace Pivotal Tile
 
 * The Solace Pivotal Tile is available for download from PivNet (https://network.pivotal.io/products/solace-messaging/).
 * [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-messaging/)
@@ -143,11 +146,10 @@ For my example I have downloaded version 0.4.0 and placed it in:
 solace-messaging-cf-dev/workspace/solace-messaging-0.4.0.pivotal
 ~~~~
 
-## Deployment - Connecting the dots
 
-Now we have all the tools, the VMs created, and we can start using them.
+#### Login to cli-tools VM
 
-## Do the steps below using the cli-tools VM 
+All deployment steps require you to be logged in to the cli-tools VM 
 
 ~~~~
 cd solace-messaging-cf-dev
@@ -210,16 +212,11 @@ The flag for the pool name (-p) will correspond to a service plan in the marketp
 
 Pool name to service plan mapping:
 
-- Shared-VMR
- * shared
-- Large-VMR
- * large
-- Community-VMR
- * community
-- Medium-HA-VMR
- * medium-ha
-- Large-HA-VMR
- * large-ha
+- Shared-VMR => shared
+- Large-VMR => large
+- Community-VMR => community
+- Medium-HA-VMR => medium-ha
+- Large-HA-VMR => large-ha
 
 ## Using the Deployment
 
@@ -293,12 +290,11 @@ cf dev suspend
 ### Resuming all VMS
 ~~~~
 cd solace-messaging-cf-dev
-cd workspace
 
 cd cli-tools
 vagrant resume
 
-cd ../bosh-lite
+cd ../workspace/bosh-lite
 vagrant resume
 
 cf dev resume
@@ -360,7 +356,6 @@ On your host computer (not cli-tools)
 
 ~~~~
 cd solace-messaging-cf-dev
-cd workspace
 cd cli-tools
 vagrant destroy
 ~~~~
