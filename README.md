@@ -3,7 +3,19 @@
 This project provides instructions and tools to support installing and using a Solace Pivotal Tile 
 on a local computer having enough resources.
 
-RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
+This is an overview of what this project will help you install:
+
+![](resources/overview.png)
+
+This guide will help you install the following VMs:
+
+* cli-tools to provide a reliable environment to run the scripts of this project.
+ - Tested with 512mb of ram, just enough to run some scripts. 
+ - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
+* PCF Dev for hosting the solace service broker and your applications.
+ - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
+* BOSH-lite for hosting VMRs.
+ - Size as recommended below to fit the VMRs.
 
 ## Current and future state
 
@@ -19,17 +31,13 @@ Each of the following requirements for tools and software products needs to be s
 A key goal is to keep what is installed directly on your host computer to a minimum, while containing everything else inside VMs.
 With this approach we keep a high level of containment within VMs and isolation from the host system.
 
-At the end you will have these VMs:
-
-* cli-tools to provide a reliable environment to run the scripts of this project.
- - Tested with 512mb of ram, just enough to run some scripts. 
- - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
-* PCF Dev for hosting the solace service broker and your applications.
- - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
-* BOSH-lite for hosting VMRs.
- - Size as recommended below to fit the VMRs.
+RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 
 ## Installation 
+
+The goal of the installation steps is to start the required VMs.
+
+![](resources/installation.png)
 
 ### Installation Requirements 
 
@@ -129,6 +137,11 @@ VM_MEMORY=5000 vagrant up --provider=virtualbox
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
 ## Solace Messaging Deployment
+
+The goal of the deployment steps is to install Solace Messaging into the running PCF environment.
+
+![](resources/deployment.png)
+
 ### Deployment - Prerequisites
 
 #### The Solace Pivotal Tile
