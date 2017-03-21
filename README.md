@@ -131,7 +131,7 @@ _Without enabled routing, the VMs will not be able to communicate. You will have
 ### Requirements Step 5 - The Solace Pivotal Tile
 
 * The Solace Pivotal Tile is available for download from PivNet (https://network.pivotal.io/products/solace-messaging/).
-* [ Solace Pivotal Tile Documentation ] (http://docs.pivotal.io/partners/solace-messaging/)
+* [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-messaging/)
 - _You may use Solace Tiles for which we have matching [templates](./templates), 
    Installation will not work without templates to match the tile version_
 
@@ -280,12 +280,11 @@ This way you don't need to recreate them. Their state is saved to disk.
 ### Suspending all VMS
 ~~~~
 cd solace-messaging-cf-dev
-cd workspace
 
 cd cli-tools
 vagrant suspend
 
-cd ../bosh-lite
+cd ../workspace/bosh-lite
 vagrant suspend
 
 cf dev suspend
