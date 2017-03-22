@@ -125,9 +125,15 @@ cd bosh-lite
 * Then start bosh-lite  
  - Use VM_MEMORY=5000 if you want to host a single VMR
  - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
-
+ 
+ - On Linux: 
 ~~~~
 VM_MEMORY=5000 vagrant up --provider=virtualbox
+~~~~
+ - On Windows:
+~~~~
+set VM_MEMORY=5000
+vagrant up --provider=virtualbox
 ~~~~
 
 * VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
