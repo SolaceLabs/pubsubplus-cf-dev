@@ -2,3 +2,4 @@ releases/
 bosh-lite/
 *.pivotal
 *.yml
+sl-cf-solace-messaging-demo/
