@@ -250,8 +250,6 @@ For example if you deployed the default Shared-VMR , a "shared" service plan wil
 cf m
 cf create-service solace-messaging shared test_shared_instance
 cf services
-cf delete-service -f test_shared_instance
-cf services
 ~~~~
 
 Ideally you will bind the service you created to an application and use it.
@@ -345,6 +343,11 @@ ssh -p 2222 admin@10.244.0.3
 ~~~~
 
 ## How to cleanup
+
+### How to delete the Solace VMR Service 
+~~~~
+cf delete-service -f test_shared_instance
+~~~~
 
 ### To remove a deployment from BOSH-lite
 
