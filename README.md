@@ -44,12 +44,12 @@ The goal of the installation steps is to start the required VMs.
 While there may be no need for internet access once the setup is completed, it is certainly required during the setup.
 All the steps during the setup will access the internet to download and install correctly.
 
-Directly on your computer, you need to:
+Directly on your computer, you must have or get the following:
 
-* Install latest [Git](https://git-scm.com/downloads)
-* Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
-* Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
-* Shell access, use your preferred shell. 
+* Install latest [Git](https://git-scm.com/downloads) (version 2.7.1+) 
+* Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (version 5.1.18+)
+* Install latest [Vagrant](https://www.vagrantup.com/downloads.htm) (version 1.9.1+)
+* Shell access, use your preferred shell.
 
 _The setup was last tested on Windows host with 32GB of RAM, using:_
 - git version 2.8.2.windows.1
