@@ -306,7 +306,6 @@ function pcfdev_login() {
  if [ $? -eq 0 ]; then
     cf auth admin admin > /dev/null
     if [ $? -eq 0 ]; then
-       switchToServiceBrokerTarget
        export PCFDEV=1 
     else
        export PCFDEV=0 

@@ -31,8 +31,18 @@ printf  "PCFDev \t\t\t\t%s\n" "Access attempt (may take some time)"
 
 ping -q -c 5 -w 10 api.local.pcfdev.io > /dev/null
 if [ $? -eq "0" ]; then
-  source $SOLACE_MESSAGING_CF_DEV/bin/cf-common.sh
-  pcfdev_login
+ export PCFDEV=0
+ cf api https://api.local.pcfdev.io --skip-ssl-validation > /dev/null
+ if [ $? -eq 0 ]; then
+    cf auth admin admin > /dev/null
+    if [ $? -eq 0 ]; then
+       export PCFDEV=1
+    else
+       export PCFDEV=0
+    fi
+ else
+   export PCFDEV=0
+ fi
 else
   export PCFDEV=0
 fi
