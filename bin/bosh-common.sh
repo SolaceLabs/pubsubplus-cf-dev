@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export MY_BIN_HOME=`dirname $0`
+export MY_BIN_HOME=$(dirname $(readlink -f $0))
 export MY_HOME=$MY_BIN_HOME/..
 
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
