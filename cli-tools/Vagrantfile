@@ -56,8 +56,12 @@ echo "Adding supporting perl modules used by rs-* scripts"
 sudo apt-get -y install libexpect-perl
 sudo apt-get -y install libterm-readkey-perl
 
-wget -q -P /tmp https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.8/spiff_linux_amd64.zip
-unzip -q /tmp/spiff_linux_amd64.zip -d /usr/bin
+echo "Adding spiff"
+wget -q "https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.8/spiff_linux_amd64.zip" -O /tmp/spiff_linux_amd64.zip
+( cd /tmp; unzip spiff_linux_amd64.zip )
+sudo mv /tmp/spiff /usr/bin/spiff
+rm -f /tmp/spiff_linux_amd64.zip
+which spiff
 
 echo '' >> .profile
 if [ -n "$SOLACE_MESSAGING_CF_DEV_REPO" ]; then
