@@ -124,7 +124,7 @@ function prepareManifest() {
 echo "Preparing a deployment manifest from template: $TEMPLATE_FILE "
 
 if [ ! -f $TEMPLATE_FILE ]; then
- echo "Template file not found  $TEMPALTE_FILE"
+ echo "Template file not found  $TEMPLATE_FILE"
  exit 1
 fi
 
