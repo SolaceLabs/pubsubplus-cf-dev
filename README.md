@@ -132,11 +132,11 @@ cd bosh-lite
   - Use VM_MEMORY=5000 if you want to host a single VMR
   - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
  
-  - On Linux: 
+ - On Linux: 
 ~~~~
 VM_MEMORY=5000 vagrant up --provider=virtualbox
 ~~~~
-  - On Windows:
+ - On Windows:
 ~~~~
 set VM_MEMORY=5000
 vagrant up --provider=virtualbox
@@ -254,7 +254,7 @@ For example if you deployed the default Shared-VMR, a "shared" service plan will
 
 ~~~~
 cf m
-cf create-service solace-messaging shared test_shared_instance
+cf create-service solace-messaging shared solace-messaging-demo-instance
 cf services
 ~~~~
 
@@ -352,7 +352,14 @@ ssh -p 2222 admin@10.244.0.3
 
 ### How to delete the Solace VMR Service 
 ~~~~
-cf delete-service -f test_shared_instance
+cf delete-service -f solace-messaging-demo-instance
+~~~~
+
+### How to remove the solace-messaging service from PCFDev
+
+You should only do this after you have unbound and deleted any solace-messaging services you previously created.
+~~~~
+uninstallServiceBroker.sh
 ~~~~
 
 ### To remove a deployment from BOSH-lite
