@@ -213,14 +213,36 @@ function getServiceBrokerRouters() {
 
 function switchToOrgAndSpace() {
 
- # Create (will proceed even if it exists)
- log "Will create and target org: $1"
- cf create-org $1
- cf target -o $1
+ FOUND_ORG=0
+ for ORG in $(cf orgs | grep -v "Getting" | grep -v "^name"); do
+    if [ "$ORG" == "$1" ]; then
+       FOUND_ORG=1
+    fi
+ done
 
- log "Will create and target space: $2"
- cf create-space $2
- cf target -o $1 -s $2
+ if [ "$FOUND_ORG" -eq "0" ]; then
+   log "Will create and target org: $1"
+   cf create-org $1 > /dev/null
+ fi
+
+ cf target -o $1 > /dev/null
+
+ FOUND_SPACE=0
+ for SPACE in $(cf spaces | grep -v "Getting" | grep -v "^name"); do
+    if [ "$SPACE" == "$2" ]; then
+       FOUND_SPACE=1
+    fi
+ done
+
+ if [ "$FOUND_SPACE" -eq "0" ]; then
+   log "Will create and target space: $2"
+   cf create-space $2 > /dev/null
+ fi
+
+ cf target -o $1 -s $2 > /dev/null
+ if [ $? -ne 0 ]; then
+    log "FAILED: cf target -o $1 -s $2"
+ fi
 
 }
 
@@ -269,15 +291,7 @@ function enableAndShowInMarketPlace() {
 }
 
 function switchToServiceBrokerTarget() {
-	FOUND_ORG=`cf orgs | grep $SB_ORG | wc -l`
- 	if [ "$FOUND_ORG" -gt "0" ]; then
- 	   cf target -o $SB_ORG -s $SB_SPACE
-	else
-	   log "Unable to locate required ORG: $SB_ORG and SPACE: $SB_SPACE"
-	   cf orgs 
-	   ## Will cause a non 0 exit code, and will fail in test pipeline
-	   cf orgs | grep $SB_ORG 
-	fi
+        switchToOrgAndSpace $SB_ORG $SB_SPACE
 }
 
 function restartServiceBroker() {
@@ -287,9 +301,18 @@ function restartServiceBroker() {
 
 
 function pcfdev_login() {
-
- cf api https://api.local.pcfdev.io --skip-ssl-validation
- cf auth admin admin
+ export PCFDEV=0 
+ cf api https://api.local.pcfdev.io --skip-ssl-validation > /dev/null
+ if [ $? -eq 0 ]; then
+    cf auth admin admin > /dev/null
+    if [ $? -eq 0 ]; then
+       export PCFDEV=1 
+    else
+       export PCFDEV=0 
+    fi
+ else
+   export PCFDEV=0 
+ fi
 
 }
 
