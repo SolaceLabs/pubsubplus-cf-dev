@@ -117,25 +117,38 @@ function deleteDeploymentAndRelease() {
 
 }
 
+function generateManifest() {
 
-function prepareManifest() {
-
-echo "Preparing manifest file $MANIFEST_FILE"
 local VMR_JOB_NAME_ARG=""
 local CERT_ARG=''
+local HA_ARG=''
 if [ -n "$VMR_JOB_NAME" ]; then
-	VMR_JOB_NAME_ARG="-j $VMR_JOB_NAME"
+    VMR_JOB_NAME_ARG="-j $VMR_JOB_NAME"
 fi
 if [ "$CERT_ENABLED" == true ]; then
     CERT_ARG="--cert"
 fi
-export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -s $SOLACE_DOCKER_IMAGE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
-echo "Running: $PREPARE_MANIFEST_COMMAND > $MANIFEST_FILE"
-${PREPARE_MANIFEST_COMMAND} > $MANIFEST_FILE
+if [ "$HA_ENABLED" == true ]; then
+    HA_ARG="--ha"
+fi
+export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $HA_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -s $SOLACE_DOCKER_IMAGE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
+>&2 echo "Running: $PREPARE_MANIFEST_COMMAND"
+${PREPARE_MANIFEST_COMMAND}
 
 if [ $? -ne 0 ]; then
- echo
- echo "Prepare Manifest failed."
+ >&2 echo
+ >&2 echo "Generating the Manifest failed."
+ exit 1
+fi 
+}
+
+function prepareManifest() {
+
+generateManifest > $MANIFEST_FILE
+
+if [ $? -ne 0 ]; then
+ >&2 echo
+ >&2 echo "Preparing the Manifest failed."
  exit 1
 fi 
 }
@@ -147,8 +160,8 @@ echo "Will build the BOSH Release (May take some time)"
 ./build.sh | tee -a $LOG_FILE
 
 if [ $? -ne 0 ]; then
- echo
- echo "Build failed."
+ >&2 echo
+ >&2 echo "Build failed."
  exit 1
 fi 
 
@@ -177,7 +190,7 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  echo "yes" | bosh deploy | tee -a $LOG_FILE
 
 else
- echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
+ >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
  exit 1
 fi
 
@@ -199,9 +212,9 @@ function showUsage() {
 }
 
 function missingRequired() {
-  echo
-  echo "Some required argument(s) were missing."
-  echo 
+  >&2 echo
+  >&2 echo "Some required argument(s) were missing."
+  >&2 echo 
 
   showUsage
   exit 1
@@ -224,9 +237,9 @@ while getopts :p:hn opt; do
         exit 0
       ;;
       \?)
-      echo
-      echo "Invalid option: -$OPTARG" >&2
-      echo
+      >&2 echo
+      >&2 echo "Invalid option: -$OPTARG" >&2
+      >&2 echo
       showUsage
       exit 1
       ;;
@@ -275,13 +288,19 @@ case $POOL_NAME in
     ;;
 
   *)
-    echo
-    echo "Sorry, I don't seem to know about POOL_NAME: $POOL_NAME"
-    echo
+    >&2 echo
+    >&2 echo "Sorry, I don't seem to know about POOL_NAME: $POOL_NAME"
+    >&2 echo
     showUsage
     exit 1
     ;;
 esac
+
+if [[ "$POOL_NAME" == *"HA-VMR" ]]; then
+    export HA_ENABLED=true
+else
+    export HA_ENABLED=false
+fi
 
 export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
 export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
@@ -289,22 +308,19 @@ export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE 
 export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
 export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
 
-#if [ -f $TEMPLATE_FILE ]; then
-# export NUM_INSTANCES=$( grep "instances:" $TEMPLATE_FILE | grep -v _vmr_instances | head -1 | awk '{ print $2 }' )
-#else
-# export NUM_INSTANCES=0
-#fi
+export NUM_INSTANCES=$(generateManifest | grep "_vmr_instances" | head -n1 | awk '{print $2}')
 
 echo "$0 - Settings"
 echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
 echo "    Deployment     $DEPLOYMENT_NAME"
 echo "    VMR JOB NAME   $VMR_JOB_NAME"
-echo "    NUM_INSTANCES  $NUM_INSTANCES"
 echo "    CERT_ENABLED   $CERT_ENABLED"
+echo "    HA_ENABLED     $HA_ENABLED"
+echo "    NUM_INSTANCES  $NUM_INSTANCES"
 
-#INSTANCE_COUNT=0
-#while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
-#     echo "    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
-#     let INSTANCE_COUNT=INSTANCE_COUNT+1
-#done
+INSTANCE_COUNT=0
+while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
+     echo "    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
+     let INSTANCE_COUNT=INSTANCE_COUNT+1
+done
 

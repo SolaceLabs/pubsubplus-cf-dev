@@ -45,7 +45,7 @@ def main(args):
     solaceDockerImageName = args["solaceDockerImageName"]
     vmrIpList = ["10.244.0.3"]
     certEnabled = args["cert"]
-    haEnabled = "HA-VMR" in poolName
+    haEnabled = args["ha"]
     if haEnabled:
         vmrIpList.append("10.244.0.4")
         vmrIpList.append("10.244.0.5")
@@ -77,6 +77,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generates a bosh-lite YAML manifest')
     parser.add_argument('-p', '--pool_name', dest='poolName', choices=POOL_TYPES.keys(), required=True)
     parser.add_argument('--cert', action='store_true')
+    parser.add_argument('--ha', action='store_true')
     parser.add_argument('-n', '--deployment_name', dest='deploymentName')
     parser.add_argument('-j', '--job_name', dest='jobName')
     parser.add_argument('-d', '--template_directory', dest='templateDir', required=True)
