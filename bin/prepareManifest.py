@@ -1,17 +1,10 @@
 import argparse
 import os
 import yaml
+import commonUtils
 
 # The temporary file that we write the config to
 CONFIG_FILE_NAME = "config.yml"
-POOL_TYPES = {
-    # poolName : ListName
-    "Shared-VMR": "shared",
-    "Medium-HA-VMR": "medium_ha",
-    "Large-VMR": "large",
-    "Large-HA-VMR": "large_ha",
-    "Community-VMR": "community",
-}
 DOCKERFILE_STRING = """FROM solace-app:{}
 RUN \\
   echo '#!/bin/bash' > /sbin/dhclient && \\
@@ -41,11 +34,11 @@ def main(args):
     poolName = args["poolName"]
     deploymentName = args["deploymentName"] or "solace-vmr-warden-deployment"
     jobName = args["jobName"] or poolName
-    listName = POOL_TYPES[poolName]
-    solaceDockerImageName = args["solaceDockerImageName"]
-    vmrIpList = ["10.244.0.3"]
+    listName = commonUtils.POOL_TYPES[poolName].listName
+    solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
     certEnabled = args["cert"]
-    haEnabled = args["ha"]
+    haEnabled = commonUtils.POOL_TYPES[poolName].haEnabled
+    vmrIpList = ["10.244.0.3"]
     if haEnabled:
         vmrIpList.append("10.244.0.4")
         vmrIpList.append("10.244.0.5")
@@ -75,12 +68,10 @@ def main(args):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generates a bosh-lite YAML manifest')
-    parser.add_argument('-p', '--pool_name', dest='poolName', choices=POOL_TYPES.keys(), required=True)
+    parser.add_argument('-p', '--pool_name', dest='poolName', choices=commonUtils.POOL_TYPES.keys(), required=True)
     parser.add_argument('--cert', action='store_true')
-    parser.add_argument('--ha', action='store_true')
     parser.add_argument('-n', '--deployment_name', dest='deploymentName')
     parser.add_argument('-j', '--job_name', dest='jobName')
     parser.add_argument('-d', '--template_directory', dest='templateDir', required=True)
-    parser.add_argument('-s', '--solace_docker_image_name', dest='solaceDockerImageName', required=True)
     parser.add_argument('-w', '--workspace_dir', dest='workspaceDir', required=True)
     main(vars(parser.parse_args()))

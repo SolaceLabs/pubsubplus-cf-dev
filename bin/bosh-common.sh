@@ -128,10 +128,7 @@ fi
 if [ "$CERT_ENABLED" == true ]; then
     CERT_ARG="--cert"
 fi
-if [ "$HA_ENABLED" == true ]; then
-    HA_ARG="--ha"
-fi
-export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $HA_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -s $SOLACE_DOCKER_IMAGE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
+export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $HA_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
 >&2 echo "Running: $PREPARE_MANIFEST_COMMAND"
 ${PREPARE_MANIFEST_COMMAND}
 
@@ -265,38 +262,20 @@ fi
 export VMR_JOB_NAME=${VMR_JOB_NAME:-$POOL_NAME}
 export VM_JOB=${VM_JOB:-"$VMR_JOB_NAME/0"}
 
-case $POOL_NAME in
-
-  Shared-VMR)
-	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-    ;;
-
-  Medium-HA-VMR)
-	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-    ;;
-
-  Large-VMR)
-	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-    ;;
-
-  Large-HA-VMR)
-	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-    ;;
-
-  Community-VMR)
-	export SOLACE_DOCKER_IMAGE="latest-community"
-    ;;
-
-  *)
+python3 -c "import commonUtils; commonUtils.isValidPoolName(\"$POOL_NAME\")"
+if [ "$?" -ne 0 ]; then
     >&2 echo
     >&2 echo "Sorry, I don't seem to know about POOL_NAME: $POOL_NAME"
     >&2 echo
     showUsage
     exit 1
-    ;;
-esac
+fi
 
-if [[ "$POOL_NAME" == *"HA-VMR" ]]; then
+export SOLACE_DOCKER_IMAGE_NAME=$(python3 -c "import commonUtils; commonUtils.getSolaceDockerImageName(\"$POOL_NAME\")")
+echo $SOLACE_DOCKER_IMAGE_NAME
+
+python3 -c "import commonUtils; commonUtils.getHaEnabled(\"$POOL_NAME\")"
+if [ "$?" -eq 0 ]; then
     export HA_ENABLED=true
 else
     export HA_ENABLED=false
