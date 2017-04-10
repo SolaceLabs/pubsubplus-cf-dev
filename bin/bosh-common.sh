@@ -121,19 +121,14 @@ function deleteDeploymentAndRelease() {
 
 function prepareManifest() {
 
-#echo "Preparing a deployment manifest from template: $TEMPLATE_FILE "
-
-if [ ! -f $TEMPLATE_FILE ]; then
- echo "Template file not found  $TEMPLATE_FILE"
- exit 1
-fi
-
-#cp $TEMPLATE_FILE $MANIFEST_FILE
-
 echo "Preparing manifest file $MANIFEST_FILE"
-echo "Running:  python3 ${MY_BIN_HOME}/prepareManifest.py --cert -p $POOL_NAME -d $(dirname $TEMPLATE_FILE) -n $DEPLOYMENT_NAME  > $MANIFEST_FILE"
-python3 ${MY_BIN_HOME}/prepareManifest.py --cert -p $POOL_NAME -d $(dirname $TEMPLATE_FILE) -n $DEPLOYMENT_NAME  > ${MANIFEST_FILE}
-
+local VMR_JOB_NAME_ARG=""
+if [ -n "$VMR_JOB_NAME" ]; then
+	VMR_JOB_NAME_ARG="-j $VMR_JOB_NAME"
+fi
+export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py --cert $VMR_JOB_NAME_ARG -w $WORKSPACE -s $SOLACE_DOCKER_IMAGE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
+echo "Running: $PREPARE_MANIFEST_COMMAND > $MANIFEST_FILE"
+${PREPARE_MANIFEST_COMMAND} > $MANIFEST_FILE
 }
 
 function build() {
@@ -184,7 +179,7 @@ fi
 ###################### Common parameter processing ########################
 
 
-export BASIC_USAGE_PARAMS="-p [Shared-VMR|Large-VMR|Community-VMR|Medium-HA-VMR|Large-HA-VMR] -t [cert|no-cert|ha]"
+export BASIC_USAGE_PARAMS="-p [Shared-VMR|Large-VMR|Community-VMR|Medium-HA-VMR|Large-HA-VMR]"
 
 CMD_NAME=`basename $0`
 
@@ -207,13 +202,10 @@ function missingRequired() {
 #   missingRequired
 # fi
 
-while getopts :p:t:h opt; do
+while getopts :p:h opt; do
     case $opt in
       p)
         export POOL_NAME=$OPTARG
-      ;;
-      t)
-        export TEMPLATE_POSTFIX="-${OPTARG}"
       ;;
       h)
         showUsage
@@ -252,27 +244,22 @@ case $POOL_NAME in
 
   Shared-VMR)
 	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-        export LIST_NAME="shared"
     ;;
 
   Medium-HA-VMR)
 	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-        export LIST_NAME="medium_ha"
     ;;
 
   Large-VMR)
 	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-        export LIST_NAME="large"
     ;;
 
   Large-HA-VMR)
 	export SOLACE_DOCKER_IMAGE="latest-evaluation"
-        export LIST_NAME="large_ha"
     ;;
 
   Community-VMR)
 	export SOLACE_DOCKER_IMAGE="latest-community"
-        export LIST_NAME="community"
     ;;
 
   *)
@@ -287,14 +274,14 @@ esac
 export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
 export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
 
-export TEMPLATE_FILE="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION/${TEMPLATE_PREFIX}${TEMPLATE_POSTFIX}.yml.template"
+export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
 export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
 
-if [ -f $TEMPLATE_FILE ]; then
- export NUM_INSTANCES=$( grep "instances:" $TEMPLATE_FILE | grep -v _vmr_instances | head -1 | awk '{ print $2 }' )
-else
- export NUM_INSTANCES=0
-fi
+#if [ -f $TEMPLATE_FILE ]; then
+# export NUM_INSTANCES=$( grep "instances:" $TEMPLATE_FILE | grep -v _vmr_instances | head -1 | awk '{ print $2 }' )
+#else
+# export NUM_INSTANCES=0
+#fi
 
 echo "$0 - Settings"
 echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
@@ -303,9 +290,9 @@ echo "    VMR JOB NAME   $VMR_JOB_NAME"
 echo "    NUM_INSTANCES  $NUM_INSTANCES"
 
 
-INSTANCE_COUNT=0
-while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
-     echo "    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
-     let INSTANCE_COUNT=INSTANCE_COUNT+1
-done
+#INSTANCE_COUNT=0
+#while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
+#     echo "    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
+#     let INSTANCE_COUNT=INSTANCE_COUNT+1
+#done
 
