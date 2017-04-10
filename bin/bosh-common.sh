@@ -121,28 +121,18 @@ function deleteDeploymentAndRelease() {
 
 function prepareManifest() {
 
-echo "Preparing a deployment manifest from template: $TEMPLATE_FILE "
+#echo "Preparing a deployment manifest from template: $TEMPLATE_FILE "
 
 if [ ! -f $TEMPLATE_FILE ]; then
  echo "Template file not found  $TEMPLATE_FILE"
  exit 1
 fi
 
-cp $TEMPLATE_FILE $MANIFEST_FILE
+#cp $TEMPLATE_FILE $MANIFEST_FILE
 
 echo "Preparing manifest file $MANIFEST_FILE"
-
-## Template keys to replace
-## __VMR_JOB_NAME__
-## __POOL_NAME__
-## __SOLACE_DOCKER_IMAGE__
-## __LIST_NAME__
-
-sed -i "s/__DEPLOYMENT_NAME__/$DEPLOYMENT_NAME/g" $MANIFEST_FILE
-sed -i "s/__VMR_JOB_NAME__/$VMR_JOB_NAME/g" $MANIFEST_FILE
-sed -i "s/__POOL_NAME__/$POOL_NAME/g" $MANIFEST_FILE
-sed -i "s/__SOLACE_DOCKER_IMAGE__/$SOLACE_DOCKER_IMAGE/g" $MANIFEST_FILE
-sed -i "s/__LIST_NAME__/$LIST_NAME/g" $MANIFEST_FILE
+echo "Running:  python3 ${MY_BIN_HOME}/prepareManifest.py --cert -p $POOL_NAME -d $(dirname $TEMPLATE_FILE) -n $DEPLOYMENT_NAME  > $MANIFEST_FILE"
+python3 ${MY_BIN_HOME}/prepareManifest.py --cert -p $POOL_NAME -d $(dirname $TEMPLATE_FILE) -n $DEPLOYMENT_NAME  > ${MANIFEST_FILE}
 
 }
 

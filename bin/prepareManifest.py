@@ -10,8 +10,7 @@ POOL_TYPES = {
     "Large-HA-VMR": "large_ha",
     "Community-VMR": "community",
 }
-DOCKERFILE_STRING = """FROM solace-app: {}
-
+DOCKERFILE_STRING = """FROM solace-app:{}
 RUN \\
   echo '#!/bin/bash' > /sbin/dhclient && \\
   echo 'exit 0' >> /sbin/dhclient && \\
@@ -53,9 +52,10 @@ def main(args):
             "name": jobName,
             "properties": {
                 "pool_name": poolName,
-            },
-            "containers": {
-                "dockerfile": DOCKERFILE_STRING.format(solaceDockerImageName)
+            	"containers": [{
+                    "name": "solace",
+                    "dockerfile": DOCKERFILE_STRING.format(solaceDockerImageName)
+                }]
             }
         }, {
             "name": "UpdateServiceBroker",
