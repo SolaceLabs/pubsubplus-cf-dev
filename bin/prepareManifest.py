@@ -2,6 +2,7 @@ import argparse
 import os
 import yaml
 
+# The temporary file that we write the config to
 CONFIG_FILE_NAME = "config.yml"
 POOL_TYPES = {
     # poolName : ListName

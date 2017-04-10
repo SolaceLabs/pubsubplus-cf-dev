@@ -4,7 +4,6 @@ export MY_BIN_HOME=$(dirname $(readlink -f $0))
 export MY_HOME=$MY_BIN_HOME/..
 
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
-export TEMPLATE_PREFIX=${TEMPLATE_PREFIX:-"solace-vmr-warden-deployment"}
 export LOG_FILE=${LOG_FILE:-"/tmp/bosh_deploy.log"}
 
 export SOLACE_DOCKER_BOSH_VERSION="29-solace-2"
@@ -123,12 +122,22 @@ function prepareManifest() {
 
 echo "Preparing manifest file $MANIFEST_FILE"
 local VMR_JOB_NAME_ARG=""
+local CERT_ARG=''
 if [ -n "$VMR_JOB_NAME" ]; then
 	VMR_JOB_NAME_ARG="-j $VMR_JOB_NAME"
 fi
-export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py --cert $VMR_JOB_NAME_ARG -w $WORKSPACE -s $SOLACE_DOCKER_IMAGE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
+if [ "$CERT_ENABLED" == true ]; then
+    CERT_ARG="--cert"
+fi
+export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -s $SOLACE_DOCKER_IMAGE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
 echo "Running: $PREPARE_MANIFEST_COMMAND > $MANIFEST_FILE"
 ${PREPARE_MANIFEST_COMMAND} > $MANIFEST_FILE
+
+if [ $? -ne 0 ]; then
+ echo
+ echo "Prepare Manifest failed."
+ exit 1
+fi 
 }
 
 function build() {
@@ -179,7 +188,7 @@ fi
 ###################### Common parameter processing ########################
 
 
-export BASIC_USAGE_PARAMS="-p [Shared-VMR|Large-VMR|Community-VMR|Medium-HA-VMR|Large-HA-VMR]"
+export BASIC_USAGE_PARAMS="-p [Shared-VMR|Large-VMR|Community-VMR|Medium-HA-VMR|Large-HA-VMR] -n (To not use a self-signed certificate)"
 
 CMD_NAME=`basename $0`
 
@@ -202,10 +211,13 @@ function missingRequired() {
 #   missingRequired
 # fi
 
-while getopts :p:h opt; do
+while getopts :p:hn opt; do
     case $opt in
       p)
         export POOL_NAME=$OPTARG
+      ;;
+      n)
+        export CERT_ENABLED=false
       ;;
       h)
         showUsage
@@ -233,8 +245,8 @@ if [ -z $POOL_NAME ]; then
    export POOL_NAME="Shared-VMR"
 fi
 
-if [ -z $TEMPLATE_POSTFIX ]; then
-   export TEMPLATE_POSTFIX="-cert"
+if [ -z $CERT_ENABLED ]; then
+    export CERT_ENABLED=true
 fi
 
 export VMR_JOB_NAME=${VMR_JOB_NAME:-$POOL_NAME}
@@ -288,7 +300,7 @@ echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_REL
 echo "    Deployment     $DEPLOYMENT_NAME"
 echo "    VMR JOB NAME   $VMR_JOB_NAME"
 echo "    NUM_INSTANCES  $NUM_INSTANCES"
-
+echo "    CERT_ENABLED   $CERT_ENABLED"
 
 #INSTANCE_COUNT=0
 #while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
