@@ -20,16 +20,22 @@ RUN \\
   chmod +x /sbin/dhclient"""
 
 def outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled):
-    deploymentType = ""
-    if haEnabled:
-        deploymentType += "-ha"
-    if certEnabled:
-        deploymentType += "-cert"
-    templateFileName = os.path.join(templateDir, "solace-vmr-warden-deployment{}.yml".format(deploymentType))
+    haTemplate = haEnabled and "ha.yml" or "no-ha.yml"
+    certTemplate = certEnabled and "cert.yml" or "no-cert.yml"
+    
+    templateFileName = os.path.join(templateDir, "solace-vmr-deployment.yml")
+    haTemplateFileName = os.path.join(templateDir, haTemplate)
+    certTemplateFileName = os.path.join(templateDir, certTemplate)
     outputFileName = os.path.join(workspaceDir, CONFIG_FILE_NAME)
+
     with open(outputFileName, "w") as f:
         yaml.dump(data, f, default_flow_style=False)
-        os.system("spiff merge {} {}".format(templateFileName, outputFileName))
+        os.system("spiff merge {} {} {} {}".format(
+            templateFileName,
+            haTemplateFileName,
+            certTemplateFileName,
+            outputFileName)
+        )
 
 def main(args):
     poolName = args["poolName"]

@@ -1,0 +1,23 @@
+update:
+    canaries: 1
+    max_in_flight: 1
+
+jobs:
+    - instances: 3
+      <<: (( merge ))
+      networks:
+        - name: test-network 
+          static_ips: 
+            - 10.244.0.3
+            - 10.244.0.4
+            - 10.244.0.5
+
+networks:
+    - name: test-network
+      subnets:    
+        - gateway: 10.244.0.1
+          static: 
+            - 10.244.0.3
+            - 10.244.0.4
+            - 10.244.0.5
+

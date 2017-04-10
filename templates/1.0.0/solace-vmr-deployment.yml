@@ -15,10 +15,10 @@ compilation:
     name: random
 
 update:
-  canaries: 0
+  canaries: (( merge))
   canary_watch_time: 30000-240000
   update_watch_time: 30000-600000
-  max_in_flight: 3
+  max_in_flight: (( merge ))
 
 resource_pools:
 - name: common-resource-pool
@@ -38,7 +38,7 @@ networks:
     gateway: 10.244.0.1
     static:
       - 10.244.0.2
-      - 10.244.0.3
+      - <<: (( merge ))
     cloud_properties:
       name: random
   - range: 10.244.0.16/28
@@ -54,13 +54,12 @@ jobs:
   -  {name: prepare_vmr, release: solace-vmr}
   -  {name: containers, release: solace-vmr}
   -  {name: vmr_agent, release: solace-vmr}
-  instances: 1
   persistent_disk: 20480
   resource_pool: common-resource-pool
   networks:
   - name: test-network
     static_ips:
-      - 10.244.0.3
+      - <<: (( merge ))
   properties:
     <<: (( merge ))
     vmr_agent_port: 18080
@@ -80,6 +79,7 @@ jobs:
     containers:
       - name: solace
         image: solace-bosh
+        memory: 4G
         <<: (( merge ))
         env_vars:
          - "NODE_TYPE=MESSAGE_ROUTING_NODE"
