@@ -5,14 +5,3 @@ update:
 jobs:
     - instances: 1
       <<: (( merge ))
-      networks:
-          - name: test-network
-            static_ips:
-                - 10.244.0.3
-
-networks:
-    - name: test-network
-      subnets:
-          - gateway: 10.244.0.1
-            static:
-                - 10.244.0.3

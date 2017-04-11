@@ -272,7 +272,6 @@ if [ "$?" -ne 0 ]; then
 fi
 
 export SOLACE_DOCKER_IMAGE_NAME=$(python3 -c "import commonUtils; commonUtils.getSolaceDockerImageName(\"$POOL_NAME\")")
-echo $SOLACE_DOCKER_IMAGE_NAME
 
 python3 -c "import commonUtils; commonUtils.getHaEnabled(\"$POOL_NAME\")"
 if [ "$?" -eq 0 ]; then

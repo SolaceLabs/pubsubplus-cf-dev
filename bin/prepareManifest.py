@@ -55,13 +55,24 @@ def main(args):
                     "name": "solace",
                     "dockerfile": DOCKERFILE_STRING.format(solaceDockerImageName)
                 }]
-            }
+            },
+            "networks": [{
+                "name": "test-network",
+                "static_ips": vmrIpList
+            }]
         }, {
             "name": "UpdateServiceBroker",
             "properties": {
                 "{}_vmr_list".format(listName): vmrIpList,
                 "{}_vmr_instances".format(listName): len(vmrIpList)
             }
+        }],
+        "networks": [{
+            "name": "test-network",
+            "subnets": [{
+                "gateway": "10.244.0.1",
+                "static": vmrIpList
+            }]
         }]
     }
     outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled)
