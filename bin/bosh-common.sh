@@ -1,6 +1,7 @@
 #!/bin/bash
 
 export MY_BIN_HOME=$(dirname $(readlink -f $0))
+export PYTHONPATH=$MY_BIN_HOME
 export MY_HOME=$MY_BIN_HOME/..
 
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
@@ -117,6 +118,7 @@ function deleteDeploymentAndRelease() {
 
 }
 
+# Generates a bosh-lite manifest and prints it to stdout
 function generateManifest() {
 
 local VMR_JOB_NAME_ARG=""
