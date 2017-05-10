@@ -7,18 +7,24 @@ source $SCRIPTPATH/cf-common.sh
 
 export SB_JAR=$WORKSPACE/releases/solace-messaging.jar
 
+if [ ! -f $SB_JAR ]; then
+   echo "Service broker jar seems to be missing $SB_JAR"
+   exit 1
+fi
+
 export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+
+if [ ! -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
+   echo "Solace VMR BOSH Release file seems to be missing - expected in $WORKSPACE/releases/solace-vmr-*.tgz"
+   exit 1
+fi
+
 export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
 
 ## Use a specific manifest that matches the tile version.
 export SB_MANIFEST=$SCRIPTPATH/../templates/$SOLACE_VMR_BOSH_RELEASE_VERSION/service-broker-manifest.yml
 
 ## Check we have the files..
-
-if [ ! -f $SB_JAR ]; then
-   echo "Service broker jar seems to be missing $SB_JAR"
-   exit 1
-fi
 
 if [ ! -f $SB_MANIFEST ]; then
    echo "Service broker pcf-dev deployment manifest seems to be missing $SB_MANIFEST"

@@ -10,12 +10,12 @@ This is an overview of what this project will help you install:
 This guide will help you install the following VMs:
 
 * cli-tools to provide a reliable environment to run the scripts of this project.
- - Tested with 512mb of ram, just enough to run some scripts. 
- - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
+  - Tested with 512mb of ram, just enough to run some scripts. 
+  - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
 * PCF Dev for hosting the solace service broker and your applications.
- - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
+  - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
 * BOSH-lite for hosting VMRs.
- - Size as recommended below to fit the VMRs.
+  - Size as recommended below to fit the VMRs.
 
 ## Current and future state
 
@@ -33,6 +33,8 @@ With this approach we keep a high level of containment within VMs and isolation 
 
 RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 
+You will also need at least 40GB of free disk space.
+
 ## Installation 
 
 The goal of the installation steps is to start the required VMs.
@@ -44,18 +46,22 @@ The goal of the installation steps is to start the required VMs.
 While there may be no need for internet access once the setup is completed, it is certainly required during the setup.
 All the steps during the setup will access the internet to download and install correctly.
 
-Directly on your computer, you need to:
+Directly on your computer, you must have or get the following:
 
-* Install latest [Git](https://git-scm.com/downloads)
-* Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads)
-* Install latest [Vagrant](https://www.vagrantup.com/downloads.htm)
-* Shell access, use your preferred shell. 
+* Install latest [Git](https://git-scm.com/downloads) (version 2.7.1+) 
+* Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (version 5.1.18+)
+* Install latest [Vagrant](https://www.vagrantup.com/downloads.htm) (version 1.9.1+)
+* Shell access, use your preferred shell.
 
 _The setup was last tested on Windows host with 32GB of RAM, using:_
 - git version 2.8.2.windows.1
 - cf version 6.21.1+6fd3c9f-2016-08-10
 - Vagrant 1.9.1
 - VirtualBox Version 5.1.10 r112026 (Qt5.6.2)
+
+If you are installing this in a VM you will need to ensure that:
+
+* Intel VT-x/EPT or AMD-RVI Virtualization is enabled.
 
 ### Installation Step 1 - Clone this project and start up its cli-tools vm
 
@@ -80,7 +86,7 @@ exit
 ~~~~
 
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
-another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM_
+another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
 
 ### Installation Step 2 - PCFDev
 
@@ -110,7 +116,7 @@ Optionally, you may follow the full [Getting started with pivotal cloud foundry 
 
 We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
 
-But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) :
+But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite):
 
 * By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
 * Clone bosh-lite in the workspace of this project.
@@ -122,17 +128,23 @@ git clone https://github.com/cloudfoundry/bosh-lite
 cd bosh-lite
 ~~~~
 
-* Then start bosh-lite  
- - Use VM_MEMORY=5000 if you want to host a single VMR
- - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
-
+* Then start bosh-lite: 
+  - Use VM_MEMORY=5000 if you want to host a single VMR
+  - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
+ 
+ - On Linux: 
 ~~~~
 VM_MEMORY=5000 vagrant up --provider=virtualbox
 ~~~~
+ - On Windows:
+~~~~
+set VM_MEMORY=5000
+vagrant up --provider=virtualbox
+~~~~
 
 * VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
- - bosh-lite/bin/add-route 
- - bosh-lite/bin/add-route.bat 
+  - bosh-lite/bin/add-route 
+  - bosh-lite/bin/add-route.bat 
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
@@ -146,17 +158,17 @@ The goal of the deployment steps is to install Solace Messaging into the running
 
 #### The Solace Pivotal Tile
 
-* The Solace Pivotal Tile is available for download from PivNet (https://network.pivotal.io/products/solace-messaging/).
+* The Solace Pivotal Tile is available for download from [PivNet](https://network.pivotal.io/products/solace-messaging/).
 * [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-messaging/)
-- _You may use Solace Tiles for which we have matching [templates](./templates), 
+  - _You may use Solace Tiles for which we have matching [templates](./templates), 
    Installation will not work without templates to match the tile version_
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
-For my example I have downloaded version 0.4.0 and placed it in:
+For my example I have downloaded version 1.0.0 and placed it in:
 
 ~~~~
-solace-messaging-cf-dev/workspace/solace-messaging-0.4.0.pivotal
+solace-messaging-cf-dev/workspace/solace-messaging-1.0.0.pivotal
 ~~~~
 
 
@@ -178,7 +190,7 @@ Use extract_tile.sh to extract the relevant contents we need.
 
 ~~~~
 cd workspace
-extract_tile.sh -t solace-messaging-0.4.0.pivotal
+extract_tile.sh -t solace-messaging-1.0.0.pivotal
 ~~~~
 
 You will find the relevant contents extracted to ~workspace/releases
@@ -199,7 +211,7 @@ installServiceBroker.sh
 
 ### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
 
-_Deploy only one and only once, you must use cleanup_bosh.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
+_Deploy only one and only once, you must use bosh_cleanup.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
 
 Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
 
@@ -238,13 +250,11 @@ and become available for use in PCFDev.
 
 _You can use 'cf' from cli-tools, or directly from your host computer, they both access the same PCFDev instance_
 
-For example if you deployed the default Shared-VMR , a "shared" service plan will be available and you can do this:
+For example if you deployed the default Shared-VMR, a "shared" service plan will be available and you can do this:
 
 ~~~~
 cf m
-cf create-service solace-messaging shared test_shared_instance
-cf services
-cf delete-service -f test_shared_instance
+cf create-service solace-messaging shared solace-messaging-demo-instance
 cf services
 ~~~~
 
@@ -284,7 +294,7 @@ getServiceBrokerInfo.sh
 
 ## How to suspend and resume VMs
 
-The VMS we created can be suspended and resumed at a later time. 
+The VMs we created can be suspended and resumed at a later time. 
 This way you don't need to recreate them. Their state is saved to disk.
 
 ### Suspending all VMS
@@ -339,6 +349,18 @@ ssh -p 2222 admin@10.244.0.3
 ~~~~
 
 ## How to cleanup
+
+### How to delete the Solace VMR Service 
+~~~~
+cf delete-service -f solace-messaging-demo-instance
+~~~~
+
+### How to remove the solace-messaging service from PCFDev
+
+You should only do this after you have unbound and deleted any solace-messaging services you previously created.
+~~~~
+uninstallServiceBroker.sh
+~~~~
 
 ### To remove a deployment from BOSH-lite
 
