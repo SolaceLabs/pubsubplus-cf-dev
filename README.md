@@ -211,7 +211,7 @@ installServiceBroker.sh
 
 ### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
 
-_Deploy only one and only once, you must use cleanup_bosh.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
+_Deploy only one and only once, you must use bosh_cleanup.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
 
 Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
 
