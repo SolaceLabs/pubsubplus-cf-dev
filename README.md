@@ -10,12 +10,12 @@ This is an overview of what this project will help you install:
 This guide will help you install the following VMs:
 
 * cli-tools to provide a reliable environment to run the scripts of this project.
- - Tested with 512mb of ram, just enough to run some scripts. 
- - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
+  - Tested with 512mb of ram, just enough to run some scripts. 
+  - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
 * PCF Dev for hosting the solace service broker and your applications.
- - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
+  - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
 * BOSH-lite for hosting VMRs.
- - Size as recommended below to fit the VMRs.
+  - Size as recommended below to fit the VMRs.
 
 ## Current and future state
 
@@ -129,8 +129,8 @@ cd bosh-lite
 ~~~~
 
 * Then start bosh-lite: 
- - Use VM_MEMORY=5000 if you want to host a single VMR
- - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
+  - Use VM_MEMORY=5000 if you want to host a single VMR
+  - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
  
  - On Linux: 
 ~~~~
@@ -143,8 +143,8 @@ vagrant up --provider=virtualbox
 ~~~~
 
 * VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
- - bosh-lite/bin/add-route 
- - bosh-lite/bin/add-route.bat 
+  - bosh-lite/bin/add-route 
+  - bosh-lite/bin/add-route.bat 
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
@@ -160,15 +160,15 @@ The goal of the deployment steps is to install Solace Messaging into the running
 
 * The Solace Pivotal Tile is available for download from [PivNet](https://network.pivotal.io/products/solace-messaging/).
 * [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-messaging/)
-- _You may use Solace Tiles for which we have matching [templates](./templates), 
+  - _You may use Solace Tiles for which we have matching [templates](./templates), 
    Installation will not work without templates to match the tile version_
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
-For my example I have downloaded version 0.4.0 and placed it in:
+For my example I have downloaded version 1.0.0 and placed it in:
 
 ~~~~
-solace-messaging-cf-dev/workspace/solace-messaging-0.4.0.pivotal
+solace-messaging-cf-dev/workspace/solace-messaging-1.0.0.pivotal
 ~~~~
 
 
@@ -190,7 +190,7 @@ Use extract_tile.sh to extract the relevant contents we need.
 
 ~~~~
 cd workspace
-extract_tile.sh -t solace-messaging-0.4.0.pivotal
+extract_tile.sh -t solace-messaging-1.0.0.pivotal
 ~~~~
 
 You will find the relevant contents extracted to ~workspace/releases
@@ -211,7 +211,7 @@ installServiceBroker.sh
 
 ### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
 
-_Deploy only one and only once, you must use cleanup_bosh.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
+_Deploy only one and only once, you must use bosh_cleanup.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
 
 Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
 
@@ -254,7 +254,7 @@ For example if you deployed the default Shared-VMR, a "shared" service plan will
 
 ~~~~
 cf m
-cf create-service solace-messaging shared test_shared_instance
+cf create-service solace-messaging shared solace-messaging-demo-instance
 cf services
 ~~~~
 
@@ -352,7 +352,14 @@ ssh -p 2222 admin@10.244.0.3
 
 ### How to delete the Solace VMR Service 
 ~~~~
-cf delete-service -f test_shared_instance
+cf delete-service -f solace-messaging-demo-instance
+~~~~
+
+### How to remove the solace-messaging service from PCFDev
+
+You should only do this after you have unbound and deleted any solace-messaging services you previously created.
+~~~~
+uninstallServiceBroker.sh
 ~~~~
 
 ### To remove a deployment from BOSH-lite
