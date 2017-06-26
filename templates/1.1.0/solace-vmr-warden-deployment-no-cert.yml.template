@@ -71,12 +71,18 @@ jobs:
     heartbeat_rate: 15000
     admin_password: 'admin'
     admin_user: 'admin'
-    support_user: 'support'
-    support_password: 'support'
     semp_port: 8080
     semp_ssl_port: 943
     ssh_port: 2222
     system_domain: 'local.pcfdev.io'
+    syslog_config: 'disabled'
+    cf_api_host: 'api.local.pcfdev.io'
+    cf_client_id: 'solace_router'
+    cf_client_secret: '1234'
+    cf_organization: 'solace'
+    cf_space: 'solace-messaging'
+    tcp_routes_enabled: 'disabled'
+    tls_config: 'disabled'
     containers:
       - name: solace
         image: solace-bosh
@@ -95,7 +101,6 @@ jobs:
          - "USERNAME_ADMIN_PASSWORD=admin"
          - "USERNAME_ADMIN_GLOBALACCESSLEVEL=admin"
         encrypted_vars:
-         - "DEBUG_USERNAME_SUPPORT_ENCRYPTEDPASSWORD=support"
          - "DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1"
         net: host
         shm_size: 2G
@@ -107,31 +112,3 @@ jobs:
         - /var/vcap/store/prepare_vmr/volumes/internalSpool:/usr/sw/internalSpool
         - /var/vcap/store/prepare_vmr/volumes/adbBackup:/usr/sw/adb
         - /var/vcap/store/prepare_vmr/volumes/adb:/usr/sw/internalSpool/softAdb
-- name: UpdateServiceBroker
-  templates:
-  -  {name: update_config, release: solace-vmr}
-  persistent_disk: 4096
-  instances: 1
-  resource_pool: common-resource-pool
-  networks:
-  - name: test-network
-    static_ips:
-      - 10.244.0.2
-  properties:
-    vmr_agent_port: 18080
-    starting_port: 7000
-    broker_user: 'solacedemo'
-    broker_password: 'solacedemo'
-    broker_hostname: 'solace-messaging.local.pcfdev.io'
-    heartbeat_rate: 15000
-    admin_password: 'admin'
-    admin_user: 'admin'
-    support_user: 'support'
-    support_password: 'support'
-    semp_port: 8080
-    semp_ssl_port: 943
-    system_domain: 'local.pcfdev.io'
-    ssh_port: 2222
-    __LIST_NAME___vmr_list:
-      - 10.244.0.3
-    __LIST_NAME___vmr_instances: 1
