@@ -11,7 +11,7 @@ source $SCRIPTPATH/$COMMON
 cd $SCRIPTPATH/..
 
 prepareManifest
-
+exit 0
 VM_FOUND_COUNT=`bosh vms | grep $VM_JOB | wc -l`
 printf "\n"
 

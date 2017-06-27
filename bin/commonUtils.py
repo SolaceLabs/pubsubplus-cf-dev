@@ -4,10 +4,10 @@ import sys
 PoolType = namedtuple("PoolType", ["listName", "solaceDockerImageName", "haEnabled"])
 POOL_TYPES = {
         "Shared-VMR": PoolType("shared", "latest-evaluation", False),
-        "Medium-HA-VMR": PoolType("shared", "latest-evaluation", True),
-        "Large-VMR": PoolType("shared", "latest-evaluation", False),
-        "Large-HA-VMR": PoolType("shared", "latest-evaluation", True),
-        "Community-VMR": PoolType("shared", "latest-community", False)
+        "Medium-HA-VMR": PoolType("medium_ha", "latest-evaluation", True),
+        "Large-VMR": PoolType("large", "latest-evaluation", False),
+        "Large-HA-VMR": PoolType("large_ha", "latest-evaluation", True),
+        "Community-VMR": PoolType("community", "latest-community", False)
 }
 
 # Meant to be used with bash scripts

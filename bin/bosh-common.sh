@@ -123,14 +123,13 @@ function generateManifest() {
 
 local VMR_JOB_NAME_ARG=""
 local CERT_ARG=''
-local HA_ARG=''
-if [ -n "$VMR_JOB_NAME" ]; then
-    VMR_JOB_NAME_ARG="-j $VMR_JOB_NAME"
+if [ -n "$SERIALIZED_VMR_JOB_NAME" ]; then
+    VMR_JOB_NAME_ARG="-j $SERIALIZED_VMR_JOB_NAME"
 fi
 if [ "$CERT_ENABLED" == true ]; then
     CERT_ARG="--cert"
 fi
-export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $HA_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -p $POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
+export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -p $SERIALIZED_POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
 >&2 echo "Running: $PREPARE_MANIFEST_COMMAND"
 ${PREPARE_MANIFEST_COMMAND}
 
@@ -202,6 +201,12 @@ fi
 
 export BASIC_USAGE_PARAMS="-p [Shared-VMR|Large-VMR|Community-VMR|Medium-HA-VMR|Large-HA-VMR] -n (To not use a self-signed certificate)"
 
+export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+
+export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
+export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
+
 CMD_NAME=`basename $0`
 
 function showUsage() {
@@ -223,14 +228,29 @@ function missingRequired() {
 #   missingRequired
 # fi
 
-while getopts :p:hn opt; do
+while getopts :p:h opt; do
     case $opt in
       p)
-        export POOL_NAME=$OPTARG
+        OPT_VALS=(${OPTARG//:/ })
+
+        if printf '%s\n' "${POOL_NAME[@]}" | grep -x -q ${OPT_VALS[0]}; then
+            >&2 echo
+            >&2 echo "Operation conflict: Pool name ${OPTARG[0]} cannot be specified more than once" >&2
+            >&2 echo
+            showUsage
+            exit 1
+        fi
+
+        POOL_NAME+=(${OPT_VALS[0]})
+        if [ -z ${OPT_VALS[1]} ]; then
+            NUM_INSTANCES+=(-1)
+        else
+            NUM_INSTANCES+=(${OPT_VALS[1]})
+        fi
       ;;
-      n)
-        export CERT_ENABLED=false
-      ;;
+#      n)
+#        export CERT_ENABLED=false
+#      ;;
       h)
         showUsage
         exit 0
@@ -253,54 +273,72 @@ fi
 
 ## Derived and default values
 
-if [ -z $POOL_NAME ]; then
-   export POOL_NAME="Shared-VMR"
+if [ -z $_POOL_NAME ]; then
+    POOL_NAME="Shared-VMR"
 fi
 
 if [ -z $CERT_ENABLED ]; then
     export CERT_ENABLED=true
 fi
 
-export VMR_JOB_NAME=${VMR_JOB_NAME:-$POOL_NAME}
-export VM_JOB=${VM_JOB:-"$VMR_JOB_NAME/0"}
+for i in "${!POOL_NAME[@]}"; do
+    VMR_JOB_NAME+=(${POOL_NAME[i]})
 
-python3 -c "import commonUtils; commonUtils.isValidPoolName(\"$POOL_NAME\")"
-if [ "$?" -ne 0 ]; then
-    >&2 echo
-    >&2 echo "Sorry, I don't seem to know about POOL_NAME: $POOL_NAME"
-    >&2 echo
-    showUsage
-    exit 1
-fi
+    python3 -c "import commonUtils; commonUtils.isValidPoolName(\"${POOL_NAME[i]}\")"
+    if [ "$?" -ne 0 ]; then
+        >&2 echo
+        >&2 echo "Sorry, I don't seem to know about pool name: ${POOL_NAME[i]}"
+        >&2 echo
+        showUsage
+        exit 1
+    fi
 
-export SOLACE_DOCKER_IMAGE_NAME=$(python3 -c "import commonUtils; commonUtils.getSolaceDockerImageName(\"$POOL_NAME\")")
+    SOLACE_DOCKER_IMAGE_NAME+=($(python3 -c "import commonUtils; commonUtils.getSolaceDockerImageName(\"${POOL_NAME[i]}\")"))
 
-python3 -c "import commonUtils; commonUtils.getHaEnabled(\"$POOL_NAME\")"
-if [ "$?" -eq 0 ]; then
-    export HA_ENABLED=true
-else
-    export HA_ENABLED=false
-fi
+    python3 -c "import commonUtils; commonUtils.getHaEnabled(\"${POOL_NAME[i]}\")"
+    if [ "$?" -eq 0 ]; then
+        HA_ENABLED+=(true)
+    else
+        HA_ENABLED+=(false)
+    fi
 
-export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
-export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    if [ -z ${NUM_INSTANCES[i]} ] || [ ${NUM_INSTANCES[i]} -eq -1 ]; then
+        if ${HA_ENABLED[i]}; then
+            NUM_INSTANCES[$i]=3
+        else
+            NUM_INSTANCES[$i]=1
+        fi
+    fi
 
-export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
-export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
-
-export NUM_INSTANCES=$(generateManifest | grep "_vmr_instances" | head -n1 | awk '{print $2}')
+    INSTANCE_COUNT=0
+    while [ "$INSTANCE_COUNT" -lt "${NUM_INSTANCES[i]}" ]; do
+        VM_JOB+=("${VMR_JOB_NAME[i]}/$INSTANCE_COUNT")
+        let INSTANCE_COUNT=INSTANCE_COUNT+1
+    done
+done
 
 echo "$0 - Settings"
 echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
 echo "    Deployment     $DEPLOYMENT_NAME"
-echo "    VMR JOB NAME   $VMR_JOB_NAME"
-echo "    CERT_ENABLED   $CERT_ENABLED"
-echo "    HA_ENABLED     $HA_ENABLED"
-echo "    NUM_INSTANCES  $NUM_INSTANCES"
+echo
 
-INSTANCE_COUNT=0
-while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
-     echo "    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
-     let INSTANCE_COUNT=INSTANCE_COUNT+1
+for i in "${!POOL_NAME[@]}"; do
+    echo "    VMR JOB NAME   ${VMR_JOB_NAME[i]}"
+    echo "    CERT_ENABLED   $CERT_ENABLED"
+    echo "    HA_ENABLED     ${HA_ENABLED[i]}"
+    echo "    NUM_INSTANCES  ${NUM_INSTANCES[i]}"
+
+    INSTANCE_COUNT=0
+    while [ "$INSTANCE_COUNT" -lt "${NUM_INSTANCES[i]}" ];  do
+         echo "    VM/$INSTANCE_COUNT           ${VMR_JOB_NAME[i]}/$INSTANCE_COUNT"
+         let INSTANCE_COUNT=INSTANCE_COUNT+1
+    done
+    echo
 done
+
+## Serialize settings
+export SERIALIZED_VMR_JOB_NAME=$(IFS=' '; echo "${VMR_JOB_NAME[*]}")
+export SERIALIZED_POOL_NAME=$(IFS=' '; echo "${POOL_NAME[*]}")
+export SERIALIZED_NUM_INSTANCES=$(IFS=' '; echo "${NUM_INSTANCES[*]}")
+export SERIALIZED_VMR_JOB=$(IFS=' '; echo "${VMR_JOB[*]}")
 
