@@ -21,3 +21,4 @@ done
 
 deleteDeploymentAndRelease | tee $LOG_FILE
 deleteOrphanedDisks | tee $LOG_FILE
+resetServiceBrokerEnvironment
