@@ -189,7 +189,125 @@ fi
 
 }
 
+# This sets up the environment variables that are normally set by the tile.
+# e.g. SOLACE_VMR_MEDIUM_HA_VMR_HOSTS: ["192.168.101.16", "192.168.101.17", "192.168.101.18"]
+# It sets the environment on the service broker and restages it.
 
+function setupServiceBrokerEnvironment() {
+  echo setupServiceBrokerEnvironment - doing cf target...
+  cf target -o solace -s solace-messaging
+
+  setServiceBrokerVMRHostsEnvironment
+  setServiceBrokerSyslogEnvironment
+  setServiceBrokerLDAPEnvironment
+  setServiceBrokerTLSEnvironment
+
+  echo restaging message broker...
+  cf restage solace-messaging
+}
+
+function resetServiceBrokerEnvironment() {
+  echo resetServiceBrokerEnvironment - doing cf target...
+  cf target -o solace -s solace-messaging
+ 
+  resetServiceBrokerVMRHostsEnvironment
+  resetServiceBrokerSyslogEnvironment
+  resetServiceBrokerLDAPEnvironment
+  resetServiceBrokerTLSEnvironment
+
+  echo restaging message broker...
+  cf restage solace-messaging
+}
+
+
+function resetServiceBrokerTLSEnvironment() {
+
+  cf unset-env solace-messaging TLS_CONFIG
+
+}
+
+
+function setServiceBrokerTLSEnvironment() {
+
+  tls_config=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.tls_config "disabled" `
+  echo cf set-env solace-messaging TLS_CONFIG "{'value' : '$tls_config'}"
+  cf set-env solace-messaging TLS_CONFIG "{'value' : '$tls_config'}"
+
+}
+ 
+function resetServiceBrokerLDAPEnvironment() {
+ 
+  cf unset-env solace-messaging LDAP_CONFIG 
+  cf unset-env solace-messaging MANAGEMENT_ACCESS_AUTH_SCHEME 
+  cf unset-env solace-messaging APPLICATION_ACCESS_AUTH_SCHEME 
+
+}
+
+function setServiceBrokerLDAPEnvironment() {
+
+  ldap_config=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.ldap_config "disabled" `
+  management_access_auth_scheme=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.management_access_auth_scheme "vmr_internal" `
+  application_access_auth_scheme=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.application_access_auth_scheme "vmr_internal" `
+
+  echo cf set-env solace-messaging LDAP_CONFIG "{'value' : '$ldap_config'}"
+  cf set-env solace-messaging LDAP_CONFIG "{'value' : '$ldap_config'}"
+
+  echo cf set-env solace-messaging MANAGEMENT_ACCESS_AUTH_SCHEME "{'value' : '$management_access_auth_scheme'}"
+  cf set-env solace-messaging MANAGEMENT_ACCESS_AUTH_SCHEME "{'value' : '$management_access_auth_scheme'}"
+
+  echo cf set-env solace-messaging APPLICATION_ACCESS_AUTH_SCHEME "{'value' : '$application_access_auth_scheme'}"
+  cf set-env solace-messaging APPLICATION_ACCESS_AUTH_SCHEME "{'value' : '$application_access_auth_scheme'}"
+
+}
+ 
+function setServiceBrokerVMRHostsEnvironment() {
+  IPS=`cat $MANIFEST_FILE | shyaml get-values jobs.0.networks.0.static_ips`
+  ENV_NM=`echo $POOL_NAME | tr '[:lower:]-' '[:upper:]_'`
+  ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
+
+  IPSTR=''
+  for IP in $IPS; do
+    if [[ -z $IPSTR ]]; then
+      IPSTR='['
+    else
+      IPSTR=${IPSTR},
+    fi
+    IPSTR=${IPSTR}\"${IP}\"
+  done
+  IPSTR=${IPSTR}']'
+
+  echo setting environment variable $ENV_NAME to "$IPSTR"
+
+  cf set-env solace-messaging $ENV_NAME "$IPSTR"
+}
+
+function resetServiceBrokerVMRHostsEnvironment() {
+  ENV_NM=`echo $POOL_NAME | tr '[:lower:]-' '[:upper:]_'`
+  ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
+  IPSTR='[]'
+
+  echo setting environment variable $ENV_NAME to "$IPSTR"
+
+  cf set-env solace-messaging $ENV_NAME "$IPSTR"
+}
+
+function setServiceBrokerSyslogEnvironment() {
+  echo "Setting SYSLOG env variables on Service Broker..." 
+  SYSLOG_CONFIG=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.syslog_config "disabled"`
+  if [ "$SYSLOG_CONFIG" == "enabled" ]; then
+    SYSLOG_HOSTNAME=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.syslog_hostname ""`
+    SYSLOG_PORT=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.syslog_port "514"`
+    SYSLOG_PROTOCOL=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.syslog_protocol "udp"`
+    SYSLOG_BROKER_AND_AGENT_LOGS=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.syslog_broker_and_agent_logs "false"`
+    cf set-env solace-messaging SYSLOG_CONFIG "{'value':'$SYSLOG_CONFIG', 'selected_option':{'syslog_hostname':'$SYSLOG_HOSTNAME','syslog_port':$SYSLOG_PORT,'syslog_protocol':'$SYSLOG_PROTOCOL','syslog_vmr_command_logs':true,'syslog_vmr_event_logs':true,'syslog_vmr_system_logs':true,'syslog_broker_and_agent_logs':$SYSLOG_BROKER_AND_AGENT_LOGS}}"
+  else
+    cf set-env solace-messaging SYSLOG_CONFIG "{'value':'$SYSLOG_CONFIG', 'selected_option':{}}"
+  fi
+}
+
+function resetServiceBrokerSyslogEnvironment() {
+  cf set-env solace-messaging SYSLOG_CONFIG "{'value':'disabled','selected_option':{}}"
+}
 
 ###################### Common parameter processing ########################
 
