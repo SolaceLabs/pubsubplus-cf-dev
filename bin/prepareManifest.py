@@ -90,6 +90,8 @@ def getVmrIps(templateDir, workspaceDir):
         yaml.dump(vmrHosts, f, default_flow_style=False)
 
 #    subprocess.call(["rm", blankFileName])
+    vmrHosts.reverse()
+    return vmrHosts
 
 def main(args):
     deploymentName = args["deploymentName"] or "solace-vmr-warden-deployment"
@@ -102,15 +104,19 @@ def main(args):
     staticIps = getVmrIps(templateDir, workspaceDir);
 
     for i in range(len(args["poolName"])):
+        if len(vmrHosts) == 0:
+            return 3
+
         poolName = args["poolName"][i]
         jobName = args["jobName"][i] or poolName
         listName = commonUtils.POOL_TYPES[poolName].listName
         solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
         haEnabled = commonUtils.POOL_TYPES[poolName].haEnabled
-        vmrIpList = ["10.244.0.3"]
+
+        vmrIpList = [vmrHosts.pop(0)]
         if haEnabled:
-            vmrIpList.append("10.244.0.4")
-            vmrIpList.append("10.244.0.5")
+            vmrIpList.append(vmrHosts.pop(0))
+            vmrIpList.append(vmrHosts.pop(0))
 
         jobs.append(buildVmrJobData(jobName, poolName, solaceDockerImageName, vmrIpList))
         updateServiceBrokerProps["{}_vmr_list".format(listName)] = vmrIpList

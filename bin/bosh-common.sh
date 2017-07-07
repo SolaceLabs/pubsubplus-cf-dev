@@ -136,6 +136,9 @@ ${PREPARE_MANIFEST_COMMAND}
 if [ $? -ne 0 ]; then
  >&2 echo
  >&2 echo "Generating the Manifest failed."
+ if [ $? -eq 3 ]; then
+  >&2 echo "Total number of instances exceeds the maximum. Reduce the number of instances."
+ fi
  exit 1
 fi 
 }
