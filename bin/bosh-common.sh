@@ -273,7 +273,7 @@ fi
 
 ## Derived and default values
 
-if [ -z $_POOL_NAME ]; then
+if [ -z $POOL_NAME ]; then
     POOL_NAME="Shared-VMR"
 fi
 
