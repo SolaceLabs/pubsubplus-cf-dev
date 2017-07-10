@@ -242,6 +242,12 @@ while getopts :p:h opt; do
             >&2 echo
             showUsage
             exit 1
+        elif [ ${OPT_VALS[1]} -le 0 ]; then
+            >&2 echo
+            >&2 echo "Invalid option: Number of instances for a VMR can only be a non-zero positive integer" >&2
+            >&2 echo
+            showUsage
+            exit 1
         fi
 
         POOL_NAME+=(${OPT_VALS[0]})
@@ -343,5 +349,4 @@ done
 export SERIALIZED_VMR_JOB_NAME=$(IFS=' '; echo "${VMR_JOB_NAME[*]}")
 export SERIALIZED_POOL_NAME=$(IFS=' '; echo "${POOL_NAME[*]}")
 export SERIALIZED_NUM_INSTANCES=$(IFS=' '; echo "${NUM_INSTANCES[*]}")
-export SERIALIZED_VMR_JOB=$(IFS=' '; echo "${VMR_JOB[*]}")
 
