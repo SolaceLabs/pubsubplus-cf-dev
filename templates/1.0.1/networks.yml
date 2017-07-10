@@ -5,7 +5,6 @@ networks:
   - range: 10.244.0.0/28
     gateway: 10.244.0.1
     static:
-      - 10.244.0.2
       - <<: (( merge ))
     cloud_properties:
       name: random

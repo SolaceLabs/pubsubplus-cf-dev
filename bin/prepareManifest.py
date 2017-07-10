@@ -7,13 +7,47 @@ import ipaddress
 
 # The temporary file that we write the config to
 CONFIG_FILE_NAME = "config.yml"
-TMP_FILE_NAME = "tmp.yml"
 DOCKERFILE_STRING = """FROM solace-app:{}
 RUN \\
   echo '#!/bin/bash' > /sbin/dhclient && \\
   echo 'exit 0' >> /sbin/dhclient && \\
   echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \\
   chmod +x /sbin/dhclient"""
+
+def buildConfigData(deploymentName, jobs, testNetworkIpList):
+    return {
+        "name": deploymentName,
+        "jobs": jobs,
+        "networks": buildNetworksData(testNetworkIpList)
+    }
+
+def buildNetworksData(staticIps):
+    return [{
+        "name": "test-network",
+        "subnets": [{
+            "gateway": "10.244.0.1",
+            "static": staticIps
+        }]
+    }]
+
+def buildTestJobData(name, props, ipList):
+    return {
+        "name": name,
+        "properties": props,
+        "networks": [{
+            "name": "test-network",
+            "static_ips": ipList
+        }]
+    }
+
+def buildVmrJobProps(poolName, solaceDockerImageName):
+    return {
+        "pool_name": poolName,
+        "containers": [{
+            "name": "solace",
+            "dockerfile": DOCKERFILE_STRING.format(solaceDockerImageName)
+        }]
+    }
 
 def outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled):
     haTemplate = haEnabled and "ha.yml" or "no-ha.yml"
@@ -36,62 +70,35 @@ def outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled):
         outputFileName
     ])
 
-def buildNetworksData(staticIps):
-    return [{
-        "name": "test-network",
-        "subnets": [{
-            "gateway": "10.244.0.1",
-            "static": staticIps
-        }]
-    }]
-
-def buildVmrJobData(jobName, poolName, solaceDockerImageName, vmrIpList):
-    return {
-        "name": jobName,
-        "properties": {
-            "pool_name": poolName,
-            "containers": [{
-                "name": "solace",
-                "dockerfile": DOCKERFILE_STRING.format(solaceDockerImageName)
-            }]
-        },
-        "networks": [{
-            "name": "test-network",
-            "static_ips": vmrIpList
-        }]
-
-    }
-
-def getVmrIps(templateDir, workspaceDir):
-    blankFileName = os.path.join(workspaceDir, TMP_FILE_NAME) 
+def getTestNetworkIps(templateDir, workspaceDir):
+    tmpFileName = os.path.join(workspaceDir, "tmp.yml") 
     networksFileName = os.path.join(templateDir, "networks.yml")
-    vmrSubnetHookId = "IP_PLACEHOLDER"
-
-    with open(blankFileName, "w") as f:
-        yaml.dump({"networks": buildNetworksData([vmrSubnetHookId])}, f, default_flow_style=False)
+    testSubnetHookId = "IP_PLACEHOLDER"
 
     # Assuming that the one subnet with a (( merge )) in its static IP list
     #   is the one which will hold all data regarding VMR static IPs
-    networks = yaml.load(subprocess.check_output(["spiff", "merge", networksFileName, blankFileName]))["networks"]
+    with open(tmpFileName, "w") as f:
+        yaml.dump({"networks": buildNetworksData([testSubnetHookId])}, f, default_flow_style=False)
+
+    fakeNetworksObj = yaml.load(subprocess.check_output(["spiff", "merge", networksFileName, tmpFileName]))
+    networks = fakeNetworksObj["networks"]
     testNetwork = next(n for n in networks if n["name"] == "test-network")
 
-    vmrSubnet = next(s for s in testNetwork["subnets"] if vmrSubnetHookId in s["static"])
-    otherSubnets = [s for s in testNetwork["subnets"] if vmrSubnetHookId not in s["static"]]
+    testSubnet = next(s for s in testNetwork["subnets"] if testSubnetHookId in s["static"])
+    otherSubnets = [s for s in testNetwork["subnets"] if testSubnetHookId not in s["static"]]
 
-    vmrIpSubnet = ipaddress.ip_network(vmrSubnet["range"])
+    testIpSubnet = ipaddress.ip_network(testSubnet["range"])
+    subnetGateway = testSubnet["gateway"]
 
     for otherIpSubnet in map(lambda s: ipaddress.ip_network(s["range"]), otherSubnets):
-        if vmrIpSubnet.overlaps(otherIpSubnet):
-            vmrIpSubnet = vmrIpSubnet.address_exclude(otherIpSubnet)
+        if testIpSubnet.overlaps(otherIpSubnet):
+            testIpSubnet = testIpSubnet.address_exclude(otherIpSubnet)
 
-    vmrHosts = list(map(lambda h: h.exploded, vmrIpSubnet.hosts()))
+    testHosts = list(map(lambda h: h.exploded, testIpSubnet.hosts()))
+    testHosts.remove(subnetGateway)
 
-    with open(blankFileName, "w") as f:
-        yaml.dump(vmrHosts, f, default_flow_style=False)
-
-#    subprocess.call(["rm", blankFileName])
-    vmrHosts.reverse()
-    return vmrHosts
+    subprocess.call(["rm", tmpFileName])
+    return testHosts
 
 def main(args):
     deploymentName = args["deploymentName"] or "solace-vmr-warden-deployment"
@@ -99,12 +106,16 @@ def main(args):
     workspaceDir = args["workspaceDir"]
     certEnabled = args["cert"]
 
-    jobs = [];
-    updateServiceBrokerProps = {};
-    staticIps = getVmrIps(templateDir, workspaceDir);
+    jobs = []
+    testNetworkIpList = []
+    updateServiceBrokerProps = {}
+    staticIpList = getTestNetworkIps(templateDir, workspaceDir)
+
+    updateBrokerIp = staticIpList.pop(0)
+    testNetworkIpList.append(updateBrokerIp)
 
     for i in range(len(args["poolName"])):
-        if len(vmrHosts) == 0:
+        if len(staticIpList) == 0:
             return 3
 
         poolName = args["poolName"][i]
@@ -113,26 +124,20 @@ def main(args):
         solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
         haEnabled = commonUtils.POOL_TYPES[poolName].haEnabled
 
-        vmrIpList = [vmrHosts.pop(0)]
+        vmrIpList = [staticIpList.pop(0)]
         if haEnabled:
-            vmrIpList.append(vmrHosts.pop(0))
-            vmrIpList.append(vmrHosts.pop(0))
+            vmrIpList.append(staticIpList.pop(0))
+            vmrIpList.append(staticIpList.pop(0))
 
-        jobs.append(buildVmrJobData(jobName, poolName, solaceDockerImageName, vmrIpList))
+        vmrJobProps = buildVmrJobProps(poolName, solaceDockerImageName)
+
+        jobs.append(buildTestJobData(jobName, vmrJobProps, vmrIpList))
+        testNetworkIpList += vmrIpList
         updateServiceBrokerProps["{}_vmr_list".format(listName)] = vmrIpList
         updateServiceBrokerProps["{}_vmr_instances".format(listName)] = len(vmrIpList)
 
-    jobs.append({
-        "name": "UpdateServiceBroker",
-        "properties": updateServiceBrokerProps
-    })
-    
-    data = {
-        "name": deploymentName,
-        "jobs": jobs,
-        "networks": buildNetworksData(vmrIpList)
-    }
-    return #TODO REMOVE THIS
+    jobs.append(buildTestJobData("UpdateServiceBroker", updateServiceBrokerProps, [updateBrokerIp]))
+    data = buildConfigData(deploymentName, jobs, testNetworkIpList)
     outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled)
 
 if __name__ == "__main__":

@@ -95,7 +95,7 @@ jobs:
   networks:
   - name: test-network
     static_ips:
-      - 10.244.0.2
+      - <<: (( merge ))
   properties:
     vmr_agent_port: 18080
     starting_port: 7000
