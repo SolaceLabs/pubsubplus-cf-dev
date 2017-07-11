@@ -1,6 +1,7 @@
 import argparse
 import os.path
 import subprocess
+import sys
 import yaml
 import commonUtils
 import ipaddress
@@ -115,19 +116,18 @@ def main(args):
     testNetworkIpList.append(updateBrokerIp)
 
     for i in range(len(args["poolName"])):
-        if len(staticIpList) == 0:
-            return 3
-
         poolName = args["poolName"][i]
         jobName = args["jobName"][i] or poolName
         listName = commonUtils.POOL_TYPES[poolName].listName
+        numInstances = args["numInstances"][i]
         solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
         haEnabled = commonUtils.POOL_TYPES[poolName].haEnabled
 
-        vmrIpList = [staticIpList.pop(0)]
-        if haEnabled:
-            vmrIpList.append(staticIpList.pop(0))
-            vmrIpList.append(staticIpList.pop(0))
+        if len(staticIpList) < numInstances:
+            sys.exit(3)
+
+        vmrIpList = staticIpList[:numInstances]
+        del staticIpList[:numInstances]
 
         vmrJobProps = buildVmrJobProps(poolName, solaceDockerImageName)
 
@@ -143,6 +143,7 @@ def main(args):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generates a bosh-lite YAML manifest')
     parser.add_argument('-p', '--pool_name', dest='poolName', choices=commonUtils.POOL_TYPES.keys(), nargs='+', required=True)
+    parser.add_argument('-i', '--num_instances', dest='numInstances', type=int, nargs='+', required=True)
     parser.add_argument('--cert', action='store_true')
     parser.add_argument('-n', '--deployment_name', dest='deploymentName')
     parser.add_argument('-j', '--job_name', dest='jobName', nargs='+')

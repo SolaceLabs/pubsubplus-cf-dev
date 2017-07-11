@@ -14,8 +14,6 @@ export STEMCELL_VERSION="3312.7"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
-export NUM_INSTANCES=${NUM_INSTANCES:-"1"}
-
 function targetBosh() {
 
   bosh target 192.168.50.4 lite
@@ -129,15 +127,16 @@ fi
 if [ "$CERT_ENABLED" == true ]; then
     CERT_ARG="--cert"
 fi
-export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -p $SERIALIZED_POOL_NAME -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
+export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -p $SERIALIZED_POOL_NAME -i $SERIALIZED_NUM_INSTANCES -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
 >&2 echo "Running: $PREPARE_MANIFEST_COMMAND"
 ${PREPARE_MANIFEST_COMMAND}
+local PREPARE_MANIFEST_EXIT_STAT=$?
 
-if [ $? -ne 0 ]; then
+if [ $PREPARE_MANIFEST_EXIT_STAT -ne 0 ]; then
  >&2 echo
  >&2 echo "Generating the Manifest failed."
- if [ $? -eq 3 ]; then
-  >&2 echo "Total number of instances exceeds the maximum. Reduce the number of instances."
+ if [ $PREPARE_MANIFEST_EXIT_STAT -eq 3 ]; then
+  >&2 echo "Total number of instances exceeded the maximum capacity of the subnet. Please reduce the number of VMR instances."
  fi
  exit 1
 fi 
@@ -242,7 +241,7 @@ while getopts :p:h opt; do
             >&2 echo
             showUsage
             exit 1
-        elif [ ${OPT_VALS[1]} -le 0 ]; then
+        elif [ -n "${OPT_VALS[1]}" ] && [ ${OPT_VALS[1]} -le 0 ]; then
             >&2 echo
             >&2 echo "Invalid option: Number of instances for a VMR can only be a non-zero positive integer" >&2
             >&2 echo
@@ -304,19 +303,16 @@ for i in "${!POOL_NAME[@]}"; do
 
     SOLACE_DOCKER_IMAGE_NAME+=($(python3 -c "import commonUtils; commonUtils.getSolaceDockerImageName(\"${POOL_NAME[i]}\")"))
 
+    if [ -z ${NUM_INSTANCES[i]} ] || [ ${NUM_INSTANCES[i]} -eq -1 ]; then
+        NUM_INSTANCES[$i]=1
+    fi
+
     python3 -c "import commonUtils; commonUtils.getHaEnabled(\"${POOL_NAME[i]}\")"
     if [ "$?" -eq 0 ]; then
         HA_ENABLED+=(true)
+        NUM_INSTANCES[$i]=$((${NUM_INSTANCES[i]} * 3))
     else
         HA_ENABLED+=(false)
-    fi
-
-    if [ -z ${NUM_INSTANCES[i]} ] || [ ${NUM_INSTANCES[i]} -eq -1 ]; then
-        if ${HA_ENABLED[i]}; then
-            NUM_INSTANCES[$i]=3
-        else
-            NUM_INSTANCES[$i]=1
-        fi
     fi
 
     INSTANCE_COUNT=0
