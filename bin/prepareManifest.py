@@ -5,6 +5,7 @@ import sys
 import yaml
 import commonUtils
 import ipaddress
+import jinja2
 
 # The temporary file that we write the config to
 CONFIG_FILE_NAME = "config.yml"
@@ -15,12 +16,7 @@ RUN \\
   echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \\
   chmod +x /sbin/dhclient"""
 
-def buildConfigData(deploymentName, jobs, testNetworkIpList):
-    return {
-        "name": deploymentName,
-        "jobs": jobs,
-        "networks": buildNetworksData(testNetworkIpList)
-    }
+TEMPLATE = None
 
 def buildNetworksData(staticIps):
     return [{
@@ -31,59 +27,21 @@ def buildNetworksData(staticIps):
         }]
     }]
 
-def buildTestJobData(name, props, ipList):
-    return {
-        "name": name,
-        "properties": props,
-        "networks": [{
-            "name": "test-network",
-            "static_ips": ipList
-        }]
-    }
+def outputFiles(deploymentName, testNetworkIps, vmrJobs, brokerJob, certEnabled):
+    templateFileName = "new.yml"
+    print TEMPLATE.get_template(templateFileName).render(
+        name = data.name,
+        testNetwork = {
+            "static_ips": testNetworkIps
+        },
+        vmrJobs = vmrJobs,
+        updateServiceBrokerJob = brokerJob,
+        usingCerts = certEnabled
+    )
 
-def buildVmrJobProps(poolName, solaceDockerImageName):
-    return {
-        "pool_name": poolName,
-        "containers": [{
-            "name": "solace",
-            "dockerfile": DOCKERFILE_STRING.format(solaceDockerImageName)
-        }]
-    }
-
-def outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled):
-    haTemplate = haEnabled and "ha.yml" or "no-ha.yml"
-    certTemplate = certEnabled and "cert.yml" or "no-cert.yml"
-    
-    templateFileName = os.path.join(templateDir, "solace-vmr-deployment.yml")
-    networksFileName = os.path.join(templateDir, "networks.yml")
-    haTemplateFileName = os.path.join(templateDir, haTemplate)
-    certTemplateFileName = os.path.join(templateDir, certTemplate)
-    outputFileName = os.path.join(workspaceDir, CONFIG_FILE_NAME)
-
-    with open(outputFileName, "w") as f:
-        yaml.dump(data, f, default_flow_style=False)
-
-    subprocess.call(["spiff", "merge",
-        templateFileName,
-        networksFileName,
-        haTemplateFileName,
-        certTemplateFileName,
-        outputFileName
-    ])
-
-def getTestNetworkIps(templateDir, workspaceDir):
-    tmpFileName = os.path.join(workspaceDir, "tmp.yml") 
-    networksFileName = os.path.join(templateDir, "networks.yml")
-    testSubnetHookId = "IP_PLACEHOLDER"
-
-    # Assuming that the one subnet with a (( merge )) in its static IP list
-    #   is the one which will hold all data regarding VMR static IPs
-    with open(tmpFileName, "w") as f:
-        yaml.dump({"networks": buildNetworksData([testSubnetHookId])}, f, default_flow_style=False)
-
-    fakeNetworksObj = yaml.load(subprocess.check_output(["spiff", "merge", networksFileName, tmpFileName]))
-    networks = fakeNetworksObj["networks"]
-    testNetwork = next(n for n in networks if n["name"] == "test-network")
+def getTestNetworkIps():
+    testNetFileName = "test-networks.yml"
+    testNetwork = TEMPLATES.get_template(testNetFileName).render()[0]
 
     testSubnet = next(s for s in testNetwork["subnets"] if testSubnetHookId in s["static"])
     otherSubnets = [s for s in testNetwork["subnets"] if testSubnetHookId not in s["static"]]
@@ -98,8 +56,12 @@ def getTestNetworkIps(templateDir, workspaceDir):
     testHosts = list(map(lambda h: h.exploded, testIpSubnet.hosts()))
     testHosts.remove(subnetGateway)
 
-    subprocess.call(["rm", tmpFileName])
     return testHosts
+
+def initTemplateEnvironment(templateDir):
+    global TEMPLATE
+    if TEMPLATE == None:
+        TEMPLATE = jinja2.Environment(loader=jinja2.FileSystemLoader(templateDir))
 
 def main(args):
     deploymentName = args["deploymentName"] or "solace-vmr-warden-deployment"
@@ -107,9 +69,11 @@ def main(args):
     workspaceDir = args["workspaceDir"]
     certEnabled = args["cert"]
 
+    initTemplateEnvironment(templateDir)
+
     jobs = []
     testNetworkIpList = []
-    updateServiceBrokerProps = {}
+    brokerVmrProps = {}
     staticIpList = getTestNetworkIps(templateDir, workspaceDir)
 
     updateBrokerIp = staticIpList.pop(0)
@@ -129,16 +93,26 @@ def main(args):
         vmrIpList = staticIpList[:numInstances]
         del staticIpList[:numInstances]
 
-        vmrJobProps = buildVmrJobProps(poolName, solaceDockerImageName)
+        vmrJob = {}
+        vmrJob["name"] = jobName
+        vmrJob["poolName"] = poolName
+        vmrJob["isHa"] = haEnabled
+        vmrJob["static_ips"] = vmrIpList
+        vmrJob["solaceDockerFile"] =  DOCKERFILE_STRING.format(solaceDockerImageName)
+        jobs.append(vmrJob)
 
-        jobs.append(buildTestJobData(jobName, vmrJobProps, vmrIpList))
         testNetworkIpList += vmrIpList
-        updateServiceBrokerProps["{}_vmr_list".format(listName)] = vmrIpList
-        updateServiceBrokerProps["{}_vmr_instances".format(listName)] = len(vmrIpList)
 
-    jobs.append(buildTestJobData("UpdateServiceBroker", updateServiceBrokerProps, [updateBrokerIp]))
-    data = buildConfigData(deploymentName, jobs, testNetworkIpList)
-    outputFiles(data, templateDir, workspaceDir, haEnabled, certEnabled)
+        vmrUpdate = {}
+        vmrUpdate["ipList"] = vmrIpList
+        vmrUpdate["numInstances"] = len(vmrIpList)
+        brokerVmrProps[listName] = vmrUpdate
+
+    brokerJob = {}
+    brokerJob["ip"] = updateBrokerIp
+    brokerJob["vmrProps"] = updateServiceBrokerProps
+
+    outputFiles(deploymentName, testNetworkIpList, vmrJobs, brokerJob, certEnabled)
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description='Generates a bosh-lite YAML manifest')
