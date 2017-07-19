@@ -183,9 +183,11 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
  echo "Calling bosh deployment"
 
- bosh deployment $MANIFEST_FILE | tee -a $LOG_FILE
+ bosh deployment $MANIFEST_FILE | tee -a $LOG_FILE 
 
- echo "Will deploy VMR with name $VMR_JOB_NAME , having POOL_NAME: $POOL_NAME, and using $SOLACE_DOCKER_IMAGE" | tee -a $LOG_FILE
+ for I in ${!POOL_NAME[@]}; do
+  echo "Will deploy VMR with name ${VMR_JOB_NAME[I]} , having POOL_NAME: ${POOL_NAME[I]}, and using ${SOLACE_DOCKER_IMAGE_NAME[I]}" | tee -a $LOG_FILE
+ done
 
  echo "yes" | bosh deploy | tee -a $LOG_FILE
 

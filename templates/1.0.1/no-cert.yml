@@ -1,7 +1,0 @@
-jobs:
-    - <<: (( merge ))
-      properties:
-          <<: (( merge ))
-    - name: UpdateServiceBroker
-      properties:
-          <<: (( merge ))

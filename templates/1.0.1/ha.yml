@@ -1,7 +1,0 @@
-update:
-    canaries: 1
-    max_in_flight: 1
-
-jobs:
-    - instances: 3
-      <<: (( merge ))

@@ -3,7 +3,7 @@
   subnets:
   - range: 10.244.0.0/28
     gateway: 10.244.0.1
-    static: {% if not static_ips %}[]{% endif %}
+    static:
     {% for ip in static_ips %}
       - {{ ip }}
     {% endfor %}

@@ -5,7 +5,7 @@
   -  {name: containers, release: solace-vmr}
   -  {name: vmr_agent, release: solace-vmr}
   persistent_disk: 20480
-  instances: {% if isHA %}3{% else %}1{% endif %}
+  instances: {{ numInstances }}
   resource_pool: common-resource-pool
   networks:
   - name: test-network
@@ -15,9 +15,6 @@
     {% endfor %}
   properties:
     pool_name: {{ poolName }}
-    {% if usingCerts %}
-    {% include 'cert.yml' %}
-    {% endif %}
     vmr_agent_port: 18080
     starting_port: 7000
     broker_user: 'solacedemo'
@@ -32,11 +29,18 @@
     semp_ssl_port: 943
     ssh_port: 2222
     system_domain: 'local.pcfdev.io'
+    {% if usingCerts %}
+        {% filter indent(4, true) %}
+            {% include 'cert.yml' %}
+        {% endfilter %}
+    {% endif %}
+
     containers:
       - name: solace
         image: solace-bosh
         memory: 4G
-        dockerfile: {{ solaceDockerFile }}
+        dockerfile: |
+          {{ solaceDockerFile|indent(10, false) }}
         env_vars:
          - "NODE_TYPE=MESSAGE_ROUTING_NODE"
          - "SERVICE_SSH_PORT=2222"

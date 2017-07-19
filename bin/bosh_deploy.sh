@@ -11,12 +11,17 @@ source $SCRIPTPATH/$COMMON
 cd $SCRIPTPATH/..
 
 prepareManifest
-exit 0
-VM_FOUND_COUNT=`bosh vms | grep $VM_JOB | wc -l`
+
+VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
 printf "\n"
 
-if [ "$VM_FOUND_COUNT" -eq "1" ]; then
-   echo "bosh deployment is already done, the VM was found: $VM_JOB"
+if [ "$VMS_FOUND_COUNT" -gt "0" ]; then
+   echo "A bosh deployment is already done, the following VMs were found:"
+
+   for VM in ${VM_JOB[@]}; do
+      echo "    $VM"
+   done
+
    echo
    echo "Will not build and will not DEPLOY"
    echo 
@@ -30,16 +35,16 @@ echo "You can see deployment logs in $LOG_FILE"
 
 prepareBosh
 
-VM_FOUND_COUNT=`bosh vms | grep $VM_JOB | wc -l`
+VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
 
-if [ "$VM_FOUND_COUNT" -eq "0" ]; then
+if [ "$VMS_FOUND_COUNT" -eq "0" ]; then
    uploadAndDeployRelease
 else
-   echo "Skipping deployment as the VM was already found: $VM_JOB"
+   echo "Skipping deployment as there are VMs that were found: $VM_JOB"
    echo "You should cleanup the deployment with bosh_cleanup.sh ?!"
 fi
 
-VM_FOUND_COUNT=`bosh vms | grep $VM_JOB | wc -l`
+VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
 
 # INSTANCE_COUNT=0
 # while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
@@ -47,11 +52,24 @@ VM_FOUND_COUNT=`bosh vms | grep $VM_JOB | wc -l`
 #     let INSTANCE_COUNT=INSTANCE_COUNT+1
 # done
 
-if [ "$VM_FOUND_COUNT" -eq "1" ]; then
-   echo "bosh deployment is present, VM called $VM_JOB"
-   echo "You can ssh to it:"
-   echo "  bosh ssh $VM_JOB"
+if [ "$VMS_FOUND_COUNT" -eq "${#VM_JOB[@]}" ]; then
+   echo "bosh deployment is present, VMs called:"
+
+   for VM in ${VM_JOB[@]}; do
+      echo "    $VM"
+   done
+
+   echo
+   echo "You can ssh to them using:"
+   echo "  bosh ssh [VM_NAME]"
+   echo
+   echo "  e.g. bosh ssh ${VM_JOB[0]}"
 else
-   echo "Could not find VM called $VM_JOB"
+   for VM in ${VM_JOB[@]}; do
+      VM_FOUND_COUNT = `bosh vms | grep $VM | wc -l`
+      if [ "$VM_FOUND_COUNT" -eq "0" ]; then
+         echo "Could not find VM called $VM"
+      fi
+   done
 fi
 

@@ -18,19 +18,10 @@ RUN \\
 
 TEMPLATE = None
 
-def buildNetworksData(staticIps):
-    return [{
-        "name": "test-network",
-        "subnets": [{
-            "gateway": "10.244.0.1",
-            "static": staticIps
-        }]
-    }]
-
 def outputFiles(deploymentName, testNetworkIps, vmrJobs, brokerJob, certEnabled):
-    templateFileName = "new.yml"
-    print TEMPLATE.get_template(templateFileName).render(
-        name = data.name,
+    templateFileName = "solace-vmr-deployment.yml"
+    manifest = TEMPLATE.get_template(templateFileName).render(
+        name = deploymentName,
         testNetwork = {
             "static_ips": testNetworkIps
         },
@@ -39,9 +30,16 @@ def outputFiles(deploymentName, testNetworkIps, vmrJobs, brokerJob, certEnabled)
         usingCerts = certEnabled
     )
 
+    subprocess.call(["echo", manifest])
+    yaml.load(manifest) #validating yaml syntax
+
+
 def getTestNetworkIps():
-    testNetFileName = "test-networks.yml"
-    testNetwork = TEMPLATES.get_template(testNetFileName).render()[0]
+    testNetFileName = "test-network.yml"
+    testSubnetHookId = "TEST-SUBNET-HOOK"
+    testNetwork = yaml.load(
+        TEMPLATE.get_template(testNetFileName)
+            .render({"static_ips": [testSubnetHookId]}))[0]
 
     testSubnet = next(s for s in testNetwork["subnets"] if testSubnetHookId in s["static"])
     otherSubnets = [s for s in testNetwork["subnets"] if testSubnetHookId not in s["static"]]
@@ -61,7 +59,11 @@ def getTestNetworkIps():
 def initTemplateEnvironment(templateDir):
     global TEMPLATE
     if TEMPLATE == None:
-        TEMPLATE = jinja2.Environment(loader=jinja2.FileSystemLoader(templateDir))
+        TEMPLATE = jinja2.Environment(
+            loader          = jinja2.FileSystemLoader(templateDir),
+            trim_blocks     = True,
+            lstrip_blocks   = True
+        )
 
 def main(args):
     deploymentName = args["deploymentName"] or "solace-vmr-warden-deployment"
@@ -71,10 +73,10 @@ def main(args):
 
     initTemplateEnvironment(templateDir)
 
-    jobs = []
+    vmrJobs = []
     testNetworkIpList = []
     brokerVmrProps = {}
-    staticIpList = getTestNetworkIps(templateDir, workspaceDir)
+    staticIpList = getTestNetworkIps()
 
     updateBrokerIp = staticIpList.pop(0)
     testNetworkIpList.append(updateBrokerIp)
@@ -96,10 +98,10 @@ def main(args):
         vmrJob = {}
         vmrJob["name"] = jobName
         vmrJob["poolName"] = poolName
-        vmrJob["isHa"] = haEnabled
         vmrJob["static_ips"] = vmrIpList
+        vmrJob["numInstances"] = len(vmrIpList)
         vmrJob["solaceDockerFile"] =  DOCKERFILE_STRING.format(solaceDockerImageName)
-        jobs.append(vmrJob)
+        vmrJobs.append(vmrJob)
 
         testNetworkIpList += vmrIpList
 
@@ -110,7 +112,7 @@ def main(args):
 
     brokerJob = {}
     brokerJob["ip"] = updateBrokerIp
-    brokerJob["vmrProps"] = updateServiceBrokerProps
+    brokerJob["vmrPropsList"] = brokerVmrProps
 
     outputFiles(deploymentName, testNetworkIpList, vmrJobs, brokerJob, certEnabled)
 
