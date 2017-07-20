@@ -12,11 +12,10 @@ cd $SCRIPTPATH/..
 
 echo "Logs in file $LOG_FILE"
 
-INSTANCE_COUNT=0
-while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
-     echo "Cleanup    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
-     shutdownVMRJobs $VMR_JOB_NAME/$INSTANCE_COUNT | tee $LOG_FILE
-     let INSTANCE_COUNT=INSTANCE_COUNT+1
+for I in ${!VM_JOB[@]}; do
+     echo
+     echo "Cleanup    VM/$I           ${VM_JOB[I]}"
+     shutdownVMRJobs ${VM_JOB[I]} | tee $LOG_FILE
 done
 
 deleteDeploymentAndRelease | tee $LOG_FILE

@@ -60,9 +60,7 @@ if [ "$VMS_FOUND_COUNT" -eq "${#VM_JOB[@]}" ]; then
    done
 
    echo
-   echo "You can ssh to them using:"
-   echo "  bosh ssh [VM_NAME]"
-   echo
+   echo "You can ssh to them using: bosh ssh [VM_NAME]"
    echo "  e.g. bosh ssh ${VM_JOB[0]}"
 else
    for VM in ${VM_JOB[@]}; do

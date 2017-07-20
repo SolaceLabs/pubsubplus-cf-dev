@@ -1,6 +1,4 @@
 import argparse
-import os.path
-import subprocess
 import sys
 import yaml
 import commonUtils
@@ -30,13 +28,13 @@ def outputFiles(deploymentName, testNetworkIps, vmrJobs, brokerJob, certEnabled)
         usingCerts = certEnabled
     )
 
-    subprocess.call(["echo", manifest])
+    print(manifest)
     yaml.load(manifest) #validating yaml syntax
-
 
 def getTestNetworkIps():
     testNetFileName = "test-network.yml"
     testSubnetHookId = "TEST-SUBNET-HOOK"
+
     testNetwork = yaml.load(
         TEMPLATE.get_template(testNetFileName)
             .render({"static_ips": [testSubnetHookId]}))[0]
