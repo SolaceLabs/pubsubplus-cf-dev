@@ -44,6 +44,8 @@ else
    echo "You should cleanup the deployment with bosh_cleanup.sh ?!"
 fi
 
+setupServiceBrokerEnvironment
+
 VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
 
 # INSTANCE_COUNT=0
