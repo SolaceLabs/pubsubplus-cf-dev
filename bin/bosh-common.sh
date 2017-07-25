@@ -270,34 +270,41 @@ function setServiceBrokerLDAPEnvironment() {
 }
  
 function setServiceBrokerVMRHostsEnvironment() {
-  IPS=`cat $MANIFEST_FILE | shyaml get-values jobs.0.networks.0.static_ips`
-  ENV_NM=`echo $POOL_NAME | tr '[:lower:]-' '[:upper:]_'`
-  ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
+  JOBS=`cat $MANIFEST_FILE | shyaml -y get-values-0 jobs`
 
-  IPSTR=''
-  for IP in $IPS; do
-    if [[ -z $IPSTR ]]; then
-      IPSTR='['
-    else
-      IPSTR=${IPSTR},
-    fi
-    IPSTR=${IPSTR}\"${IP}\"
+  for I in ${!VMR_JOB_NAME[@]}; do
+    JOB=$(python3 -c "import commonUtils; commonUtils.getManifestJobByName(\"$MANIFEST_FILE\", \"${VMR_JOB_NAME[I]}\")")
+    IPS=`echo $JOB | shyaml get-values networks.0.static_ips`
+    ENV_NM=`echo ${POOL_NAME[I]} | tr '[:lower:]-' '[:upper:]_'`
+    ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
+
+    IPSTR=''
+    for IP in $IPS; do
+      if [[ -z $IPSTR ]]; then
+        IPSTR='['
+      else
+        IPSTR=${IPSTR},
+      fi
+      IPSTR=${IPSTR}\"${IP}\"
+    done
+    IPSTR=${IPSTR}']'
+
+    echo setting environment variable $ENV_NAME to "$IPSTR"
+
+    cf set-env solace-messaging $ENV_NAME "$IPSTR"
   done
-  IPSTR=${IPSTR}']'
-
-  echo setting environment variable $ENV_NAME to "$IPSTR"
-
-  cf set-env solace-messaging $ENV_NAME "$IPSTR"
 }
 
 function resetServiceBrokerVMRHostsEnvironment() {
-  ENV_NM=`echo $POOL_NAME | tr '[:lower:]-' '[:upper:]_'`
-  ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
-  IPSTR='[]'
+  for POOL in ${POOL_NAME[@]}; do
+    ENV_NM=`echo $POOL | tr '[:lower:]-' '[:upper:]_'`
+    ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
+    IPSTR='[]'
 
-  echo setting environment variable $ENV_NAME to "$IPSTR"
+    echo setting environment variable $ENV_NAME to "$IPSTR"
 
-  cf set-env solace-messaging $ENV_NAME "$IPSTR"
+    cf set-env solace-messaging $ENV_NAME "$IPSTR"
+  done
 }
 
 function setServiceBrokerSyslogEnvironment() {
@@ -350,7 +357,7 @@ function missingRequired() {
 #   missingRequired
 # fi
 
-while getopts :p:h opt; do
+while getopts :p:hn opt; do
     case $opt in
       p)
         OPT_VALS=(${OPTARG//:/ })
@@ -376,9 +383,9 @@ while getopts :p:h opt; do
             NUM_INSTANCES+=(${OPT_VALS[1]})
         fi
       ;;
-#      n)
-#        export CERT_ENABLED=false
-#      ;;
+      n)
+        export CERT_ENABLED=false
+      ;;
       h)
         showUsage
         exit 0

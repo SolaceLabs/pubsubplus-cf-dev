@@ -52,3 +52,11 @@
          - "DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1"
         net: host
         shm_size: 2G
+        privileged: true
+        uts: host
+        volumes:
+        - /var/vcap/store/prepare_vmr/volumes/jail:/usr/sw/jail
+        - /var/vcap/store/prepare_vmr/volumes/var:/usr/sw/var
+        - /var/vcap/store/prepare_vmr/volumes/internalSpool:/usr/sw/internalSpool
+        - /var/vcap/store/prepare_vmr/volumes/adbBackup:/usr/sw/adb
+        - /var/vcap/store/prepare_vmr/volumes/adb:/usr/sw/internalSpool/softAdb
