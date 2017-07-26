@@ -10,7 +10,7 @@ export LOG_FILE=${LOG_FILE:-"/tmp/bosh_deploy.log"}
 export SOLACE_DOCKER_BOSH_VERSION="29-solace-2"
 export SOLACE_DOCKER_BOSH=${SOLACE_DOCKER_BOSH:-"$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"}
 
-export STEMCELL_VERSION="3312.7"
+export STEMCELL_VERSION="3312.24"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 

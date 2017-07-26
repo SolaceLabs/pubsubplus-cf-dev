@@ -1,68 +1,20 @@
-name: __DEPLOYMENT_NAME__
-director_uuid: <%= `bosh status --uuid` %>
-
-releases:
-- name: docker
-  version: latest
-- name: solace-vmr
-  version: latest
-
-compilation:
-  workers: 1
-  network: test-network
-  reuse_compilation_vms: true
-  cloud_properties:
-    name: random
-
-update:
-  canaries: 0
-  canary_watch_time: 30000-240000
-  update_watch_time: 30000-600000
-  max_in_flight: 3
-
-resource_pools:
-- name: common-resource-pool
-  network: test-network
-  size: 1
-  stemcell:
-    name: bosh-warden-boshlite-ubuntu-trusty-go_agent
-    version: latest
-  cloud_properties:
-    name: random
-
-networks:
-- name: test-network
-  type: manual
-  subnets:
-  - range: 10.244.0.0/28
-    gateway: 10.244.0.1
-    static:
-      - 10.244.0.2
-      - 10.244.0.3
-    cloud_properties:
-      name: random
-  - range: 10.244.0.16/28
-    gateway: 10.244.0.17
-    static: []
-    cloud_properties:
-      name: random
-
-jobs:
-- name: __VMR_JOB_NAME__
+- name: {{ name }}
   templates:
   -  {name: docker, release: docker}
   -  {name: prepare_vmr, release: solace-vmr}
   -  {name: containers, release: solace-vmr}
   -  {name: vmr_agent, release: solace-vmr}
-  instances: 1
   persistent_disk: 20480
+  instances: {{ numInstances }}
   resource_pool: common-resource-pool
   networks:
   - name: test-network
     static_ips:
-      - 10.244.0.3
+    {% for ip in static_ips %}
+      - {{ ip }}
+    {% endfor %}
   properties:
-    pool_name: '__POOL_NAME__'
+    pool_name: {{ poolName }}
     vmr_agent_port: 18080
     starting_port: 7000
     broker_user: 'solacedemo'
@@ -82,18 +34,19 @@ jobs:
     cf_organization: 'solace'
     cf_space: 'solace-messaging'
     tcp_routes_enabled: 'disabled'
-    tls_config: 'disabled'
+    tls_config: {{ 'enabled' if usingCerts else 'disabled' }}
+    {% if usingCerts %}
+        {% filter indent(4, true) %}
+            {% include 'cert.yml' %}
+        {% endfilter %}
+    {% endif %}
+
     containers:
       - name: solace
         image: solace-bosh
+        memory: 4G
         dockerfile: |
-          FROM solace-app:__SOLACE_DOCKER_IMAGE__
-
-          RUN \
-            echo '#!/bin/bash' > /sbin/dhclient && \
-            echo 'exit 0' >> /sbin/dhclient && \
-            echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \
-            chmod +x /sbin/dhclient
+          {{ solaceDockerFile|indent(10, false) }}
         env_vars:
          - "NODE_TYPE=MESSAGE_ROUTING_NODE"
          - "SERVICE_SSH_PORT=2222"

@@ -1,4 +1,5 @@
 import argparse
+import os
 import sys
 import yaml
 import commonUtils
@@ -69,6 +70,9 @@ def main(args):
     workspaceDir = args["workspaceDir"]
     certEnabled = args["cert"]
 
+    # for pre 1.1.0
+    genBrokerJob =  os.path.exists(os.path.join(templateDir, "update-service-broker-job.yml"))
+
     initTemplateEnvironment(templateDir)
 
     vmrJobs = []
@@ -76,8 +80,9 @@ def main(args):
     brokerVmrProps = {}
     staticIpList = getTestNetworkIps()
 
-    updateBrokerIp = staticIpList.pop(0)
-    testNetworkIpList.append(updateBrokerIp)
+    if genBrokerJob:
+        updateBrokerIp = staticIpList.pop(0)
+        testNetworkIpList.append(updateBrokerIp)
 
     for i in range(len(args["poolName"])):
         poolName = args["poolName"][i]
@@ -103,14 +108,17 @@ def main(args):
 
         testNetworkIpList += vmrIpList
 
-        vmrUpdate = {}
-        vmrUpdate["ipList"] = vmrIpList
-        vmrUpdate["numInstances"] = len(vmrIpList)
-        brokerVmrProps[listName] = vmrUpdate
+        if genBrokerJob:
+            vmrUpdate = {}
+            vmrUpdate["ipList"] = vmrIpList
+            vmrUpdate["numInstances"] = len(vmrIpList)
+            brokerVmrProps[listName] = vmrUpdate
 
-    brokerJob = {}
-    brokerJob["ip"] = updateBrokerIp
-    brokerJob["vmrPropsList"] = brokerVmrProps
+    brokerJob = None
+    if genBrokerJob:
+        brokerJob = {}
+        brokerJob["ip"] = updateBrokerIp
+        brokerJob["vmrPropsList"] = brokerVmrProps
 
     outputFiles(deploymentName, testNetworkIpList, vmrJobs, brokerJob, certEnabled)
 
