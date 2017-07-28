@@ -98,6 +98,37 @@ function lookupServiceBrokerDetails() {
 }
 
 function lookupServiceBrokerVMRs() {
+ 
+ INFO_DATA=`curl -sX GET $SB_BASE/info` 
+
+ # Pre 1.1.0 backwards compatibility
+ if [ "$(echo $INFO_DATA | jq length)" == "0" ]; then
+  deprecated_lookupServiceBrokerVMRs
+  return
+ fi
+
+ ROUTERS_DATA=`echo $INFO_DATA | jq -c ".messageRouters"`
+  
+ export ALL_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
+ export SHARED_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "Shared-VMR"))'    | jq -c '.[] | .sshLink'))
+ export LARGE_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "Large-VMR"))'     | jq -c '.[] | .sshLink'))
+ export COMMUNITY_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Community-VMR"))' | jq -c '.[] | .sshLink'))
+ 
+ export MEDIUM_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ 
+ export LARGE_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "Large-HA-VMR"))'                        | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+}
+
+#Deprecated 1.1.0
+function deprecated_lookupServiceBrokerVMRs() {
 
  export ALL_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links`
  export SHARED_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$SHARED_PLAN`
@@ -114,6 +145,11 @@ function lookupServiceBrokerVMRs() {
  export LARGE_HA_VMR_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$BACKUP_PARAM`
  export LARGE_HA_VMR_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$MONITOR_PARAM`
 
+}
+
+function formatVMRList() {
+  # Echos formatted results from jq
+  echo `echo "$@" | tr -d "\"\n\r" | tr " " ","`
 }
 
 function showServiceBrokerVMRs() {
