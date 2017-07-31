@@ -216,16 +216,21 @@ function setupServiceBrokerEnvironment() {
 }
 
 function resetServiceBrokerEnvironment() {
-  echo resetServiceBrokerEnvironment - doing cf target...
-  cf target -o solace -s solace-messaging
- 
-  resetServiceBrokerVMRHostsEnvironment
-  resetServiceBrokerSyslogEnvironment
-  resetServiceBrokerLDAPEnvironment
-  resetServiceBrokerTLSEnvironment
+  echo resetServiceBrokerEnvironment 
+  cf orgs | grep solace
+  if [ "$?" -eq "0" ]; then
+    cf target -o solace -s solace-messaging
 
-  echo restaging message broker...
-  cf restage solace-messaging
+    resetServiceBrokerVMRHostsEnvironment
+    resetServiceBrokerSyslogEnvironment
+    resetServiceBrokerLDAPEnvironment
+    resetServiceBrokerTLSEnvironment
+
+    echo restaging message broker...
+    cf restage solace-messaging
+  else
+    echo "solace organization does not exist so no need to reset service broker environment"
+  fi
 }
 
 
