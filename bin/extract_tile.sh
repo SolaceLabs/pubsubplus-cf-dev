@@ -91,7 +91,7 @@ export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 
 export TEMPLATE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/\.pivotal//g' | awk -F\- '{ print $1 }' )
 
 export TILE_FILE_PATH=$(readlink -f "$TILE_FILE")
-export WORKSPACE=$(dirname $TILE_FILE_PATH)
+export WORKSPACE=${WORKSPACE-`dirname $TILE_FILE_PATH`}
 
 export TEMPLATE_DIR=$SCRIPTPATH/../templates/$TEMPLATE_VERSION 
 
