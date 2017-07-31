@@ -15,7 +15,7 @@ export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-tru
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
 function targetBosh() {
-  bosh login admin admin
+
   bosh target 192.168.50.4 lite
 
 }

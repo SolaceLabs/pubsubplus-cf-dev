@@ -9,7 +9,6 @@ COMMON=${COMMON:-bosh-common.sh}
 source $SCRIPTPATH/$COMMON
 
 cd $SCRIPTPATH/..
-targetBosh
 
 echo "Logs in file $LOG_FILE"
 
