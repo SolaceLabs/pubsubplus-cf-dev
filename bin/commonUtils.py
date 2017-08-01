@@ -29,9 +29,10 @@ def getSolaceDockerImageName(poolName):
 
 def getHaEnabled(poolName):
     if poolName in POOL_TYPES:
-        # Invert because 0 is success in shell scripting
-        sys.exit(not POOL_TYPES[poolName].haEnabled)
-    raise ValueError("{} not a valid pool type".format(poolName))
+        print(int(POOL_TYPES[poolName].haEnabled))
+    else:
+        raise ValueError("{} not a valid pool type".format(poolName))
+        sys.exit(1)
 
 def getManifestJobByName(manifestFile, jobName):
     with open(manifestFile, 'r') as f:

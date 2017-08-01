@@ -442,8 +442,7 @@ for i in "${!POOL_NAME[@]}"; do
         NUM_INSTANCES[$i]=1
     fi
 
-    python3 -c "import commonUtils; commonUtils.getHaEnabled(\"${POOL_NAME[i]}\")"
-    if [ "$?" -eq 0 ]; then
+    if [ "$(python3 -c "import commonUtils; commonUtils.getHaEnabled(\"${POOL_NAME[i]}\")")" -eq "1" ]; then
         HA_ENABLED+=(true)
         NUM_INSTANCES[$i]=$((${NUM_INSTANCES[i]} * 3))
     else

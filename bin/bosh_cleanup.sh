@@ -5,6 +5,8 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export LOG_FILE="/tmp/bosh_cleanup.log"
 
+set -e
+
 COMMON_PARAMS=""
 
 while getopts a opt; do

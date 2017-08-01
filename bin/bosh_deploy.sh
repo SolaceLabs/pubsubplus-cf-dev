@@ -5,6 +5,8 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export LOG_FILE="/tmp/bosh_deploy.log"
 
+set -e
+
 COMMON=${COMMON:-bosh-common.sh}
 source $SCRIPTPATH/$COMMON
 
