@@ -11,6 +11,9 @@ POOL_TYPES = {
         "Community-VMR": PoolType("community", "latest-community", False)
 }
 
+def getPoolNames():
+    print(" ".join(list(POOL_TYPES.keys())))
+
 # Meant to be used with bash scripts
 def isValidPoolName(poolName):
     if poolName in POOL_TYPES:

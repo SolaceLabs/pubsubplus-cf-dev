@@ -357,7 +357,7 @@ function missingRequired() {
 #   missingRequired
 # fi
 
-while getopts :p:hn opt; do
+while getopts :p:hna opt; do
     case $opt in
       p)
         OPT_VALS=(${OPTARG//:/ })
@@ -368,9 +368,9 @@ while getopts :p:hn opt; do
             >&2 echo
             showUsage
             exit 1
-        elif [ -n "${OPT_VALS[1]}" ] && [ ${OPT_VALS[1]} -le 0 ]; then
+        elif [ -n "${OPT_VALS[1]}" ] && ((echo "${OPT_VALS[1]}" | grep -qE "[^0-9]") || [ ${OPT_VALS[1]} -le 0 ]); then
             >&2 echo
-            >&2 echo "Invalid option: Number of instances for a VMR can only be a non-zero positive integer" >&2
+            >&2 echo "Invalid option: \"${OPT_VALS[1]}\". Number of instances for a VMR can only be a non-zero positive integer" >&2
             >&2 echo
             showUsage
             exit 1
@@ -386,6 +386,9 @@ while getopts :p:hn opt; do
       n)
         export CERT_ENABLED=false
       ;;
+      a)
+        #Reserved for bosh_cleanup
+        ;;
       h)
         showUsage
         exit 0
