@@ -129,17 +129,7 @@ if [ "$CERT_ENABLED" == true ]; then
 fi
 export PREPARE_MANIFEST_COMMAND="python3 ${MY_BIN_HOME}/prepareManifest.py $CERT_ARG $VMR_JOB_NAME_ARG -w $WORKSPACE -p $SERIALIZED_POOL_NAME -i $SERIALIZED_NUM_INSTANCES -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME"
 >&2 echo "Running: $PREPARE_MANIFEST_COMMAND"
-${PREPARE_MANIFEST_COMMAND}
-local PREPARE_MANIFEST_EXIT_STAT=$?
-
-if [ $PREPARE_MANIFEST_EXIT_STAT -ne 0 ]; then
- >&2 echo
- >&2 echo "Generating the Manifest failed."
- if [ $PREPARE_MANIFEST_EXIT_STAT -eq 3 ]; then
-  >&2 echo "Total number of instances exceeded the maximum capacity of the subnet. Please reduce the number of VMR instances."
- fi
- exit 1
-fi 
+$PREPARE_MANIFEST_COMMAND
 }
 
 function prepareManifest() {
@@ -441,8 +431,7 @@ fi
 for i in "${!POOL_NAME[@]}"; do
     VMR_JOB_NAME+=(${POOL_NAME[i]})
 
-    py "isValidPoolName" "${POOL_NAME[i]}"
-    if [ "$?" -ne 0 ]; then
+    if [ "$(py "isValidPoolName" "${POOL_NAME[i]}")" -eq 0 ]; then
         >&2 echo
         >&2 echo "Sorry, I don't seem to know about pool name: ${POOL_NAME[i]}"
         >&2 echo

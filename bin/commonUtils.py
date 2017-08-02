@@ -16,10 +16,7 @@ def getPoolNames():
 
 # Meant to be used with bash scripts
 def isValidPoolName(poolName):
-    if poolName in POOL_TYPES:
-        sys.exit(0)
-    else:
-        sys.exit(1)
+    print(int(poolName in POOL_TYPES))
 
 def getSolaceDockerImageName(poolName):
     if poolName in POOL_TYPES:

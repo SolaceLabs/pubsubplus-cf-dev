@@ -69,6 +69,7 @@ def main(args):
     templateDir = args["templateDir"]
     workspaceDir = args["workspaceDir"]
     certEnabled = args["cert"]
+    numInstancesList = args["numInstances"]
 
     # for pre 1.1.0
     genBrokerJob =  os.path.exists(os.path.join(templateDir, "update-service-broker-job.yml"))
@@ -84,16 +85,24 @@ def main(args):
         updateBrokerIp = staticIpList.pop(0)
         testNetworkIpList.append(updateBrokerIp)
 
+    maxAvailableVMs = len(staticIpList)
+    numSpecifiedVMs = sum(numInstancesList[0:len(numInstancesList)])
+    if maxAvailableVMs < numSpecifiedVMs:
+        raise ValueError(
+            "Generating the Manifest failed. "
+            "Total number of instances exceeded the maximum capacity of the subnet.\n\n" +
+            "Please reduce the number of VMR instances:\n" +
+            "   Max available VMs: {}\n".format(maxAvailableVMs) +
+            "   Total given VMs:   {}"  .format(numSpecifiedVMs))
+        sys.exit(1)
+
     for i in range(len(args["poolName"])):
         poolName = args["poolName"][i]
         jobName = args["jobName"][i] or poolName
         listName = commonUtils.POOL_TYPES[poolName].listName
-        numInstances = args["numInstances"][i]
+        numInstances = numInstancesList[i]
         solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
         haEnabled = commonUtils.POOL_TYPES[poolName].haEnabled
-
-        if len(staticIpList) < numInstances:
-            sys.exit(3)
 
         vmrIpList = staticIpList[:numInstances]
         del staticIpList[:numInstances]
