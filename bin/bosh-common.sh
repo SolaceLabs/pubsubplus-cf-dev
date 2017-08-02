@@ -34,19 +34,17 @@ function prepareBosh() {
      echo "$SOLACE_DOCKER_BOSH was found $FOUND_DOCKER_RELEASE"
   fi
 
-  echo "Uploading stemcell"
-
-  if [ ! -f /tmp/$STEMCELL_NAME ]; then
-      wget -O /tmp/$STEMCELL_NAME $STEMCELL_URL
-  fi
-
   FOUND_STEMCELL=`bosh stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
-     bosh upload stemcell /tmp/$STEMCELL_NAME
+    if [ ! -f /tmp/$STEMCELL_NAME ]; then
+      echo "Downloading stemcell"
+      wget -O /tmp/$STEMCELL_NAME $STEMCELL_URL
+    fi
+    echo "Uploading stemcell"
+    bosh upload stemcell /tmp/$STEMCELL_NAME
   else
      echo "$STEMCELL_NAME was found $FOUND_STEMCELL"
   fi
-
 }
 
 function deleteOrphanedDisks() {
@@ -73,7 +71,6 @@ function shutdownVMRJobs() {
  VM_RUNNING_FOUND_COUNT=`bosh vms | grep $VM_JOB | grep running |  wc -l`
  DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
  RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
-
 
  if [ "$VM_RUNNING_FOUND_COUNT" -eq "1" ]; then
 
@@ -172,6 +169,7 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  bosh upload release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
 
  echo "Calling bosh deployment"
+ echo "MANIFEST_FILE=$MANIFEST_FILE"
 
  bosh deployment $MANIFEST_FILE | tee -a $LOG_FILE 
 
@@ -180,6 +178,11 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  done
 
  echo "yes" | bosh deploy | tee -a $LOG_FILE
+ bosh vms
+ if [ "$?" -ne "0" ]; then
+   echo "bosh vms did not find any deployments - deployment likely failed"
+   exit 1
+ fi
 
 else
  >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
@@ -339,12 +342,6 @@ function py() {
 
 export BASIC_USAGE_PARAMS="-p [Shared-VMR|Large-VMR|Community-VMR|Medium-HA-VMR|Large-HA-VMR] -n (To not use a self-signed certificate)"
 
-export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
-export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-
-export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
-export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
-
 CMD_NAME=`basename $0`
 
 function showUsage() {
@@ -458,11 +455,6 @@ for i in "${!POOL_NAME[@]}"; do
         let INSTANCE_COUNT=INSTANCE_COUNT+1
     done
 done
-
-echo "$0 - Settings"
-echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
-echo "    Deployment     $DEPLOYMENT_NAME"
-echo
 
 for i in "${!POOL_NAME[@]}"; do
     echo "    VMR JOB NAME   ${VMR_JOB_NAME[i]}"

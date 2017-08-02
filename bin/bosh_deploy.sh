@@ -6,13 +6,29 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 export LOG_FILE="/tmp/bosh_deploy.log"
 
 set -e
+echo "Value check: Will use MANIFEST_FILE=$MANIFEST_FILE"
 
 COMMON=${COMMON:-bosh-common.sh}
 source $SCRIPTPATH/$COMMON
 
+export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+
+export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
+export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
+
+echo "$0 - Settings"
+echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
+echo "    Deployment     $DEPLOYMENT_NAME"
+echo
+
 cd $SCRIPTPATH/..
 
-prepareManifest
+if [ -z "$MANIFEST_FILE" ]; then
+  prepareManifest
+else
+  echo "Will use MANIFEST_FILE=$MANIFEST_FILE"
+fi
 
 VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
 printf "\n"
