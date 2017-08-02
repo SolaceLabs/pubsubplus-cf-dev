@@ -15,7 +15,12 @@ while getopts a opt; do
       POOL_NAMES=$(python3 -c "import commonUtils; commonUtils.getPoolNames()")
       for POOL in ${POOL_NAMES[@]}; do
         VM_FOUND_COUNT=`bosh vms | grep $POOL | wc -l`
+
         if [ "$VM_FOUND_COUNT" -gt "0" ]; then
+          if [ "$(python3 -c "import commonUtils; commonUtils.getHaEnabled(\"$POOL\")")" -eq "1" ]; then
+            VM_FOUND_COUNT=$(($VM_FOUND_COUNT / 3))
+          fi
+
           COMMON_PARAMS+=" -p $POOL:$VM_FOUND_COUNT"
         fi
       done
