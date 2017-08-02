@@ -330,6 +330,20 @@ function resetServiceBrokerSyslogEnvironment() {
   cf set-env solace-messaging SYSLOG_CONFIG "{'value':'disabled','selected_option':{}}"
 }
 
+function py() {
+  local RAW_PY_PARAMS=$2 PY_PARAM PY_PARAMS=()
+
+  for PY_PARAM in ${RAW_PY_PARAMS[@]}; do
+    if [ -n "$PY_PARAM" ] && (echo "$PY_PARAM" | grep -qE "[^0-9]"); then
+      PY_PARAMS+=("\"$PY_PARAM\"")
+    else
+      PY_PARAMS+=($PY_PARAM)
+    fi
+  done
+
+  python3 -c "import commonUtils; commonUtils.$1($(IFS=$','; echo "${PY_PARAMS[*]}"))"
+}
+
 ###################### Common parameter processing ########################
 
 
@@ -427,7 +441,7 @@ fi
 for i in "${!POOL_NAME[@]}"; do
     VMR_JOB_NAME+=(${POOL_NAME[i]})
 
-    python3 -c "import commonUtils; commonUtils.isValidPoolName(\"${POOL_NAME[i]}\")"
+    py "isValidPoolName" "${POOL_NAME[i]}"
     if [ "$?" -ne 0 ]; then
         >&2 echo
         >&2 echo "Sorry, I don't seem to know about pool name: ${POOL_NAME[i]}"
@@ -436,13 +450,13 @@ for i in "${!POOL_NAME[@]}"; do
         exit 1
     fi
 
-    SOLACE_DOCKER_IMAGE_NAME+=($(python3 -c "import commonUtils; commonUtils.getSolaceDockerImageName(\"${POOL_NAME[i]}\")"))
+    SOLACE_DOCKER_IMAGE_NAME+=($(py "getSolaceDockerImageName" ${POOL_NAME[i]}))
 
     if [ -z ${NUM_INSTANCES[i]} ] || [ ${NUM_INSTANCES[i]} -eq -1 ]; then
         NUM_INSTANCES[$i]=1
     fi
 
-    if [ "$(python3 -c "import commonUtils; commonUtils.getHaEnabled(\"${POOL_NAME[i]}\")")" -eq "1" ]; then
+    if [ "$(py "getHaEnabled" ${POOL_NAME[i]})" -eq "1" ]; then
         HA_ENABLED+=(true)
         NUM_INSTANCES[$i]=$((${NUM_INSTANCES[i]} * 3))
     else
