@@ -196,9 +196,8 @@ fi
 # It sets the environment on the service broker and restages it.
 
 function setupServiceBrokerEnvironment() {
-  echo setupServiceBrokerEnvironment - doing cf target...
+  echo "In setupServiceBrokerEnvironment - doing cf target..."
   cf target -o solace -s solace-messaging
-
   setServiceBrokerVMRHostsEnvironment
   setServiceBrokerSyslogEnvironment
   setServiceBrokerLDAPEnvironment
@@ -209,11 +208,8 @@ function setupServiceBrokerEnvironment() {
 }
 
 function resetServiceBrokerEnvironment() {
-  echo resetServiceBrokerEnvironment 
-  cf orgs | grep solace
-  if [ "$?" -eq "0" ]; then
-    cf target -o solace -s solace-messaging
-
+  echo "In resetServiceBrokerEnvironment"
+  if cf target -o solace -s solace-messaging; then
     resetServiceBrokerVMRHostsEnvironment
     resetServiceBrokerSyslogEnvironment
     resetServiceBrokerLDAPEnvironment

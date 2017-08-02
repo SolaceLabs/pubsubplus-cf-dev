@@ -43,13 +43,13 @@ if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
    yes | bosh download manifest $DEPLOYMENT_NAME $WORKSPACE/solace.yml
    bosh deployment $WORKSPACE/solace.yml
    bosh deployment
-fi
 
-for I in ${!VM_JOB[@]}; do
+   for I in ${!VM_JOB[@]}; do
      echo
      echo "Cleanup    VM/$I           ${VM_JOB[I]}"
      shutdownVMRJobs ${VM_JOB[I]} | tee $LOG_FILE
-done
+   done
+fi
 
 deleteDeploymentAndRelease | tee $LOG_FILE
 deleteOrphanedDisks | tee $LOG_FILE
