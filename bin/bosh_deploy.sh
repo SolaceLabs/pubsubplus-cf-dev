@@ -6,28 +6,61 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 export LOG_FILE="/tmp/bosh_deploy.log"
 
 set -e
-echo "Value check: Will use MANIFEST_FILE=$MANIFEST_FILE"
+echo "Will use MANIFEST_FILE=$MANIFEST_FILE"
+unset COMMON_PARAMS
+
+USE_EXISTING_MANIFEST=1
+
+while getopts :m: opt; do
+  case $opt in
+    m)
+      USE_EXISTING_MANIFEST=0
+      if (echo "$OPTARG" | grep -qE "^/.*"); then
+        MANIFEST_FILE="$OPTARG"
+      else
+        MANIFEST_FILE="`pwd`/$OPTARG"
+      fi
+
+      if ! [ -e "$MANIFEST_FILE" ]; then
+        echo "Manifest file cannot be found."
+        exit 1
+      elif ! [ -f "$MANIFEST_FILE" ]; then
+        echo "Manifest must be a file."
+        exit 1
+      fi
+
+      if [ "$(cat $MANIFEST_FILE | grep cert_pem | wc -l)" -le "0" ]; then
+        COMMON_PARAMS+=" -n"
+      fi
+
+      JOBS_TO_DEPLOY=$(python3 -c "import commonUtils; commonUtils.getManifestJobNames(\"$MANIFEST_FILE\")")
+      for JOB_NAME in ${JOBS_TO_DEPLOY[@]}; do
+        JOB=$(python3 -c "import commonUtils; commonUtils.getManifestJobByName(\"$MANIFEST_FILE\", \"$JOB_NAME\")")
+        MANIFEST_INSTANCE_CNT=`echo $JOB | shyaml get-value instances`
+        POOL=`echo $JOB | shyaml get-value properties.pool_name`
+
+        if [ "$MANIFEST_INSTANCE_CNT" -gt "0" ]; then
+          if [ "$(python3 -c "import commonUtils; commonUtils.getHaEnabled(\"$POOL\")")" -eq "1" ]; then
+            MANIFEST_INSTANCE_CNT=$(($MANIFEST_INSTANCE_CNT / 3))
+          fi
+
+          COMMON_PARAMS+=" -p $POOL:$MANIFEST_INSTANCE_CNT"
+        fi
+      done
+      ;;
+  esac
+done
+
+OPTIND=1 #Reset getopts
 
 COMMON=${COMMON:-bosh-common.sh}
-source $SCRIPTPATH/$COMMON
-
-export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
-export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-
-export TEMPLATE_DIR="$MY_HOME/templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
-export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
-
-echo "$0 - Settings"
-echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
-echo "    Deployment     $DEPLOYMENT_NAME"
-echo
-
+source $SCRIPTPATH/$COMMON $COMMON_PARAMS
 cd $SCRIPTPATH/..
 
-if [ -z "$MANIFEST_FILE" ]; then
-  prepareManifest
+if [ $USE_EXISTING_MANIFEST -eq 1 ]; then
+    prepareManifest
 else
-  echo "Will use MANIFEST_FILE=$MANIFEST_FILE"
+    echo "Using existing MANIFEST_FILE=$MANIFEST_FILE"
 fi
 
 VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`

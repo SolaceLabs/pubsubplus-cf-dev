@@ -9,7 +9,7 @@ set -e
 
 COMMON_PARAMS=""
 
-while getopts a opt; do
+while getopts :a opt; do
   case $opt in
     a)
       POOL_NAMES=$(python3 -c "import commonUtils; commonUtils.getPoolNames()")
