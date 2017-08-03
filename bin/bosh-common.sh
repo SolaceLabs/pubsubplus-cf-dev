@@ -198,6 +198,8 @@ fi
 function setupServiceBrokerEnvironment() {
   echo "In setupServiceBrokerEnvironment - doing cf target..."
   cf target -o solace -s solace-messaging
+  setServiceBrokerSimpleProperty starting_port STARTING_PORT
+  setServiceBrokerSimpleProperty admin_password VMR_ADMIN_PASSWORD
   setServiceBrokerVMRHostsEnvironment
   setServiceBrokerSyslogEnvironment
   setServiceBrokerLDAPEnvironment
@@ -222,6 +224,15 @@ function resetServiceBrokerEnvironment() {
   fi
 }
 
+function setServiceBrokerSimpleProperty() {
+  MANIFEST_PROPERTY_NAME=$1
+  SB_ENV_NAME=$2
+
+  echo "Setting $SB_ENV_NAME env variables on Service Broker..." 
+  # Using no default with shyaml since we want it to fail if value is not found
+  VALUE_FROM_MANIFEST=`cat $MANIFEST_FILE | shyaml get-value jobs.0.properties.$MANIFEST_PROPERTY_NAME`
+  cf set-env solace-messaging $SB_ENV_NAME $VALUE_FROM_MANIFEST
+}
 
 function resetServiceBrokerTLSEnvironment() {
 
