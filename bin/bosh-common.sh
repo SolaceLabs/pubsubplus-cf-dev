@@ -268,7 +268,7 @@ function setServiceBrokerVMRHostsEnvironment() {
   JOBS=`cat $MANIFEST_FILE | shyaml -y get-values-0 jobs`
 
   for I in ${!VMR_JOB_NAME[@]}; do
-    JOB=$(python3 -c "import commonUtils; commonUtils.getManifestJobByName(\"$MANIFEST_FILE\", \"${VMR_JOB_NAME[I]}\")")
+    JOB=$(py "getManifestJobByName" $MANIFEST_FILE ${VMR_JOB_NAME[I]})
     IPS=`echo $JOB | shyaml get-values networks.0.static_ips`
     ENV_NM=`echo ${POOL_NAME[I]} | tr '[:lower:]-' '[:upper:]_'`
     ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
@@ -321,17 +321,19 @@ function resetServiceBrokerSyslogEnvironment() {
 }
 
 function py() {
-  local RAW_PY_PARAMS=$2 PY_PARAM PY_PARAMS=()
+  local OP=$1 PARAMS=()
+  shift
 
-  for PY_PARAM in ${RAW_PY_PARAMS[@]}; do
-    if [ -n "$PY_PARAM" ] && (echo "$PY_PARAM" | grep -qE "[^0-9]"); then
-      PY_PARAMS+=("\"$PY_PARAM\"")
+  while (( "$#" )); do
+    if [ -n "$1" ] && (echo "$1" | grep -qE "[^0-9]"); then
+      PARAMS+=("\"$1\"")
     else
-      PY_PARAMS+=($PY_PARAM)
+      PARAMS+=($1)
     fi
+    shift
   done
 
-  python3 -c "import commonUtils; commonUtils.$1($(IFS=$','; echo "${PY_PARAMS[*]}"))"
+  python3 -c "import commonUtils; commonUtils.$OP($(IFS=$','; echo "${PARAMS[*]}"))"
 }
 
 ###################### Common parameter processing ########################
@@ -366,8 +368,11 @@ function missingRequired() {
 #   missingRequired
 # fi
 
-while getopts :p:hna opt; do
+while getopts :m:p:hna opt; do
     case $opt in
+      m)
+        #Reserved for bosh_deploy
+        ;;
       p)
         OPT_VALS=(${OPTARG//:/ })
 

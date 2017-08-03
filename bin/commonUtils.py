@@ -36,8 +36,13 @@ def getManifestJobByName(manifestFile, jobName):
         jobs = yaml.load(f)["jobs"]
         job = next((j for j in jobs if j["name"] == jobName), None)
 
-        if job == None:
-            raise ValueError("Manifest job {} does not exist".format(jobName))
-            return
+        if job != None:
+            print(yaml.dump(job, default_flow_style=True))
+        else:
+            print(0)
 
-        print(yaml.dump(job, default_flow_style=True))
+def getManifestJobNames(manifestFile):
+    with open(manifestFile, 'r') as f:
+        jobNames = [j["name"] for j in yaml.load(f)["jobs"]]
+        print(" ".join(jobNames))
+
