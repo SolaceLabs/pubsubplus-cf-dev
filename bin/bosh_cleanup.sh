@@ -7,7 +7,13 @@ export LOG_FILE="/tmp/bosh_cleanup.log"
 
 set -e
 
-COMMON_PARAMS=""
+unset COMMON_PARAMS
+
+if $(2>&1 bosh vms | grep -q "No deployments"); then
+  echo "No deployments detected. Nothing to do..."
+  echo "Terminating cleanup..."
+  exit 0
+fi
 
 while getopts :a opt; do
   case $opt in
