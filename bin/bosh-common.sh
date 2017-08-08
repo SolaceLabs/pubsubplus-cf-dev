@@ -14,6 +14,8 @@ export STEMCELL_VERSION="3312.24"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
+source "commonUtils.sh"
+
 function targetBosh() {
 
   bosh target 192.168.50.4 lite
@@ -320,21 +322,6 @@ function resetServiceBrokerSyslogEnvironment() {
   cf set-env solace-messaging SYSLOG_CONFIG "{'value':'disabled','selected_option':{}}"
 }
 
-function py() {
-  local OP=$1 PARAMS=()
-  shift
-
-  while (( "$#" )); do
-    if [ -n "$1" ] && (echo "$1" | grep -qE "[^0-9]"); then
-      PARAMS+=("\"$1\"")
-    else
-      PARAMS+=($1)
-    fi
-    shift
-  done
-
-  python3 -c "import commonUtils; commonUtils.$OP($(IFS=$','; echo "${PARAMS[*]}"))"
-}
 
 ###################### Common parameter processing ########################
 

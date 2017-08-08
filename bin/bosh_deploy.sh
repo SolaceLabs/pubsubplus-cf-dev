@@ -5,6 +5,8 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export LOG_FILE="/tmp/bosh_deploy.log"
 
+source "$SCRIPTPATH/commonUtils.sh"
+
 set -e
 unset COMMON_PARAMS
 
@@ -32,14 +34,14 @@ while getopts :m: opt; do
         COMMON_PARAMS+=" -n"
       fi
 
-      JOBS_TO_DEPLOY=$(python3 -c "import commonUtils; commonUtils.getManifestJobNames(\"$MANIFEST_FILE\")")
+      JOBS_TO_DEPLOY=$(py "getManifestJobNames" $MANIFEST_FILE)
       for JOB_NAME in ${JOBS_TO_DEPLOY[@]}; do
-        JOB=$(python3 -c "import commonUtils; commonUtils.getManifestJobByName(\"$MANIFEST_FILE\", \"$JOB_NAME\")")
+        JOB=$(py "getManifestJobByName" $MANIFEST_FILE $JOB_NAME)
         MANIFEST_INSTANCE_CNT=`echo $JOB | shyaml get-value instances`
         POOL=`echo $JOB | shyaml get-value properties.pool_name`
 
         if [ "$MANIFEST_INSTANCE_CNT" -gt "0" ]; then
-          if [ "$(python3 -c "import commonUtils; commonUtils.getHaEnabled(\"$POOL\")")" -eq "1" ]; then
+          if [ "$(python3 -c "getHaEnabled" $POOL)" -eq "1" ]; then
             MANIFEST_INSTANCE_CNT=$(($MANIFEST_INSTANCE_CNT / 3))
           fi
 
