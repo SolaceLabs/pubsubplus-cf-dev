@@ -38,6 +38,8 @@ done
 
 OPTIND=1 #Reset getopts
 
+echo "$0 - Settings"
+
 COMMON=${COMMON:-bosh-common.sh}
 source $SCRIPTPATH/$COMMON $COMMON_PARAMS
 

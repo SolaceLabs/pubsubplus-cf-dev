@@ -190,8 +190,9 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
  echo "yes" | bosh deploy | tee -a $LOG_FILE
  bosh vms
- if [ "$?" -ne "0" ]; then
-   echo "bosh vms did not find any deployments - deployment likely failed"
+ DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
+   echo "bosh did not find any deployments - deployment likely failed"
    exit 1
  fi
 
@@ -460,6 +461,9 @@ for i in "${!POOL_NAME[@]}"; do
         let INSTANCE_COUNT=INSTANCE_COUNT+1
     done
 done
+
+echo "    Deployment     $DEPLOYMENT_NAME"
+echo
 
 for i in "${!POOL_NAME[@]}"; do
     echo "    VMR JOB NAME   ${VMR_JOB_NAME[i]}"

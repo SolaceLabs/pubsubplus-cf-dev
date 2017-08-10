@@ -8,7 +8,6 @@ export LOG_FILE="/tmp/bosh_deploy.log"
 source "$SCRIPTPATH/commonUtils.sh"
 
 set -e
-echo "Will use MANIFEST_FILE=$MANIFEST_FILE"
 unset COMMON_PARAMS
 
 while getopts :m: opt; do
@@ -51,6 +50,15 @@ while getopts :m: opt; do
 done
 
 OPTIND=1 #Reset getopts
+
+export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+
+export TEMPLATE_DIR="$SCRIPTPATH/../templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
+export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
+
+echo "$0 - Settings"
+echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
 
 COMMON=${COMMON:-bosh-common.sh}
 source $SCRIPTPATH/$COMMON $COMMON_PARAMS
