@@ -5,6 +5,7 @@ import yaml
 import commonUtils
 import ipaddress
 import jinja2
+import subprocess
 
 # The temporary file that we write the config to
 CONFIG_FILE_NAME = "config.yml"
@@ -55,6 +56,41 @@ def getTestNetworkIps():
 
     return testHosts
 
+def getDeployedIps(deploymentName, workspaceDir, poolNamesFilter):
+    deployedIpConfig = {
+        "global": []
+    }
+
+    deploymentCount = subprocess.check_output("bosh deployments | grep "+deploymentName+" | wc -l", shell=True)
+    if int(deploymentCount) == 0:
+        return deployedIpConfig
+
+    deployedManifestFile = os.path.join(workspaceDir, "deployed-manifest.yml")
+
+    if os.path.exists(deployedManifestFile):
+        os.remove(deployedManifestFile)
+
+    subprocess.call(["bosh", "download", "manifest", deploymentName, deployedManifestFile], stdout=subprocess.DEVNULL)
+
+    with open(deployedManifestFile, "r") as f:
+        deployedManifest = yaml.load(f)
+
+    testSubnet = next(n for n in deployedManifest["networks"] if n["name"] == "test-network")["subnets"][0]
+
+    deployedIpConfig["global"] = testSubnet["static"]
+
+    for job in deployedManifest["jobs"]:
+        if job["name"] not in commonUtils.POOL_TYPES:
+            continue
+
+        if job["name"] in poolNamesFilter:
+            deployedIpConfig[job["name"]] = job["networks"][0]["static_ips"]
+        else:
+            deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(job["networks"][0]["static_ips"]))
+
+    os.remove(deployedManifestFile)
+    return deployedIpConfig
+
 def initTemplateEnvironment(templateDir):
     global TEMPLATE
     if TEMPLATE == None:
@@ -66,6 +102,7 @@ def initTemplateEnvironment(templateDir):
 
 def main(args):
     deploymentName = args["deploymentName"] or "solace-vmr-warden-deployment"
+    poolNameList = args["poolName"]
     templateDir = args["templateDir"]
     workspaceDir = args["workspaceDir"]
     certEnabled = args["cert"]
@@ -79,13 +116,13 @@ def main(args):
     vmrJobs = []
     testNetworkIpList = []
     brokerVmrProps = {}
-    staticIpList = getTestNetworkIps()
+    freeIps = getTestNetworkIps()
 
     if genBrokerJob:
-        updateBrokerIp = staticIpList.pop(0)
+        updateBrokerIp = freeIps.pop(0)
         testNetworkIpList.append(updateBrokerIp)
 
-    maxAvailableVMs = len(staticIpList)
+    maxAvailableVMs = len(freeIps)
     numSpecifiedVMs = sum(numInstancesList[0:len(numInstancesList)])
     if maxAvailableVMs < numSpecifiedVMs:
         raise ValueError(
@@ -96,16 +133,28 @@ def main(args):
             "   Total given VMs:   {}"  .format(numSpecifiedVMs))
         sys.exit(1)
 
-    for i in range(len(args["poolName"])):
-        poolName = args["poolName"][i]
+    deployedIpConfig = getDeployedIps(deploymentName, workspaceDir, poolNameList)
+    freeIps = list(set(freeIps) - set(deployedIpConfig["global"]))
+    freeIps.sort()
+
+    for i in range(len(poolNameList)):
+        poolName = poolNameList[i]
         jobName = args["jobName"][i] or poolName
         listName = commonUtils.POOL_TYPES[poolName].listName
         numInstances = numInstancesList[i]
         solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
         haEnabled = commonUtils.POOL_TYPES[poolName].haEnabled
 
-        vmrIpList = staticIpList[:numInstances]
-        del staticIpList[:numInstances]
+        numInstancesToAllocate = numInstances
+        vmrIpList = []
+        if poolName in deployedIpConfig:
+            deployedJobIps = deployedIpConfig[poolName]
+            numIpsToReuse = min(len(deployedJobIps), numInstancesToAllocate)
+            vmrIpList = deployedJobIps[:numIpsToReuse]
+            numInstancesToAllocate -= numIpsToReuse
+
+        vmrIpList.extend(freeIps[:numInstancesToAllocate])
+        del freeIps[:numInstancesToAllocate]
 
         vmrJob = {}
         vmrJob["name"] = jobName

@@ -1,4 +1,4 @@
-name: {{ name }}
+name: "{{ name }}"
 director_uuid: <%= `bosh status --uuid` %>
 
 releases:

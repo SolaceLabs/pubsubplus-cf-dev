@@ -1,4 +1,4 @@
-name: (( merge ))
+name: "(( merge ))"
 director_uuid: <%= `bosh status --uuid` %>
 
 releases:

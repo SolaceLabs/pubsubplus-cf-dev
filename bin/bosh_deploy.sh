@@ -10,38 +10,35 @@ source "$SCRIPTPATH/commonUtils.sh"
 set -e
 unset COMMON_PARAMS
 
-USE_EXISTING_MANIFEST=1
-
 while getopts :m: opt; do
   case $opt in
     m)
-      USE_EXISTING_MANIFEST=0
       if (echo "$OPTARG" | grep -qE "^/.*"); then
-        MANIFEST_FILE="$OPTARG"
+        EXISTING_MANIFEST_FILE="$OPTARG"
       else
-        MANIFEST_FILE="`pwd`/$OPTARG"
+        EXISTING_MANIFEST_FILE="`pwd`/$OPTARG"
       fi
 
-      if ! [ -e "$MANIFEST_FILE" ]; then
+      if ! [ -e "$EXISTING_MANIFEST_FILE" ]; then
         echo "Manifest file cannot be found."
         exit 1
-      elif ! [ -f "$MANIFEST_FILE" ]; then
+      elif ! [ -f "$EXISTING_MANIFEST_FILE" ]; then
         echo "Manifest must be a file."
         exit 1
       fi
 
-      if [ "$(cat $MANIFEST_FILE | grep cert_pem | wc -l)" -le "0" ]; then
+      if [ "$(cat $EXISTING_MANIFEST_FILE | grep cert_pem | wc -l)" -le "0" ]; then
         COMMON_PARAMS+=" -n"
       fi
 
-      JOBS_TO_DEPLOY=$(py "getManifestJobNames" $MANIFEST_FILE)
+      JOBS_TO_DEPLOY=$(py "getManifestJobNames" $EXISTING_MANIFEST_FILE)
       for JOB_NAME in ${JOBS_TO_DEPLOY[@]}; do
-        JOB=$(py "getManifestJobByName" $MANIFEST_FILE $JOB_NAME)
+        JOB=$(py "getManifestJobByName" $EXISTING_MANIFEST_FILE $JOB_NAME)
         MANIFEST_INSTANCE_CNT=`echo $JOB | shyaml get-value instances`
         POOL=`echo $JOB | shyaml get-value properties.pool_name`
 
         if [ "$MANIFEST_INSTANCE_CNT" -gt "0" ]; then
-          if [ "$(python3 -c "getHaEnabled" $POOL)" -eq "1" ]; then
+          if [ "$(py "getHaEnabled" $POOL)" -eq "1" ]; then
             MANIFEST_INSTANCE_CNT=$(($MANIFEST_INSTANCE_CNT / 3))
           fi
 
@@ -58,28 +55,37 @@ COMMON=${COMMON:-bosh-common.sh}
 source $SCRIPTPATH/$COMMON $COMMON_PARAMS
 cd $SCRIPTPATH/..
 
-if [ $USE_EXISTING_MANIFEST -eq 1 ]; then
-    prepareManifest
+echo "Checking for existing deployment..."
+
+if ! $(2>&1 bosh vms | grep -q "No deployments"); then
+   echo "A bosh deployment is already done, will shutdown the running VMs..."
+   echo
+   POOL_NAMES=$(py "getPoolNames")
+   for POOL in ${POOL_NAMES[@]}; do
+      VM_FOUND_COUNT=$(bosh vms | grep $POOL | wc -l)
+      echo "$POOL: Found $VM_FOUND_COUNT running VMs"
+      echo
+      I=0
+      while [ "$I" -lt "$VM_FOUND_COUNT" ]; do
+         echo "Shutting down $POOL/$I"
+         shutdownVMRJobs $POOL/$I | tee $LOG_FILE
+         echo
+         I=$(($I+1))
+      done
+   done
 else
-    echo "Using existing MANIFEST_FILE=$MANIFEST_FILE"
+   echo "No existing bosh deployment found. Continuing..."
 fi
 
-VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
-printf "\n"
-
-if [ "$VMS_FOUND_COUNT" -gt "0" ]; then
-   echo "A bosh deployment is already done, the following VMs were found:"
-
-   for VM in ${VM_JOB[@]}; do
-      echo "    $VM"
-   done
-
-   echo
-   echo "Will not build and will not DEPLOY"
-   echo 
-   echo "You should cleanup the deployment with bosh_cleanup.sh ?!"
-   echo
-   exit 1
+if [ -n "$EXISTING_MANIFEST_FILE" ]; then
+    echo "Using existing MANIFEST_FILE=$EXISTING_MANIFEST_FILE"
+    if ! [ "$EXISTING_MANIFEST_FILE" -ef "$MANIFEST_FILE" ]; then
+        echo "Copying $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
+        cp $EXISTING_MANIFEST_FILE $MANIFEST_FILE
+    fi
+    resolveConflictsAndRegenerateManifest
+else
+    prepareManifest
 fi
 
 echo
@@ -87,24 +93,11 @@ echo "You can see deployment logs in $LOG_FILE"
 
 prepareBosh
 
-VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
-
-if [ "$VMS_FOUND_COUNT" -eq "0" ]; then
-   uploadAndDeployRelease
-else
-   echo "Skipping deployment as there are VMs that were found: $VM_JOB"
-   echo "You should cleanup the deployment with bosh_cleanup.sh ?!"
-fi
+uploadAndDeployRelease
 
 setupServiceBrokerEnvironment
 
 VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
-
-# INSTANCE_COUNT=0
-# while [ "$INSTANCE_COUNT" -lt "$NUM_INSTANCES" ];  do
-#     echo "    VM/$INSTANCE_COUNT           $VMR_JOB_NAME/$INSTANCE_COUNT"
-#     let INSTANCE_COUNT=INSTANCE_COUNT+1
-# done
 
 if [ "$VMS_FOUND_COUNT" -eq "${#VM_JOB[@]}" ]; then
    echo "bosh deployment is present, VMs called:"

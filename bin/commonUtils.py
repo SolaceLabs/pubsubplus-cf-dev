@@ -38,8 +38,6 @@ def getManifestJobByName(manifestFile, jobName):
 
         if job != None:
             print(yaml.dump(job, default_flow_style=True))
-        else:
-            print(0)
 
 def getManifestJobNames(manifestFile):
     with open(manifestFile, 'r') as f:

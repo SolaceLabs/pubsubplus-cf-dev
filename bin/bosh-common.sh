@@ -145,6 +145,10 @@ if [ $? -ne 0 ]; then
 fi 
 }
 
+function resolveConflictsAndRegenerateManifest() {
+ python3 ${MY_BIN_HOME}/adjustManifest.py -m $MANIFEST_FILE -w $WORKSPACE -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME
+}
+
 function build() {
 
 echo "Will build the BOSH Release (May take some time)"
@@ -162,6 +166,7 @@ fi
 function uploadAndDeployRelease() {
 
 SOLACE_VMR_BOSH_RELEASE_FILE=`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`
+RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 
 echo "in function uploadAndDeployRelease. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
 
@@ -169,9 +174,13 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
- echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
+ if [ "$RELEASE_FOUND_COUNT" -eq "0" ]; then
+  echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
 
- bosh upload release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
+  bosh upload release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
+ else
+  echo "releases solace-vmr already exists. Skipping release upload..."
+ fi
 
  echo "Calling bosh deployment"
 
@@ -268,23 +277,20 @@ function setServiceBrokerLDAPEnvironment() {
  
 function setServiceBrokerVMRHostsEnvironment() {
   JOBS=`cat $MANIFEST_FILE | shyaml -y get-values-0 jobs`
+  POOL_NAMES=$(py "getPoolNames")
 
-  for I in ${!VMR_JOB_NAME[@]}; do
-    JOB=$(py "getManifestJobByName" $MANIFEST_FILE ${VMR_JOB_NAME[I]})
-    IPS=`echo $JOB | shyaml get-values networks.0.static_ips`
-    ENV_NM=`echo ${POOL_NAME[I]} | tr '[:lower:]-' '[:upper:]_'`
+  for POOL in ${POOL_NAMES[@]}; do
+    ENV_NM=`echo $POOL | tr '[:lower:]-' '[:upper:]_'`
     ENV_NAME=SOLACE_VMR_${ENV_NM}_HOSTS
 
-    IPSTR=''
-    for IP in $IPS; do
-      if [[ -z $IPSTR ]]; then
-        IPSTR='['
-      else
-        IPSTR=${IPSTR},
-      fi
-      IPSTR=${IPSTR}\"${IP}\"
-    done
-    IPSTR=${IPSTR}']'
+    JOB=`py "getManifestJobByName" $MANIFEST_FILE $POOL`
+    if [ "$(echo -n $JOB | wc -c)" -gt "0" ]; then
+      IPS=$(echo -n $JOB | shyaml get-values networks.0.static_ips)
+      IFS=' ' read -r -a IPS <<< $IPS
+      IPSTR="[\"$(echo $(IFS=','; echo "${IPS[*]}") | sed s/,/\",\"/g)\"]"
+    else
+      IPSTR="[]"
+    fi
 
     echo setting environment variable $ENV_NAME to "$IPSTR"
 
