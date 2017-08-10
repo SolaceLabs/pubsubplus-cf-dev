@@ -8,6 +8,7 @@ export LOG_FILE="/tmp/bosh_deploy.log"
 source "$SCRIPTPATH/commonUtils.sh"
 
 set -e
+echo "Will use MANIFEST_FILE=$MANIFEST_FILE"
 unset COMMON_PARAMS
 
 while getopts :m: opt; do

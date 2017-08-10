@@ -45,11 +45,19 @@ cd $SCRIPTPATH/..
 
 echo "Logs in file $LOG_FILE"
 
-for I in ${!VM_JOB[@]}; do
+DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
+   echo "Downloading deployment $DEPLOYMENT_NAME"
+   echo "yes" | bosh download manifest $DEPLOYMENT_NAME $WORKSPACE/solace.yml
+   bosh deployment $WORKSPACE/solace.yml
+   bosh deployment
+
+   for I in ${!VM_JOB[@]}; do
      echo
      echo "Cleanup    VM/$I           ${VM_JOB[I]}"
      shutdownVMRJobs ${VM_JOB[I]} | tee $LOG_FILE
-done
+   done
+fi
 
 deleteDeploymentAndRelease | tee $LOG_FILE
 deleteOrphanedDisks | tee $LOG_FILE
