@@ -19,6 +19,9 @@ fi
 SETHOSTS
 
 $install_and_config_workstation=<<INSTALL_AND_CONFIGURE
+echo "Adding Ruby"
+sudo apt-get -y install ruby
+
 sudo gem install colorize
 sudo locale-gen en_CA.UTF-8
 apt-get update
@@ -39,7 +42,7 @@ which jq
 
 echo "Adding Python tools"
 sudo apt-get -y install python-virtualenv
-sudo apt-get -y install python-pip python3-pip
+sudo apt-get -y install python-pip python3-pip python3.6
 sudo pip install shyaml
 sudo pip3 install pyyaml
 
