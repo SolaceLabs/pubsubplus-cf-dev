@@ -134,6 +134,18 @@ def main(args):
         sys.exit(1)
 
     deployedIpConfig = getDeployedIps(deploymentName, workspaceDir, poolNameList)
+
+    for i in range(len(poolNameList)):
+        poolName = poolNameList[i]
+        if poolName not in deployedIpConfig:
+            continue
+
+        numToDelete = len(deployedIpConfig[poolName]) - numInstancesList[i]
+        if numToDelete > 0:
+            instances = deployedIpConfig[poolName][:numToDelete]
+            deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(instances))
+            del deployedIpConfig[poolName][:numToDelete]
+
     freeIps = list(set(freeIps) - set(deployedIpConfig["global"]))
     freeIps.sort()
 
@@ -148,10 +160,8 @@ def main(args):
         numInstancesToAllocate = numInstances
         vmrIpList = []
         if poolName in deployedIpConfig:
-            deployedJobIps = deployedIpConfig[poolName]
-            numIpsToReuse = min(len(deployedJobIps), numInstancesToAllocate)
-            vmrIpList = deployedJobIps[:numIpsToReuse]
-            numInstancesToAllocate -= numIpsToReuse
+            vmrIpList = deployedIpConfig[poolName]
+            numInstancesToAllocate -= len(deployedIpConfig[poolName])
 
         vmrIpList.extend(freeIps[:numInstancesToAllocate])
         del freeIps[:numInstancesToAllocate]

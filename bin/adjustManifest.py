@@ -27,16 +27,28 @@ def main(args):
 
     for job in manifest["jobs"]:
         poolName = job["name"]
+        if poolName not in deployedIpConfig:
+            continue
+
+        numToDelete = len(deployedIpConfig[poolName]) - job["instances"]
+        if numToDelete > 0:
+            instances = deployedIpConfig[poolName][:numToDelete]
+            deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(instances))
+            del deployedIpConfig[poolName][:numToDelete]
+
+    freeIps = list(set(freeIps) - set(deployedIpConfig["global"]))
+    freeIps.sort()
+
+    for job in manifest["jobs"]:
+        poolName = job["name"]
         if poolName not in commonUtils.POOL_TYPES:
             continue
 
         numInstancesToAllocate = job["instances"]
         vmrIpList = []
         if poolName in deployedIpConfig:
-            deployedJobIps = deployedIpConfig[poolName]
-            numIpsToReuse = min(len(deployedJobIps), numInstancesToAllocate)
-            vmrIpList = deployedJobIps[:numIpsToReuse]
-            numInstancesToAllocate -= numIpsToReuse
+            vmrIpList = deployedIpConfig[poolName]
+            numInstancesToAllocate -= len(deployedIpConfig[poolName])
 
         vmrIpList += freeIps[:numInstancesToAllocate]
         del freeIps[:numInstancesToAllocate]
