@@ -66,7 +66,8 @@ cd $SCRIPTPATH/..
 
 echo "Checking for existing deployment..."
 
-if ! $(2>&1 bosh vms | grep -q "No deployments"); then
+DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
    echo "A bosh deployment is already done, will shutdown the running VMs..."
    echo
    POOL_NAMES=$(py "getPoolNames")

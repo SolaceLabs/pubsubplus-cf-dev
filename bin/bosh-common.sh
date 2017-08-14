@@ -143,7 +143,10 @@ fi
 }
 
 function resolveConflictsAndRegenerateManifest() {
- python3 ${MY_BIN_HOME}/adjustManifest.py -m $MANIFEST_FILE -w $WORKSPACE -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME
+ DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+ if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ] && ! $(bosh vms | grep -q "No VMs"); then
+  python3 ${MY_BIN_HOME}/adjustManifest.py -m $MANIFEST_FILE -w $WORKSPACE -d $TEMPLATE_DIR -n $DEPLOYMENT_NAME
+ fi
 }
 
 function build() {
