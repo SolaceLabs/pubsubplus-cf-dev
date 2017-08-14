@@ -16,7 +16,10 @@ def main(args):
     with open(manifestFile, 'r') as f:
         manifest = yaml.load(f)
 
-    testSubnet = next(s for s in manifest["networks"] if s["name"] == "test-network")["subnets"][0]
+    foundNetworks = [s for s in manifest["networks"] if s["name"] == "test-network"]
+    foundNetwork = foundNetworks[0]
+    foundSubnets = foundNetwork["subnets"]
+    testSubnet = foundSubnets[0]
     testSubnet["static"] = []
 
     deployedIpConfig = prepareManifest.getDeployedIps(deploymentName, workspaceDir, [j["name"] for j in manifest['jobs']])
