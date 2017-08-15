@@ -97,6 +97,7 @@ Vagrant.configure(2) do |config|
   config.vm.box = conf['box_name'] || 'ubuntu/trusty-cloud-init'
   config.vm.box_url = conf['box_url'] if conf['box_url']
   config.vm.hostname = conf["host_name"] || "vagranthost"
+  config.disksize.size = '50GB'
 
   config.vm.provider "virtualbox" do |v|
     v.name = conf['vm.name'] || "vagrant.devcli"
