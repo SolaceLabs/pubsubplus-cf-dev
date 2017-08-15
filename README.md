@@ -71,6 +71,10 @@ On your computer, clone this project and start up the cli-tools vm. We will come
 git clone https://github.com/SolaceLabs/solace-messaging-cf-dev.git
 cd solace-messaging-cf-dev
 cd cli-tools
+~~~~
+You will need to install the `vagrant-disksize` plugin
+~~~~
+vagrant plugin install vagrant-disksize
 vagrant up
 ~~~~
 
