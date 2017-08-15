@@ -300,8 +300,7 @@ function setServiceBrokerVMRHostsEnvironment() {
     JOB=`py "getManifestJobByName" $MANIFEST_FILE $POOL`
     if [ "$(echo -n $JOB | wc -c)" -gt "0" ]; then
       IPS=$(echo -n $JOB | shyaml get-values networks.0.static_ips)
-      IFS=' ' read -r -a IPS <<< $IPS
-      IPSTR="[\"$(echo $(IFS=','; echo "${IPS[*]}") | sed s/,/\",\"/g)\"]"
+      IPSTR="[\"$(echo $IPS | sed s/\ /\",\"/g)\"]"
     else
       IPSTR="[]"
     fi
