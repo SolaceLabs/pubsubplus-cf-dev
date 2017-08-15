@@ -88,7 +88,7 @@ INSTALL_AND_CONFIGURE
 
 Vagrant.configure(2) do |config|
 
-  config.vm.synced_folder "../workspace", "/home/vagrant/workspace",type: "nfs"
+  config.vm.synced_folder "../workspace", "/home/ubuntu/workspace",type: "nfs"
   # provider configuration: vmware
   config.vm.provider "vmware_fusion" do |v|
     v.vmx["memsize"]  = conf['vm.ram'] || 1024
