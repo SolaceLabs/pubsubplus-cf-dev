@@ -51,7 +51,17 @@ done
 
 OPTIND=1 #Reset getopts
 
-export SOLACE_VMR_BOSH_RELEASE_FILE=$(ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1)
+SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-vmr-*.tgz"
+for f in $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER; do
+  if ! [ -e "$f" ]; then
+    echo "Could not find solace-vmr bosh release file: $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER"
+    exit 1
+  fi
+
+  export SOLACE_VMR_BOSH_RELEASE_FILE="$f"
+  break
+done
+
 export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
 
 export TEMPLATE_DIR="$SCRIPTPATH/../templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
