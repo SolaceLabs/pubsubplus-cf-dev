@@ -14,7 +14,7 @@ export STEMCELL_VERSION="3312.24"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
-source "commonUtils.sh"
+source $MY_BIN_HOME/commonUtils.sh
 
 function targetBosh() {
 
