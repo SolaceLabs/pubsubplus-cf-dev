@@ -47,7 +47,9 @@ while getopts :m:h opt; do
                 >&2 echo "Manifest must be a file."
                 exit 1
             fi;;
-        h) showUsage && exit 0;;
+        h)
+            showUsage
+            exit 0;;
         \?)
             echo $BASIC_USAGE
             >&2 echo "Found bad option: -$OPTARG"

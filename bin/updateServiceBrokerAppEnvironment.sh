@@ -165,7 +165,9 @@ RESET=1
 while getopts :rh opt; do
   case $opt in
     r) RESET=0;;
-    h) showUsage && exit 0;;
+    h) 
+        showUsage
+        exit 0;;
     \?) 
         echo $BASIC_USAGE
         >&2 echo "Found bad option: -$OPTARG"

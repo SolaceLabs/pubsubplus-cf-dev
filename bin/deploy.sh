@@ -7,18 +7,19 @@ export LOG_FILE="/tmp/bosh_deploy.log"
 
 set -e
 
-GEN_NEW_MANIFEST=0
+GEN_NEW_MANIFEST_FILE=0
 MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
+INSTALL_BROKER=1
 
 CMD_NAME=`basename $0`
-BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-h]"
+BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-s][-h]"
 
 function showUsage() {
     read -r -d '\0' USAGE_DESCRIPTION << EOM
 $BASIC_USAGE
 
 Deploy BOSH VMRs.
-Giving no options will execute a basic bosh-manifest generator.
+Omitting -m and -c will execute a basic bosh-manifest generator.
 
 Note: the -m and -c options cannot be used simultaneously.
 
@@ -27,13 +28,14 @@ optional arguments:
         Manifest that will be deployed
   -c CI_CONFIG_FILE
         A Concourse property file from which a new bosh-manifest will be generated
+  -s    Install the service broker after the deployment is finished
   -h    Show this help message and exit
 \0
 EOM
     echo "$USAGE_DESCRIPTION"
 }
 
-while getopts :m:c:h opt; do
+while getopts :m:c:sh opt; do
     case $opt in
         m)
             EXISTING_MANIFEST_FILE="$OPTARG"
@@ -48,7 +50,10 @@ while getopts :m:c:h opt; do
             $SCRIPTPATH/parser/converter.py --in-file="$CI_CONFIG_FILE" --out-file="$MANIFEST_FILE"
             echo
             GEN_NEW_MANIFEST_FILE=1;;
-        h) showUsage && exit 0;;
+        s) INSTALL_BROKER=0;;
+        h)
+            showUsage
+            exit 0;;
         \?)
             echo $BASIC_USAGE
             >&2 echo "Found bad option: -$OPTARG"
@@ -77,5 +82,11 @@ fi
 $SCRIPTPATH/optimizeManifest.py $MANIFEST_FILE
 echo
 $SCRIPTPATH/deployBoshManifest.sh $MANIFEST_FILE
+echo
+
+if [ "$INSTALL_BROKER" -eq "0" ]; then
+    $SCRIPTPATH/installServiceBroker.sh
+fi
+
 echo
 $SCRIPTPATH/updateServiceBrokerAppEnvironment.sh
