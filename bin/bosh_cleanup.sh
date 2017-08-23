@@ -5,62 +5,33 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export LOG_FILE="/tmp/bosh_cleanup.log"
 
-source "$SCRIPTPATH/commonUtils.sh"
-
 set -e
 
-unset COMMON_PARAMS
+CMD_NAME=`basename $0`
+BASIC_USAGE="usage: $CMD_NAME [-h]"
 
-if $(2>&1 bosh vms | grep -q "No deployments"); then
-  echo "No deployments detected. Nothing to do..."
-  echo "Terminating cleanup..."
-  exit 0
-fi
+function showUsage() {
+    read -r -d '\0' USAGE_DESCRIPTION << EOM
+$BASIC_USAGE
 
-while getopts :a opt; do
-  case $opt in
-    a)
-      POOL_NAMES=$(py "getPoolNames")
-      for POOL in ${POOL_NAMES[@]}; do
-        VM_FOUND_COUNT=`bosh vms | grep $POOL | wc -l`
+Cleanup the entire bosh deployment and update the service-broker app's environment.
 
-        if [ "$VM_FOUND_COUNT" -gt "0" ]; then
-          if [ "$(py "getHaEnabled" $POOL)" -eq "1" ]; then
-            VM_FOUND_COUNT=$(($VM_FOUND_COUNT / 3))
-          fi
+optional arguments:
+  -h            show this help message and exit
+\0
+EOM
+    echo "$USAGE_DESCRIPTION"
+}
 
-          COMMON_PARAMS+=" -p $POOL:$VM_FOUND_COUNT"
-        fi
-      done
-      ;;
-  esac
+while getopts ":h" arg; do
+    case "$arg" in
+        h) showHelp && exit 0;;
+        \?)
+            echo $BASIC_USAGE
+            >&2 echo "Found bad option: -$OPTARG"
+            exit 1;;
+    esac
 done
 
-OPTIND=1 #Reset getopts
-
-echo "$0 - Settings"
-
-COMMON=${COMMON:-bosh-common.sh}
-source $SCRIPTPATH/$COMMON $COMMON_PARAMS
-
-cd $SCRIPTPATH/..
-
-echo "Logs in file $LOG_FILE"
-
-DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
-if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
-   echo "Downloading deployment $DEPLOYMENT_NAME"
-   echo "yes" | bosh download manifest $DEPLOYMENT_NAME $WORKSPACE/solace.yml
-   bosh deployment $WORKSPACE/solace.yml
-   bosh deployment
-
-   for I in ${!VM_JOB[@]}; do
-     echo
-     echo "Cleanup    VM/$I           ${VM_JOB[I]}"
-     shutdownVMRJobs ${VM_JOB[I]} | tee $LOG_FILE
-   done
-fi
-
-deleteDeploymentAndRelease | tee $LOG_FILE
-deleteOrphanedDisks | tee $LOG_FILE
-resetServiceBrokerEnvironment
+$SCRIPTPATH/teardownBoshDeployment.sh
+$SCRIPTPATH/updateServiceBrokerAppEnvironment.sh -r

@@ -1,4 +1,4 @@
-public_key: |-
+cert_pem: |-
   -----BEGIN CERTIFICATE-----
   MIIDnzCCAoegAwIBAgIJAKEsd5V3+exFMA0GCSqGSIb3DQEBCwUAMGUxCzAJBgNV
   BAYTAkNBMQswCQYDVQQIDAJPTjEPMA0GA1UEBwwGS2FuYXRhMQ8wDQYDVQQKDAZT
@@ -21,7 +21,7 @@ public_key: |-
   q8cMA/GaUHCCyf4F0DQcOs8HSmNDYVHkgsP1HKUra2dWjZcXwRkzAuoLJgspG1GK
   3PVkdvOXQ9ROEMS+OQw0ubc0mQ==
   -----END CERTIFICATE-----
-private_key: |-
+private_key_pem: |-
   -----BEGIN RSA PRIVATE KEY-----
   MIIEpQIBAAKCAQEA4U3oyVABZuRGJoMzUX4y+KA6ImOucCQQpLK4X3ZQj4cBf3OG
   p0Z8eNePgHua2LId7qs4K3R2qWxQy3Mgl23FxO+XKzaEpCP+RjRJAuN51rbrw5eq
@@ -50,14 +50,3 @@ private_key: |-
   P5Z/XHQfurMSM19OUK5EQrSvb7TZKcxV2m3ZBMXg7ccUjh+ZcR3X7rM=
   -----END RSA PRIVATE KEY-----
 
-jobs:
-    - <<: (( merge ))
-      properties:
-          <<: (( merge ))
-          cert_pem: (( public_key ))
-          private_key_pem: (( private_key ))
-    - name: UpdateServiceBroker
-      properties:
-          <<: (( merge ))
-          cert_pem: (( public_key ))
-          private_key_pem: (( private_key ))

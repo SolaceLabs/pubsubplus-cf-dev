@@ -1,0 +1,48 @@
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" type="text/css" href="../mypy-html.css">
+</head>
+<body>
+<h2>solyaml</h2>
+<table>
+<caption>solyaml.py</caption>
+<tbody><tr>
+<td class="table-lines"><pre><span id="L1" class="lineno"><a class="lineno" href="#L1">1</a></span>
+<span id="L2" class="lineno"><a class="lineno" href="#L2">2</a></span>
+<span id="L3" class="lineno"><a class="lineno" href="#L3">3</a></span>
+<span id="L4" class="lineno"><a class="lineno" href="#L4">4</a></span>
+<span id="L5" class="lineno"><a class="lineno" href="#L5">5</a></span>
+<span id="L6" class="lineno"><a class="lineno" href="#L6">6</a></span>
+<span id="L7" class="lineno"><a class="lineno" href="#L7">7</a></span>
+<span id="L8" class="lineno"><a class="lineno" href="#L8">8</a></span>
+<span id="L9" class="lineno"><a class="lineno" href="#L9">9</a></span>
+<span id="L10" class="lineno"><a class="lineno" href="#L10">10</a></span>
+<span id="L11" class="lineno"><a class="lineno" href="#L11">11</a></span>
+<span id="L12" class="lineno"><a class="lineno" href="#L12">12</a></span>
+<span id="L13" class="lineno"><a class="lineno" href="#L13">13</a></span>
+<span id="L14" class="lineno"><a class="lineno" href="#L14">14</a></span>
+<span id="L15" class="lineno"><a class="lineno" href="#L15">15</a></span>
+<span id="L16" class="lineno"><a class="lineno" href="#L16">16</a></span>
+</pre></td>
+<td class="table-code"><pre><span class="line-empty"># Found on stackoverflow</span>
+<span class="line-empty"># https://stackoverflow.com/questions/6432605/any-yaml-libraries-in-python-that-support-dumping-of-long-strings-as-block-liter</span>
+<span class="line-empty"># Fixes the yaml dumps not being formatted correctly and having weird newline issues</span>
+<span class="line-empty"></span>
+<span class="line-empty">import yaml</span>
+<span class="line-empty"></span>
+<span class="line-empty">class folded_unicode(str): pass</span>
+<span class="line-empty">class literal_unicode(str): pass</span>
+<span class="line-empty"></span>
+<span class="line-any">def _folded_unicode_representer(dumper, data: str):</span>
+<span class="line-any">    return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='&gt;')</span>
+<span class="line-any">def _literal_unicode_representer(dumper, data: str):</span>
+<span class="line-any">    return dumper.represent_scalar(u'tag:yaml.org,2002:str', data, style='|')</span>
+<span class="line-empty"></span>
+<span class="line-any">yaml.add_representer(literal_unicode, _literal_unicode_representer)</span>
+<span class="line-any">yaml.add_representer(folded_unicode, _folded_unicode_representer)</span>
+</pre></td>
+</tr></tbody>
+</table>
+</body>
+</html>

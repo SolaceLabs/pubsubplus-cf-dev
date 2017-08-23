@@ -5,136 +5,75 @@ export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export LOG_FILE="/tmp/bosh_deploy.log"
 
-source "$SCRIPTPATH/commonUtils.sh"
-
 set -e
-unset COMMON_PARAMS
 
-while getopts :m: opt; do
-  case $opt in
-    m)
-      if (echo "$OPTARG" | grep -qE "^/.*"); then
-        EXISTING_MANIFEST_FILE="$OPTARG"
-      else
-        EXISTING_MANIFEST_FILE="`pwd`/$OPTARG"
-      fi
+GEN_NEW_MANIFEST=0
+MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
 
-      if ! [ -e "$EXISTING_MANIFEST_FILE" ]; then
-        echo "Manifest file cannot be found."
-        exit 1
-      elif ! [ -f "$EXISTING_MANIFEST_FILE" ]; then
-        echo "Manifest must be a file."
-        exit 1
-      fi
+CMD_NAME=`basename $0`
+BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-h]"
 
-      if [ "$(cat $EXISTING_MANIFEST_FILE | grep cert_pem | wc -l)" -le "0" ]; then
-        COMMON_PARAMS+=" -n"
-      fi
+function showUsage() {
+    read -r -d '\0' USAGE_DESCRIPTION << EOM
+$BASIC_USAGE
 
-      JOBS_TO_DEPLOY=$(py "getManifestJobNames" $EXISTING_MANIFEST_FILE)
-      for JOB_NAME in ${JOBS_TO_DEPLOY[@]}; do
-        JOB=$(py "getManifestJobByName" $EXISTING_MANIFEST_FILE $JOB_NAME)
-        MANIFEST_INSTANCE_CNT=`echo $JOB | shyaml get-value instances`
-        POOL=`echo $JOB | shyaml get-value properties.pool_name`
+Deploy BOSH VMRs.
+Giving no options will execute a basic bosh-manifest generator.
 
-        if [ "$MANIFEST_INSTANCE_CNT" -gt "0" ]; then
-          if [ "$(py "getHaEnabled" $POOL)" -eq "1" ]; then
-            MANIFEST_INSTANCE_CNT=$(($MANIFEST_INSTANCE_CNT / 3))
-          fi
+Note: the -m and -c options cannot be used simultaneously.
 
-          COMMON_PARAMS+=" -p $POOL:$MANIFEST_INSTANCE_CNT"
-        fi
-      done
-      ;;
-  esac
+optional arguments:
+  -m MANIFEST_FILE
+        Manifest that will be deployed
+  -c CI_CONFIG_FILE
+        A Concourse property file from which a new bosh-manifest will be generated
+  -h    Show this help message and exit
+\0
+EOM
+    echo "$USAGE_DESCRIPTION"
+}
+
+while getopts :m:c:h opt; do
+    case $opt in
+        m)
+            EXISTING_MANIFEST_FILE="$OPTARG"
+            echo "Will use bosh-lite manifest file $EXISTING_MANIFEST_FILE"
+            echo "Copied $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
+            cp $EXISTING_MANIFEST_FILE $MANIFEST_FILE
+            GEN_NEW_MANIFEST_FILE=1;;
+        c)
+            CI_CONFIG_FILE="$OPTARG"
+            echo "Will convert CI-config file, $OPTARG , to bosh-lite manifest file, $MANIFEST_FILE"
+            $SCRIPTPATH/parser/converter.py --in-file="$CI_CONFIG_FILE" --out-file="$MANIFEST_FILE"
+            GEN_NEW_MANIFEST_FILE=1;;
+        h) showUsage && exit 0;;
+        \?)
+            echo $BASIC_USAGE
+            >&2 echo "Found bad option: -$OPTARG"
+            exit 1;;
+    esac
 done
 
-OPTIND=1 #Reset getopts
-
-SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-vmr-*.tgz"
-for f in $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER; do
-  if ! [ -e "$f" ]; then
-    echo "Could not find solace-vmr bosh release file: $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER"
+if [ -n "$EXISTING_MANIFEST_FILE" ] && [ -n "$CI_CONFIG_FILE" ]; then
+    >&2 echo "The -m and -c options cannot be used simultaneously"
     exit 1
-  fi
-
-  export SOLACE_VMR_BOSH_RELEASE_FILE="$f"
-  break
-done
-
-export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-
-export TEMPLATE_DIR="$SCRIPTPATH/../templates/$SOLACE_VMR_BOSH_RELEASE_VERSION"
-export MANIFEST_FILE=${MANIFEST_FILE:-"$WORKSPACE/bosh-solace-manifest.yml"}
-
-echo "$0 - Settings"
-echo "    SOLACE VMR     $SOLACE_VMR_BOSH_RELEASE_VERSION - $SOLACE_VMR_BOSH_RELEASE_FILE"
-
-COMMON=${COMMON:-bosh-common.sh}
-source $SCRIPTPATH/$COMMON $COMMON_PARAMS
-cd $SCRIPTPATH/..
-
-echo "Checking for existing deployment..."
-
-DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
-if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
-   echo "A bosh deployment is already done, will shutdown the running VMs..."
-   echo
-   POOL_NAMES=$(py "getPoolNames")
-   for POOL in ${POOL_NAMES[@]}; do
-      VM_FOUND_COUNT=$(bosh vms | grep $POOL | wc -l)
-      echo "$POOL: Found $VM_FOUND_COUNT running VMs"
-      echo
-      I=0
-      while [ "$I" -lt "$VM_FOUND_COUNT" ]; do
-         echo "Shutting down $POOL/$I"
-         shutdownVMRJobs $POOL/$I | tee $LOG_FILE
-         echo
-         I=$(($I+1))
-      done
-   done
-else
-   echo "No existing bosh deployment found. Continuing..."
 fi
 
-if [ -n "$EXISTING_MANIFEST_FILE" ]; then
-    echo "Using existing MANIFEST_FILE=$EXISTING_MANIFEST_FILE"
-    if ! [ "$EXISTING_MANIFEST_FILE" -ef "$MANIFEST_FILE" ]; then
-        echo "Copying $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
-        cp $EXISTING_MANIFEST_FILE $MANIFEST_FILE
-    fi
-    resolveConflictsAndRegenerateManifest
-else
-    prepareManifest
+if $GEN_NEW_MANIFEST_FILE; then
+    echo "A new manifest will be generated..."
+    echo
+    $SCRIPTPATH/generateBoshManifest.py -h
+    echo
+    echo "MANIFEST_FILE set to $MANIFEST_FILE"
+    echo
+    read -p "Please indicate the options that will be used to generate this manifest (Will proceed with the default settings if none provided): " MANIFEST_GEN_OPTS
+    echo
+    $SCRIPTPATH/generateBoshManifest.py $MANIFEST_GEN_OPTS
+    echo
 fi
 
+$SCRIPTPATH/optimizeManifest.py $MANIFEST_FILE
 echo
-echo "You can see deployment logs in $LOG_FILE"
-
-prepareBosh
-
-uploadAndDeployRelease
-
-setupServiceBrokerEnvironment
-
-VMS_FOUND_COUNT=`bosh vms | grep -E $(echo ${VM_JOB[@]} | tr " " "|") | wc -l`
-
-if [ "$VMS_FOUND_COUNT" -eq "${#VM_JOB[@]}" ]; then
-   echo "bosh deployment is present, VMs called:"
-
-   for VM in ${VM_JOB[@]}; do
-      echo "    $VM"
-   done
-
-   echo
-   echo "You can ssh to them using: bosh ssh [VM_NAME]"
-   echo "  e.g. bosh ssh ${VM_JOB[0]}"
-else
-   for VM in ${VM_JOB[@]}; do
-      VM_FOUND_COUNT = `bosh vms | grep $VM | wc -l`
-      if [ "$VM_FOUND_COUNT" -eq "0" ]; then
-         echo "Could not find VM called $VM"
-      fi
-   done
-fi
-
+$SCRIPTPATH/deployBoshManifest.sh $MANIFEST_FILE
+echo
+$SCRIPTPATH/updateServiceBrokerAppEnvironment.sh
