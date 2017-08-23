@@ -38,13 +38,15 @@ while getopts :m:c:h opt; do
         m)
             EXISTING_MANIFEST_FILE="$OPTARG"
             echo "Will use bosh-lite manifest file $EXISTING_MANIFEST_FILE"
-            echo "Copied $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
             cp $EXISTING_MANIFEST_FILE $MANIFEST_FILE
+            echo "Copied $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
+            echo
             GEN_NEW_MANIFEST_FILE=1;;
         c)
             CI_CONFIG_FILE="$OPTARG"
             echo "Will convert CI-config file, $OPTARG , to bosh-lite manifest file, $MANIFEST_FILE"
             $SCRIPTPATH/parser/converter.py --in-file="$CI_CONFIG_FILE" --out-file="$MANIFEST_FILE"
+            echo
             GEN_NEW_MANIFEST_FILE=1;;
         h) showUsage && exit 0;;
         \?)
@@ -59,7 +61,7 @@ if [ -n "$EXISTING_MANIFEST_FILE" ] && [ -n "$CI_CONFIG_FILE" ]; then
     exit 1
 fi
 
-if $GEN_NEW_MANIFEST_FILE; then
+if [ "$GEN_NEW_MANIFEST_FILE" -eq "0" ]; then
     echo "A new manifest will be generated..."
     echo
     $SCRIPTPATH/generateBoshManifest.py -h
