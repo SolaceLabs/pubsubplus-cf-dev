@@ -39,8 +39,13 @@ def getManifestJobByName(manifestFile, jobName):
         if job != None:
             print(yaml.dump(job, default_flow_style=True))
 
-def getManifestJobNames(manifestFile):
+def getManifestJobNames(manifestFile, vmrFilter=True):
     with open(manifestFile, 'r') as f:
-        jobNames = [j["name"] for j in yaml.load(f)["jobs"]]
+        jobs = yaml.load(f)["jobs"]
+
+        if vmrFilter:
+            jobs = [j for j in jobs if "pool_name" in j["properties"]]
+
+        jobNames = [j["name"] for j in jobs]
         print(" ".join(jobNames))
 
