@@ -100,8 +100,6 @@ for JOB_NAME in ${VMR_JOBS[@]}; do
 
     if [ "$(py "getHaEnabled" $POOL)" -eq "1" ]; then
         HA_ENABLED+=(true)
-        NUM_INSTANCE=$(($NUM_INSTANCE * 3))
-        NUM_INSTANCES[$i]=$NUM_INSTANCE
     else
         HA_ENABLED+=(false)
     fi

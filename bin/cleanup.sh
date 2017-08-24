@@ -7,7 +7,7 @@ export LOG_FILE="/tmp/bosh_cleanup.log"
 
 set -e
 
-UNINSTALL_BROKER=1
+UNINSTALL_BROKER=false
 CMD_NAME=`basename $0`
 BASIC_USAGE="usage: $CMD_NAME [-s][-h]"
 
@@ -27,7 +27,7 @@ EOM
 
 while getopts ":sh" arg; do
     case "$arg" in
-        s) UNINSTALL_BROKER=0;;
+        s)  UNINSTALL_BROKER=true;;
         h)
             showUsage
             exit 0;;
@@ -40,7 +40,7 @@ done
 
 $SCRIPTPATH/cleanupBoshDeployment.sh
 
-if [ "$UNINSTALL_BROKER" -eq "0" ]; then
+if $UNINSTALL_BROKER; then
     $SCRIPTPATH/uninstallServiceBroker.sh
 else
     $SCRIPTPATH/updateServiceBrokerAppEnvironment.sh -r
