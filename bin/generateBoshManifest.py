@@ -104,8 +104,17 @@ def main(args):
     deploymentName = args["deploymentName"]
     poolDefs = [p for p in args["poolConfigs"] if p["numInstances"] > 0]
     certEnabled = not args["noCert"]
-    outFile = os.environ('MANIFEST_FILE') if 'MANIFEST_FILE' in os.environ else args["outFile"]
     templateDir = getTemplatesDir()
+
+    if 'MANIFEST_FILE' in os.environ:
+        manifestEnv = os.environ['MANIFEST_FILE']
+        print("Found exported environment variable MANIFEST_FILE: {}".format(manifestEnv))
+        outFile = os.path.expanduser(manifestEnv)
+    else:
+        outFile = args["outFile"]
+
+    if not os.path.isabs(outFile):
+        outFile = os.path.join(BIN_DIR, outFile)
 
     print("Generating manifest {}".format(outFile))
     print("Using manifest templates dir {}".format(templateDir))
