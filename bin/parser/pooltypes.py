@@ -5,10 +5,10 @@ from typing import Dict, Any, Optional, List
 class PoolType:
     freeIpAddress = ipaddress.IPv4Address('10.244.0.3')
     SSH_PORT = 2222 #const
-    def __init__(self, name : str, numInstancesForType : int, solaceDockerImageName: str) -> None:
+    def __init__(self, name : str, isHA : bool, solaceDockerImageName: str) -> None:
         self.name = name
         # HA is 3, non-HA is 1
-        self.numInstancesForType = numInstancesForType
+        self.isHA = isHA
         self.solaceDockerImageName = solaceDockerImageName
 
     @classmethod
@@ -25,13 +25,12 @@ class PoolType:
             return int(commandLineArgs)
         fileValue = inputFile["jobs"][self.name]["resource_config"]["instances"]
         if fileValue == "automatic":
-            fileValue = 1
+            fileValue = 1 if not self.isHA else 3
         return int(fileValue)
 
-    def generateBoshLiteManifestJob(self, properties : Dict[str, Any], requestedInstances: int, outFile: List[Dict[str, Any]]) -> None:
-        if requestedInstances == 0:
+    def generateBoshLiteManifestJob(self, properties : Dict[str, Any], numInstances: int, outFile: List[Dict[str, Any]]) -> None:
+        if numInstances == 0:
             return
-        numInstances = self.numInstancesForType * requestedInstances
         output = {}
         output["name"] = self.name
         output["instances"] = numInstances 
@@ -102,8 +101,8 @@ class PoolType:
         output["properties"]["cf_space"] = "solace-messaging"
         outFile["jobs"].append(output)
 
-Shared = PoolType("Shared-VMR", 1, "latest-evaluation")
-Community = PoolType("Community-VMR", 1, "latest-community")
-Large = PoolType("Large-VMR", 1, "latest-evaluation")
-MediumHA = PoolType("Medium-HA-VMR", 1, "latest-evaluation")
-LargeHA = PoolType("Large-HA-VMR", 1, "latest-evaluation")
+Shared = PoolType("Shared-VMR", False, "latest-evaluation")
+Community = PoolType("Community-VMR", False, "latest-community")
+Large = PoolType("Large-VMR", False, "latest-evaluation")
+MediumHA = PoolType("Medium-HA-VMR", True, "latest-evaluation")
+LargeHA = PoolType("Large-HA-VMR", True, "latest-evaluation")

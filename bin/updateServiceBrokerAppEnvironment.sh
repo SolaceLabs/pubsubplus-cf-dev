@@ -32,16 +32,19 @@ EOM
 
 function setupServiceBrokerEnvironment() {
   echo "In setupServiceBrokerEnvironment - doing cf target..."
-  cf target -o solace -s solace-messaging
-  setServiceBrokerSimpleProperty starting_port STARTING_PORT
-  setServiceBrokerSimpleProperty admin_password VMR_ADMIN_PASSWORD
-  setServiceBrokerVMRHostsEnvironment
-  setServiceBrokerSyslogEnvironment
-  setServiceBrokerLDAPEnvironment
-  setServiceBrokerTLSEnvironment
+  if cf target -o solace -s solace-messaging; then
+    setServiceBrokerSimpleProperty starting_port STARTING_PORT
+    setServiceBrokerSimpleProperty admin_password VMR_ADMIN_PASSWORD
+    setServiceBrokerVMRHostsEnvironment
+    setServiceBrokerSyslogEnvironment
+    setServiceBrokerLDAPEnvironment
+    setServiceBrokerTLSEnvironment
 
-  echo restaging message broker...
-  cf restage solace-messaging
+    echo restaging message broker...
+    cf restage solace-messaging
+  else
+    >&2 echo "solace organization does not exist, please install the service broker and re-run $CMD_NAME"
+  fi
 }
 
 function resetServiceBrokerEnvironment() {
