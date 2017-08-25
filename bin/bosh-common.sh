@@ -173,12 +173,17 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
- if [ "$RELEASE_FOUND_COUNT" -eq "0" ]; then
+ if [ "$RELEASE_FOUND_COUNT" -gt "0" ]; then
+  local UPLOADED_RELEASE_VERSION=`2>&1 bosh releases | grep solace-vmr | grep -woP "[\w.]+(?=\*)"`
+ fi
+
+ if [ "$RELEASE_FOUND_COUNT" -eq "0" ] || \
+    [ "$SOLACE_VMR_BOSH_RELEASE_VERSION" '>' "$UPLOADED_RELEASE_VERSION" ]; then
   echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
 
   bosh upload release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "releases solace-vmr already exists. Skipping release upload..."
+  echo "A solace-vmr release with version greater than or equal to $SOLACE_VMR_BOSH_RELEASE_VERSION already exists. Skipping release upload..."
  fi
 
  echo "Calling bosh deployment"

@@ -88,7 +88,9 @@ def main(args):
         numToDelete = len(deployedIpConfig[poolName]) - job["instances"]
         if numToDelete > 0:
             instances = deployedIpConfig[poolName][:numToDelete]
-            deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(instances))
+            # Not supported: https://www.pivotaltracker.com/n/projects/956238/stories/73552140
+            #print("Recycling static IPs and adding them back to the IP pool: {}".format(instances))
+            #deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(instances))
             del deployedIpConfig[poolName][:numToDelete]
 
     freeIps = list(set(freeIps) - set(deployedIpConfig["global"]))
