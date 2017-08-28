@@ -205,9 +205,16 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
  echo "yes" | bosh deploy | tee -a $LOG_FILE
  bosh vms
- DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+ DEPLOYMENT_FOUND_COUNT=`2>&1 bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
-   echo "bosh did not find any deployments - deployment likely failed"
+   >&2 echo "bosh did not find any deployments - deployment likely failed"
+   exit 1
+ fi
+
+ POOL_NAMES=$(py "getPoolNames")
+ FAILED_VMS_COUNT=`2>&1 bosh vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | grep -v running | wc -l`
+ if [ "$FAILED_VMS_COUNT" -gt "0" ]; then
+   >&2 echo "Found non-running VMs - deployment likely failed"
    exit 1
  fi
 
