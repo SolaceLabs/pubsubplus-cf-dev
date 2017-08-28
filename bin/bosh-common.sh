@@ -212,7 +212,7 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  fi
 
  POOL_NAMES=$(py "getPoolNames")
- FAILED_VMS_COUNT=`2>&1 bosh vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | grep -v running | wc -l`
+ FAILED_VMS_COUNT=`2>&1 bosh vms | grep -E "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | grep -v running | wc -l`
  if [ "$FAILED_VMS_COUNT" -gt "0" ]; then
    >&2 echo "Found non-running VMs - deployment likely failed"
    exit 1
