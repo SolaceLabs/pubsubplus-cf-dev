@@ -46,10 +46,6 @@ echo "Logs in file $LOG_FILE"
 
 DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
-   echo "Downloading deployment $DEPLOYMENT_NAME"
-   echo "yes" | bosh download manifest $DEPLOYMENT_NAME $WORKSPACE/solace.yml
-   bosh deployment $WORKSPACE/solace.yml
-   bosh deployment
    shutdownAllVMRJobs
 fi
 

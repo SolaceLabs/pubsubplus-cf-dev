@@ -93,6 +93,8 @@ function shutdownVMRJobs() {
 function shutdownAllVMRJobs() {
     local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
     echo "yes" | bosh download manifest $DEPLOYMENT_NAME $DEPLOYED_MANIFEST
+    bosh deployment $DEPLOYED_MANIFEST
+    bosh deployment
     echo "Shutting down all VMR jobs..."
     VMR_JOBS=$(py "getManifestJobNames" $DEPLOYED_MANIFEST)
     for VMR_JOB_NAME in ${VMR_JOBS[@]}; do
