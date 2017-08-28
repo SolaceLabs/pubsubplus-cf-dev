@@ -1,24 +1,13 @@
-import ipaddress
 from solyaml import literal_unicode
 from typing import Dict, Any, Optional, List
 
 class PoolType:
-    freeIpAddress = ipaddress.IPv4Address('10.244.0.3')
     SSH_PORT = 2222 #const
     def __init__(self, name : str, isHA : bool, solaceDockerImageName: str) -> None:
         self.name = name
         # HA is 3, non-HA is 1
         self.isHA = isHA
         self.solaceDockerImageName = solaceDockerImageName
-
-    @classmethod
-    def _allocateIpAddress(cls) -> ipaddress.IPv4Address:
-        ipAddress = cls.freeIpAddress
-        cls.freeIpAddress = cls.freeIpAddress + 1
-        # The route for bosh-lite is only added for this subnet
-        # All generated VMR IPs have to be on this subnet
-        assert ipAddress in ipaddress.ip_network('10.244.0.0/16')
-        return ipAddress
 
     def getNumInstances(self, commandLineArgs: Optional[int], inputFile : Dict[str, Any]) -> int:
         if commandLineArgs is not None:
@@ -45,9 +34,6 @@ class PoolType:
         output["networks"] = []
         output["networks"].append({})
         output["networks"][0]["name"] = "test-network"
-        output["networks"][0]["static_ips"] = []
-        for x in range(numInstances):
-            output["networks"][0]["static_ips"].append(str(PoolType._allocateIpAddress()))
         output["properties"]["containers"] = []
         output["properties"]["containers"].append({})
         output["properties"]["containers"][0]["name"] = "solace"

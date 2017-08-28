@@ -67,10 +67,9 @@ def getTemplatesDir():
     return os.path.join(TEMPLATES_DIR, exportedEnvs[versionEnvName])
     
 
-def writeManifest(outFile, deploymentName, testNetworkIps, vmrJobs, brokerJob, certEnabled):
+def writeManifest(outFile, deploymentName, vmrJobs, brokerJob, certEnabled):
     manifest = TEMPLATE.get_template("solace-vmr-deployment.yml").render(
         name                    = deploymentName,
-        testNetwork             = {"static_ips": testNetworkIps},
         vmrJobs                 = vmrJobs,
         updateServiceBrokerJob  = brokerJob,
         usingCerts              = certEnabled
@@ -80,25 +79,6 @@ def writeManifest(outFile, deploymentName, testNetworkIps, vmrJobs, brokerJob, c
         print(manifest, file=f)
 
     print("Manifest file generated to {}".format(outFile))
-
-def getTestNetworkIps():
-    testNetwork = yaml.load(TEMPLATE.get_template("test-network.yml").render())[0]
-
-    testSubnets = [s for s in testNetwork["subnets"]]
-    testSubnet = testSubnets[0]
-    otherSubnets = testSubnets[1:]
-
-    testIpSubnet = ipaddress.ip_network(testSubnet["range"])
-    otherIpSubnets = [ipaddress.ip_network(s["range"]) for s in otherSubnets]
-    subnetGateway = testSubnet["gateway"]
-
-    overlapOtherIpSubnets = [s for s in otherIpSubnets if testIpSubnet.overlaps(s)]
-    for otherIpSubnet in overlapOtherIpSubnets:
-        testIpSubnet = testIpSubnet.address_exclude(otherIpSubnet)
-
-    testHosts = [h.exploded for h in testIpSubnet.hosts()]
-    testHosts.remove(subnetGateway)
-    return testHosts
 
 def main(args):
     deploymentName = args["deploymentName"]
@@ -121,27 +101,10 @@ def main(args):
 
     initTemplateEnvironment(templateDir)
     vmrJobs = []
-    testNetworkIpList = []
     brokerVmrProps = {}
-    freeIps = getTestNetworkIps()
 
     # Pre 1.1.0 Compatibility: Everything that uses this is for backwards comp support
     genBrokerJob =  os.path.exists(os.path.join(templateDir, "update-service-broker-job.yml"))
-
-    if genBrokerJob:
-        updateBrokerIp = freeIps.pop(0)
-        testNetworkIpList.append(updateBrokerIp)
-
-    maxAvailableVMs = len(freeIps)
-    numSpecifiedVMs = sum([p["numInstances"] for p in poolDefs])
-    if maxAvailableVMs < numSpecifiedVMs:
-        raise ValueError(
-            "Generating the Manifest failed. "
-            "Total number of instances exceeded the maximum capacity of the subnet.\n\n" +
-            "Please reduce the number of VMR instances:\n" +
-            "   Max available VMs: {}\n".format(maxAvailableVMs) +
-            "   Total given VMs:   {}"  .format(numSpecifiedVMs))
-        sys.exit(1)
 
     for poolDef in poolDefs:
         poolName = poolDef["poolName"]
@@ -149,33 +112,24 @@ def main(args):
         numInstances = poolDef["numInstances"]
         solaceDockerImageName = commonUtils.POOL_TYPES[poolName].solaceDockerImageName
 
-        numInstancesToAllocate = numInstances
-        vmrIpList = freeIps[:numInstancesToAllocate]
-        del freeIps[:numInstancesToAllocate]
-
         vmrJob = {}
         vmrJob["name"] = poolName
         vmrJob["poolName"] = poolName
-        vmrJob["static_ips"] = vmrIpList
-        vmrJob["numInstances"] = len(vmrIpList)
+        vmrJob["numInstances"] = numInstances
         vmrJob["solaceDockerFile"] =  DOCKERFILE_STRING.format(solaceDockerImageName)
         vmrJobs.append(vmrJob)
 
-        testNetworkIpList += vmrIpList
-
         if genBrokerJob:
             vmrUpdate = {}
-            vmrUpdate["ipList"] = vmrIpList
-            vmrUpdate["numInstances"] = len(vmrIpList)
+            vmrUpdate["numInstances"] = numInstances
             brokerVmrProps[listName] = vmrUpdate
 
     brokerJob = None
     if genBrokerJob:
         brokerJob = {}
-        brokerJob["ip"] = updateBrokerIp
         brokerJob["vmrPropsList"] = brokerVmrProps
 
-    writeManifest(outFile, deploymentName, testNetworkIpList, vmrJobs, brokerJob, certEnabled)
+    writeManifest(outFile, deploymentName, vmrJobs, brokerJob, certEnabled)
 
 def instancedPool(arg):
     p = {}

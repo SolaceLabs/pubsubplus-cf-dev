@@ -30,10 +30,8 @@ EOM
 while getopts ":h" arg; do
     case "$arg" in
         h) showHelp && exit 0;;
-        \?)
-            echo $BASIC_USAGE
-            >&2 echo "Found bad option: -$OPTARG"
-            exit 1;;
+        \?) echo $BASIC_USAGE && >&2 echo "Found bad option: -$OPTARG" && exit 1;;
+        :) echo $BASIC_USAGE && >&2 echo "Missing argument for option: -$OPTARG" && exit 1;;
     esac
 done
 
