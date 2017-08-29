@@ -176,7 +176,9 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  targetBosh
 
  if [ "$RELEASE_FOUND_COUNT" -gt "0" ]; then
-  local UPLOADED_RELEASE_VERSION=`2>&1 bosh releases | grep solace-vmr | grep -woP "[\w-.]+(?=\*)"`
+  local UPLOADED_RELEASE_VERSION=`bosh releases | grep solace-vmr | awk '{ print $4 }'`
+  # remove trailing '*'
+  UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
  fi
 
  if [ "$RELEASE_FOUND_COUNT" -eq "0" ] || \
