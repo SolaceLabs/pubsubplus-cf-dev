@@ -122,7 +122,7 @@ function setServiceBrokerVMRHostsEnvironment() {
     JOB=`py "getManifestJobByName" $DEPLOYED_MANIFEST_FILE $POOL`
     if [ "$(echo -n $JOB | wc -c)" -gt "0" ]; then
       JOB_NAME=$(echo -n $JOB | shyaml get-value name)
-      IPS=`bosh vms | grep "$JOB_NAME" | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | sed 's/^\|$/"/g' | tr "\n" ","`
+      IPS=`bosh vms | grep "$JOB_NAME" | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | sed 's/^/"/g' | sed 's/$/"/g' | tr "\n" ","`
       # Remove trailing ',' and wrap into square braces
       IPS="[${IPS%,}]"
     else
