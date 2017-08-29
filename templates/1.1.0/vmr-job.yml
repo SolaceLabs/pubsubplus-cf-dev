@@ -9,10 +9,6 @@
   resource_pool: common-resource-pool
   networks:
   - name: test-network
-    static_ips:
-    {% for ip in static_ips %}
-      - {{ ip }}
-    {% endfor %}
   properties:
     pool_name: {{ poolName }}
     vmr_agent_port: 18080
