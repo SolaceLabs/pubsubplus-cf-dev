@@ -62,7 +62,7 @@ $SCRIPTPATH/getBoshInfo.sh -m $MANIFEST_FILE
 
 echo "Checking for existing deployment..."
 
-DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+DEPLOYMENT_FOUND_COUNT=`2>&1 bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
    echo "A bosh deployment is already done."
    echo
@@ -78,14 +78,14 @@ echo
 prepareBosh
 uploadAndDeployRelease
 
-DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+DEPLOYMENT_FOUND_COUNT=`2>&1 bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
     echo "Bosh deployment $DEPLOYMENT_NAME cannot be found. Exiting..."
     exit 1
 fi
 
 POOL_NAMES=$(py "getPoolNames")
-VM_JOBS=`bosh vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | tr '\n' ' '`
+VM_JOBS=`2>&1 bosh vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | tr '\n' ' '`
 
 if [ -z "$VM_JOBS" ]; then
     echo "No deployed VMs could be found."
