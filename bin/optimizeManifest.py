@@ -90,7 +90,7 @@ def main(args):
         if poolName in deployedIpConfig:
             numToDelete = len(deployedIpConfig[poolName]) - job["instances"]
             if numToDelete > 0:
-                del deployedIpConfig[poolName][:numToDelete]
+                del deployedIpConfig[poolName][-numToDelete]
 
             vmrIpList = deployedIpConfig[poolName]
             numInstancesToAllocate -= len(vmrIpList)
