@@ -33,7 +33,7 @@ def getTestNetworkIps(manifest):
     testHosts.remove(subnetGateway)
     return testHosts
 
-def getDeployedIps(deploymentName, poolNamesFilter):
+def getDeployedIps(deploymentName):
     deploymentCount = subprocess.check_output("bosh deployments | grep {} | wc -l".format(deploymentName),
         shell=True, stderr=subprocess.DEVNULL)
 
@@ -50,11 +50,7 @@ def getDeployedIps(deploymentName, poolNamesFilter):
 
     for job in deployedJobs:
         jobIps = job["networks"][0]["static_ips"]
-        if job["name"] in poolNamesFilter:
-            deployedIpConfig[job["name"]] = jobIps
-        else:
-            # Was deployed, but not part of the filter. Removing from global IP list
-            deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(jobIps))
+        deployedIpConfig[job["name"]] = jobIps
 
     return deployedIpConfig
 
@@ -69,7 +65,7 @@ def main(args):
     testSubnet["static"] = []
 
     freeIps = getTestNetworkIps(manifest)
-    deployedIpConfig = getDeployedIps(manifest["name"], [j["name"] for j in manifest['jobs']])
+    deployedIpConfig = getDeployedIps(manifest["name"])
 
     if deployedIpConfig is None:
         print("No active deployment found. No optimization to do...")
@@ -79,18 +75,8 @@ def main(args):
     if len([j for j in manifest["jobs"] if j["name"] == "UpdateServiceBroker"]) > 0:
         testSubnet["static"] += [freeIps.pop(0)]
 
-    print("Adjusting static network IPs to maximize VMR reuse...")
-    for job in manifest["jobs"]:
-        poolName = job["name"]
-        if poolName not in deployedIpConfig:
-            continue
-
-        numToDelete = len(deployedIpConfig[poolName]) - job["instances"]
-        if numToDelete > 0:
-            instances = deployedIpConfig[poolName][:numToDelete]
-            deployedIpConfig["global"] = list(set(deployedIpConfig["global"]) - set(instances))
-            del deployedIpConfig[poolName][:numToDelete]
-
+    print("Detected IPs that are already in use: {}".format(deployedIpConfig["global"]))
+    print("Adjusting static network IPs to maximize VMR reuse and to resolve IP conflicts...\n")
     freeIps = list(set(freeIps) - set(deployedIpConfig["global"]))
     freeIps.sort()
 
@@ -102,11 +88,17 @@ def main(args):
         numInstancesToAllocate = job["instances"]
         vmrIpList = []
         if poolName in deployedIpConfig:
+            numToDelete = len(deployedIpConfig[poolName]) - job["instances"]
+            if numToDelete > 0:
+                del deployedIpConfig[poolName][:numToDelete]
+
             vmrIpList = deployedIpConfig[poolName]
             numInstancesToAllocate -= len(vmrIpList)
             print("Reusing {} deployed instance(s) of {}.".format(len(vmrIpList), poolName))
 
-        vmrIpList += freeIps[:numInstancesToAllocate]
+        newJobIps = freeIps[:numInstancesToAllocate]
+        print("Allocating new static IPs to job {}: {}\n".format(poolName, newJobIps))
+        vmrIpList += newJobIps
         del freeIps[:numInstancesToAllocate]
 
         job["networks"][0]["static_ips"] = vmrIpList
