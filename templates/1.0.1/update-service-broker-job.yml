@@ -6,6 +6,8 @@
   resource_pool: common-resource-pool
   networks:
   - name: test-network
+    static_ips:
+      - {{ ip }}
   properties:
     vmr_agent_port: 18080
     starting_port: 7000
@@ -29,4 +31,8 @@
 
     {% for listName, vmrProps in vmrPropsList.items() %}
     {{ listName }}_vmr_instances: {{ vmrProps.numInstances }}
+    {{ listName }}_vmr_list:
+    {% for ip in vmrProps.ipList %}
+      - {{ ip }}
+    {% endfor %}
     {% endfor %}
