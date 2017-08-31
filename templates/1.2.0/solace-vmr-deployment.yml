@@ -31,24 +31,17 @@ resource_pools:
     name: random
 
 networks:
-- name: test-network
-  type: manual
-  subnets:
-  - range: 10.244.0.0/28
-    gateway: 10.244.0.1
-    cloud_properties:
-      name: random
-  - range: 10.244.0.16/28
-    gateway: 10.244.0.17
-    static: []
-    cloud_properties:
-      name: random
+{% with static_ips = testNetwork.static_ips %}
+    {% include 'test-network.yml' %}
+{% endwith %}
+
 
 jobs:
 {% for job in vmrJobs %}
     {% with 
         name             = job.name,
         numInstances     = job.numInstances,
+        static_ips       = job.static_ips,
         poolName         = job.poolName,
         solaceDockerFile = job.solaceDockerFile,
         usingCerts       = usingCerts

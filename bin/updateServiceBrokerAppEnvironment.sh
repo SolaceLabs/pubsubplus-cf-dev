@@ -121,16 +121,14 @@ function setServiceBrokerVMRHostsEnvironment() {
 
     JOB=`py "getManifestJobByName" $DEPLOYED_MANIFEST_FILE $POOL`
     if [ "$(echo -n $JOB | wc -c)" -gt "0" ]; then
-      JOB_NAME=$(echo -n $JOB | shyaml get-value name)
-      IPS=`bosh vms | grep "$JOB_NAME" | grep -oE '\b([0-9]{1,3}\.){3}[0-9]{1,3}\b' | sed 's/^/"/g' | sed 's/$/"/g' | tr "\n" ","`
-      # Remove trailing ',' and wrap into square braces
-      IPS="[${IPS%,}]"
+      IPS=$(echo -n $JOB | shyaml get-values networks.0.static_ips)
+      IPSTR="[\"$(echo $IPS | sed s/\ /\",\"/g)\"]"
     else
-      IPS="[]"
+      IPSTR="[]"
     fi
 
-    echo setting environment variable $ENV_NAME to "$IPS"
-    cf set-env solace-messaging $ENV_NAME "$IPS"
+    echo setting environment variable $ENV_NAME to "$IPSTR"
+    cf set-env solace-messaging $ENV_NAME "$IPSTR"
   done
 }
 

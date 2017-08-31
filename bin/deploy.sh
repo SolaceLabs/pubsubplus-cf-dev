@@ -92,6 +92,8 @@ if $GEN_NEW_MANIFEST_FILE; then
     echo
 fi
 
+$SCRIPTPATH/optimizeManifest.py $MANIFEST_FILE
+echo
 $SCRIPTPATH/deployBoshManifest.sh $MANIFEST_FILE
 echo
 $INSTALL_BROKER && $SCRIPTPATH/installServiceBroker.sh
