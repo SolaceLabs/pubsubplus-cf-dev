@@ -43,6 +43,8 @@ networks:
   subnets:
   - range: 10.244.0.0/28
     gateway: 10.244.0.1
+    static:
+      - 10.244.0.2
     cloud_properties:
       name: random
   - range: 10.244.0.16/28
@@ -68,6 +70,10 @@ def main(args) -> None:
     Large.generateBoshLiteManifestJob(generatedProperties, Large.getNumInstances(args["large"], inputFile), output)
     MediumHA.generateBoshLiteManifestJob(generatedProperties, MediumHA.getNumInstances(args["medium-HA"], inputFile), output)
     LargeHA.generateBoshLiteManifestJob(generatedProperties, LargeHA.getNumInstances(args["large-HA"], inputFile), output)
+    for job in output["jobs"]:
+        for network in job["networks"]:
+            for static_ip in network["static_ips"]:
+                output["networks"][0]["subnets"][0]["static"].append(static_ip)
 
     with open(args["out-arg"], "w") as outFile:
         yaml.dump(output, outFile, default_flow_style=False, width=100000000)
