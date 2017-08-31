@@ -43,7 +43,7 @@ function setupServiceBrokerEnvironment() {
     echo restaging message broker...
     cf restage solace-messaging
   else
-    >&2 echo "solace organization does not exist, please install the service broker and re-run $CMD_NAME"
+    >&2 echo "IT's OK - solace organization does not exist, please install the service broker and re-run $CMD_NAME"
   fi
 }
 
@@ -58,7 +58,7 @@ function resetServiceBrokerEnvironment() {
     echo restaging message broker...
     cf restage solace-messaging
   else
-    echo "solace organization does not exist so no need to reset service broker environment"
+    echo "IT's OK - solace organization does not exist so no need to reset service broker environment"
   fi
 }
 
