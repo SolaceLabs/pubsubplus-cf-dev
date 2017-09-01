@@ -91,11 +91,25 @@ function shutdownVMRJobs() {
 }
 
 function shutdownAllVMRJobs() {
-    RUNNING_VMS=`bosh vms | grep "common-resource-pool" | awk '{print $2}'`
+    local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
+    echo "yes" | bosh download manifest $DEPLOYMENT_NAME $DEPLOYED_MANIFEST
+    bosh deployment $DEPLOYED_MANIFEST
+    bosh deployment
     echo "Shutting down all VMR jobs..."
-    for RUNNING_VM in $RUNNING_VMS; do
-        shutdownVMRJobs $RUNNING_VM | tee $LOG_FILE
+    VMR_JOBS=$(py "getManifestJobNames" $DEPLOYED_MANIFEST)
+    for VMR_JOB_NAME in ${VMR_JOBS[@]}; do
+        VM_FOUND_COUNT=$(bosh vms | grep $VMR_JOB_NAME | wc -l)
+        echo "$VMR_JOB_NAME: Found $VM_FOUND_COUNT running VMs"
+        echo
+        I=0
+        while [ "$I" -lt "$VM_FOUND_COUNT" ]; do
+            echo "Shutting down $VMR_JOB_NAME/$I"
+            shutdownVMRJobs $VMR_JOB_NAME/$I | tee $LOG_FILE
+            echo
+            I=$(($I+1))
+        done
     done
+    rm $DEPLOYED_MANIFEST
 }
 
 function deleteDeploymentAndRelease() {
