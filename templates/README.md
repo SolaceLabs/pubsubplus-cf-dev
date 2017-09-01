@@ -4,8 +4,8 @@
 - There is a folder for each supported tile version.
 
 There many kinds of templates:
-- bosh manifests
-- service broker manifest
+- BOSH manifest components used for generating basic BOSH manifests.
+- service broker manifest.
 
 ### Service broker manifest
 
@@ -13,32 +13,21 @@ Currently used as is for the deployment of the service broker in PCFDev.
 
 ### Bosh manifest templates
 
-- bosh templates are selected with the -t parameter with the bosh_* commands.
-- Most templates are bosh manifests for which we do some substitution.
+Each of the BOSH manifest templates are components which are put together by `generateBoshManifest.py` to build fully-valid basic BOSH manifests that could be used for deployment.
 
-The provided bosh manifest templates currently define a single VMR job for a bosh deployment.
+These templates are Jinja2 templates which allow for value substitutions at execution-time. The abstraction provided by Jinja2 promotes code reusage between the varying types of templates, and cleanly separates most of the BOSH manifest structuring logic from the actual executing code.
 
-Template substitutions allows:
-
-- Control the job name
-- Control the pool name parameter which ends up mapping it to a service plan.
-- The docker vmr image to use, which is also mapped to the pool name.
-
-
-Template have static settings:
-
-- The number of instances, the default is 1 for most templates
-- Certificates which are present in some templates but not others.
-- networking
+For simplicity, some static settings are used in these manifests which include:
+- Certificates
+- Base networking (i.e. subnet specification)
 - passwords
 
-Once a deployment is done, the generated bosh manifest from the template is ~workspace/bosh-solace-manifest.yml
+Once a deployment is done, the generated bosh manifest from the template is stored in `$MANIFEST`, which is set to `~/workspace/bosh-solace-manifest.yml` by default.
 
 You may edit that manifest and have bosh re-deploy with the changed settings such as changing passwords.
 
 ~~~~
-cd
-bosh deployment workspace/bosh-solace-manifest.yml
+bosh deployment ~/workspace/bosh-solace-manifest.yml
 bosh deploy
 ~~~~
 
