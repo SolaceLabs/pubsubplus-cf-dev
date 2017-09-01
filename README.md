@@ -131,6 +131,7 @@ cd bosh-lite
 * Then start bosh-lite: 
   - Use VM_MEMORY=5000 if you want to host a single VMR
   - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
+  - In general, use VM_MEMORY=5000 * [Number-of-VMRs]
  
  - On Linux: 
 ~~~~
@@ -165,10 +166,10 @@ The goal of the deployment steps is to install Solace Messaging into the running
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
-For my example I have downloaded version 1.0.0 and placed it in:
+For my example I have downloaded version 1.1.0 and placed it in:
 
 ~~~~
-solace-messaging-cf-dev/workspace/solace-messaging-1.0.0.pivotal
+solace-messaging-cf-dev/workspace/solace-messaging-1.1.0.pivotal
 ~~~~
 
 
@@ -190,10 +191,10 @@ Use extract_tile.sh to extract the relevant contents we need.
 
 ~~~~
 cd workspace
-extract_tile.sh -t solace-messaging-1.0.0.pivotal
+extract_tile.sh -t solace-messaging-1.1.0.pivotal
 ~~~~
 
-You will find the relevant contents extracted to ~workspace/releases
+You will find the relevant contents extracted to ~/workspace/releases
 
 ### Deployment Step 2 - Install the Solace Service Broker on PCF Dev
 
@@ -211,25 +212,47 @@ installServiceBroker.sh
 
 ### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
 
-_Deploy only one and only once, you must use bosh_cleanup.sh if you want to re-deploy. if not sure what to pick just use the default with no parameters_
+_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
-Example deploy the default which is "Shared-VMR" with a self-signed server certificate.
-
-~~~~
-bosh_deploy.sh
-~~~~
-
-Example deploy a Community-VMR with the cert template, which uses a self-signed server certificate.
+Example: Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate.
 
 ~~~~
-bosh_deploy.sh -p Community-VMR -t cert
+deploy.sh
 ~~~~
 
-Example deploy a Medium-HA-VMR using the ha template, which requests 3 VMR instances and uses a self-signed server certificate.
+Run the deployment script in interactive mode for more customizable deployment options.
 
 ~~~~
-bosh_deploy.sh -p Medium-HA-VMR -t ha
+deploy.sh -i
 ~~~~
+
+Which will then prompt you for further input on the kind of deployment you want.
+
+~~~~
+Please indicate the options that will be used to generate this manifest (Will proceed with the default settings if none provided): generateBoshManifest.py
+~~~~
+
+_Only the script's options need to be provided for this prompt. The script name,_ `generateBoshManifest.py `_, is already provided and is only shown in the following example commands for visual clarity._
+
+Example: Deploy a Community-VMR with no self-signed server certificate.
+
+~~~~
+generateBoshManifest.py -p Community-VMR --no-cert
+~~~~
+
+Example: Deploy a Medium-HA-VMR that requests 3 VMR instances and uses a self-signed server certificate.
+
+~~~~
+generateBoshManifest.py -p Medium-HA-VMR
+~~~~
+
+Example: Deploy 1 Shared-VMR and 2 Large-VMRs (for a total of 3 VMR instances) which will all use a self-signed server certificate.
+
+~~~~
+generateBoshManifest.py -p Shared-VMR Large-VMR:2
+~~~~
+
+_The current deployment can be updated by simply rerunning the deployment script._
 
 _Keep in mind that not all Tile Releases contain all solace-messaging service plans.
 And that you may only deploy a single service plan which is controlled by the pool name (-p) to BOSH-lite.
@@ -242,6 +265,12 @@ Pool name to service plan mapping:
 - Community-VMR => community
 - Medium-HA-VMR => medium-ha
 - Large-HA-VMR => large-ha
+
+Aside from interactive mode, the deployment script has other options which are documented in the helper.
+
+~~~~
+deploy.sh -h
+~~~~
 
 ## Using the Deployment
 
@@ -294,7 +323,7 @@ getServiceBrokerInfo.sh
 
 ## How to suspend and resume VMs
 
-The VMs we created can be suspended and resumed at a later time. 
+The VMs we created can be suspended and resumed at a later time.
 This way you don't need to recreate them. Their state is saved to disk.
 
 ### Suspending all VMS
@@ -350,9 +379,14 @@ ssh -p 2222 admin@10.244.0.3
 
 ## How to cleanup
 
-### How to delete the Solace VMR Service 
+### Delete the Solace VMR Service
 ~~~~
 cf delete-service -f solace-messaging-demo-instance
+~~~~
+
+### Deleting the BOSH-lite deployment
+~~~~
+cleanup.sh
 ~~~~
 
 ### How to remove the solace-messaging service from PCFDev
@@ -364,14 +398,12 @@ uninstallServiceBroker.sh
 
 ### To remove a deployment from BOSH-lite
 
-Use the same parameters with bosh_cleanup.sh as the one you did with bosh_deploy.sh.
-
 _If you remove a deployment from BOSH-lite the service-broker inventory will be out-of-sync with the deployment.
 Just re-install the service broker to reset everything._
 
 ~~~~
-bosh_cleanup.sh -p Shared-VMR -t cert
-installServiceBroker.sh 
+cleanup.sh
+installServiceBroker.sh
 ~~~~
 
 ### How to delete BOSH-lite VM
