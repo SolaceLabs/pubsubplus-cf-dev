@@ -50,9 +50,10 @@ Most of these scripts are accompanied by help messages that are retrievable usin
   * Modifies the provided manifest file against the live deployment to maintain the following conditions:
     * If the given manifest contains VMR(s) that are already deployed, the manifest's VMR job(s) will reuse them.
     * If the given manifest does not contain VMR(s) that are deployed, modify the manifest's VMR job(s) such that they do not use the IPs of these to-be-deleted VMRs.
+
 * deployBoshManifest.sh
   * Shutdowns all running VMRs if a deployment was already done.
-  * prepare bosh if not done already, adds docker-bosh, stemcell.
+  * Run `bosh_prepare.sh`.
   * Uploads/Upgrades the release to bosh.
   * Deploys the release according to the provided manifest.
 
@@ -71,6 +72,9 @@ Most of these scripts are accompanied by help messages that are retrievable usin
   * Installs the service broker in PCFDev.
   * Provisions a mysql database for the service broker.
   * Add solace-messaging as a service.
+  
+* uninstallServiceBroker.sh
+  * The exact opposite of `installServiceBroker.sh`.
 
 * getServiceBrokerInfo.sh
   * Finds the service broker.
