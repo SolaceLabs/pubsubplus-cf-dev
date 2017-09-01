@@ -9,36 +9,79 @@ Requires a [bosh-lite] (https://github.com/cloudfoundry/bosh-lite)
 - The files in [templates](../templates/) are used to generate a bosh deployment manifest
 - The [templates](../templates) contain parameters that assume you have installed the Solace Service Broker in a locally accessible [PCF Dev](https://pivotal.io/pcf-dev)
 
-## Scripts:
+## Scripts
 
-- bosh_prepare.sh
--- prepares bosh-lite to use the solace bosh release, adds docker-bosh and stemcell
+All these scripts are independent of one another and are useable if adequate prerequirements are met.
 
-_If you use any parameters with bosh_deploy.sh you should re-use them with bosh_cleanup.sh_
+Most of these scripts are accompanied by help messages that are retrievable using an `-h` option. Please consult those for more detailed information on their operations and usages.
 
-- bosh_deploy.sh   
- * prepare bosh if not done already, adds docker-bosh, stemcell
- * Prepares a bosh deployment manifest
- * Will exit if the VMR was already deployed to bosh
- * uploads the release to bosh
- * deploys the release according to the generated manifest
+### BOSH Deployment Scripts
 
-- bosh_cleanup.sh 
- * Cleanup from bosh lite deployment
- * Deletes a recent deployment to bosh lite 
- * Deletes the release
- * Deletes orphaned disks
+#### High-Level BOSH Deployment Scripts
 
-- extract_tile.sh
- * Extracts the contents of a Solace Tile and keeps the necessary parts in ~workspace/releases
+* deploy.sh
+  * Depending on if the input is:
+    1. To run in Interactive Mode  
+      Prompts you for input for `generateBoshManifest.py` and generates a new bosh manifest at `$MANIFEST`.
+    2. A Bosh Manifest  
+      Copies the given manifest to `$MANIFEST`. Be warned that if the input is `$MANIFEST` itself, that it might be overwritten during the deployment process.
+    3. A Tile Config File  
+      Pass it through `parser/converter.py` to convert it to a BOSH manifest saved to `$MANIFEST`.
+    4. No Input  
+      Runs `generateBoshManifest.py` with its default settings.
+  * Run `optimizeManifest.py`.
+  * Run `deployBoshManifest.sh`.
+  * If the option is given, it will run `installServiceBroker.sh`.
+  * Run `updateServiceBrokerAppEnvironment.sh`.
+  
+* cleanup.sh
+  * Runs `cleanupBoshDeployment.sh`.
+  * If the option is given, run `uninstallServiceBroker.sh`. Otherwise, runs `updateServiceBrokerAppEnvironment.sh` with reset option.
 
-- installServiceBroker.sh
- * Installs the service broker in PCFDev
- * Provisions a mysql database for the service broker
- * Add solace-messaging as a service
+* getBoshInfo.sh
+  * Prints a basic summary of the live deployment or a provided BOSH manifest.
 
-- getServiceBrokerInfo.sh
- * Finds the service broker
- * Queries and displays discovered information about the inventory under management by the service broker.
+#### Modular BOSH Deployment Component Scripts
 
+* generateBoshManifest.py
+  * Generates a basic BOSH manifest to `$MANIFEST` using the provided parameters and the correct [templates](./templates) as specified by the version of the pivotal tile.
+  
+* optimizeManifest.py
+  * Modifies the provided manifest file against the live deployment to maintain the following conditions:
+    * If the given manifest contains VMR(s) that are already deployed, the manifest's VMR job(s) will reuse them.
+    * If the given manifest does not contain VMR(s) that are deployed, modify the manifest's VMR job(s) such that they do not use the IPs of these to-be-deleted VMRs.
+* deployBoshManifest.sh
+  * Shutdowns all running VMRs if a deployment was already done.
+  * prepare bosh if not done already, adds docker-bosh, stemcell.
+  * Uploads/Upgrades the release to bosh.
+  * Deploys the release according to the provided manifest.
 
+* bosh_prepare.sh
+  * prepares bosh-lite to use the solace bosh release, adds docker-bosh and stemcell.
+
+* cleanupBoshDeployment.sh 
+  * Shutdowns all running VMRs.
+  * Deletes a recent deployment to bosh lite.
+  * Deletes the release.
+  * Deletes orphaned disks.
+
+### Service Broker Scripts
+    
+* installServiceBroker.sh
+  * Installs the service broker in PCFDev.
+  * Provisions a mysql database for the service broker.
+  * Add solace-messaging as a service.
+
+* getServiceBrokerInfo.sh
+  * Finds the service broker.
+  * Queries and displays discovered information about the inventory under management by the service broker.
+  
+* updateServiceBrokerAppEnvironments
+  * Depending on if the reset option was given:
+    * Resets the service broker environments to their default values.
+    * Otherwise, update the service broker's environments based off the live deployment.
+
+### Utility Scripts
+
+* extract_tile.sh
+  * Extracts the contents of a Solace Tile and keeps the necessary parts in `~/workspace/releases`.
