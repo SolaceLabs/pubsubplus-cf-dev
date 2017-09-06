@@ -54,12 +54,19 @@ if [ $SB_RUNNING -eq "0" ]; then
 fi
 
 FIRST_FREE_PLAN=`cf marketplace -s p-mysql | grep -v "service plan" | grep free | head -1 | awk '{ print $1 }'`
+IS_1GB_FOUND=`cf marketplace -s p-mysql | grep -v "service plan" | grep free | grep 1gb | wc -l`
 IS_512MB_FOUND=`cf marketplace -s p-mysql | grep -v "service plan" | grep free | grep 512mb | wc -l`
 IS_100MB_FOUND=`cf marketplace -s p-mysql | grep -v "service plan" | grep free | grep 100mb | wc -l`
 
 echo "First free Plan: $FIRST_FREE_PLAN"
+echo "Found 1gb ?: $IS_1GB_FOUND"
 echo "Found 512mb ?: $IS_512MB_FOUND"
 echo "Found 100mb ?: $IS_100MB_FOUND"
+
+# Select the 1GB plan as it comes with max_user_connections=20 instead of 10
+if [ -z $PLAN ] && [ "$IS_1GB_FOUND" -eq "1" ]; then
+   PLAN=1gb
+fi
 
 if [ -z $PLAN ] && [ "$IS_100MB_FOUND" -eq "1" ]; then
    PLAN=100mb
