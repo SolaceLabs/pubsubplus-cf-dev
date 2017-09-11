@@ -122,12 +122,46 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
 ( 
   cd $TEMP_DIR
   echo "Looking for $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz"
-  tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz ./packages/solace_messaging.tgz 
-  SB_JAR=$(tar -tzf ./packages/solace_messaging.tgz | grep jar)
+  mkdir -p solace-messaging-${TILE_VERSION} 
+  echo "Extrating contents of solace-messaging-${TILE_VERSION}.tgz"
+  ( cd solace-messaging-${TILE_VERSION}; tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz )
+
+  SB_JAR=$(tar -tzf solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | grep jar)
   echo "Detected Solace Service Broker jar path $SB_JAR"
-  tar -xOzf ./packages/solace_messaging.tgz $SB_JAR > $WORKSPACE/releases/solace-messaging.jar
+  tar -xOzf solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz $SB_JAR > $WORKSPACE/releases/solace-messaging.jar
   echo "Extracted Solace Service Broker to $WORKSPACE/releases/solace-messaging.jar"
-  rm -f $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz
-  echo
+
+  ( cd solace-messaging-${TILE_VERSION}; tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz )
+  ( cd solace-messaging-${TILE_VERSION}/packages; tar -xzf solace_messaging.tgz )
+  sed -i 's/java_buildpack_offline/java_buildpack/' solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
+  echo "memory: 1024M" >> solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
+
+
+  ( 
+    cd solace-messaging-${TILE_VERSION}/jobs
+    mkdir deploy-all
+    cd deploy-all
+    tar -xzf ../deploy-all.tgz 
+    echo "Modified deploy-all to use 1gb mysql plan"
+    sed -i 's/SVC_PLAN\=\"\"/SVC_PLAN\=\"1gb\"/' templates/deploy-all.sh.erb
+    echo "Repackaged deploy-all.tgz"
+    tar -czf ../deploy-all.tgz ./
+    cd ..
+    rm -rf deploy-all
+  )
+
+  ## Package and cleanup
+  ( 
+    cd solace-messaging-${TILE_VERSION}/packages
+    tar -czf solace_messaging.tgz packaging solace_messaging 
+    rm -f packaging
+    rm -rf solace_messaging 
+  )
+
+
+  echo "Repackaging solace-messaging-${TILE_VERSION}.tgz"
+  ( cd solace-messaging-${TILE_VERSION}; tar -czf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz . )
+
+  echo "Extracting is completed"
 )
 

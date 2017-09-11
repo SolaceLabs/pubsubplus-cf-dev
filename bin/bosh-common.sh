@@ -160,13 +160,52 @@ function getReleaseNameAndVersion() {
       export SOLACE_VMR_BOSH_RELEASE_FILE="$f"
       break
     done
-
     export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+
+
+    SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-messaging-*.tgz"
+    for f in $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER; do
+      if ! [ -e "$f" ]; then
+        echo "Could not find solace-messaging bosh release file: $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER"
+        exit 1
+      fi
+
+      export SOLACE_MESSAGING_BOSH_RELEASE_FILE="$f"
+      break
+    done
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+
 }
 
 function uploadAndDeployRelease() {
 
-SOLACE_VMR_BOSH_RELEASE_FILE=`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`
+echo "in function uploadAndDeployRelease. SOLACE_MESSAGING_BOSH_RELEASE_FILE: $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
+
+SOLACE_MESSAGING_BOSH_RELEASE_FILE=${SOLACE_MESSAGING_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-messaging-*.tgz | tail -1`}
+SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+
+if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
+
+ targetBosh
+
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
+  local UPLOADED_RELEASE_VERSION=`bosh releases | grep solace-messaging | awk '{ print $4 }'`
+  # remove trailing '*'
+  UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
+ fi
+
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ] || \
+    [ "$SOLACE_MESSAGING_BOSH_RELEASE_VERSION" '>' "$UPLOADED_RELEASE_VERSION" ]; then
+  echo "Will upload release $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
+
+  bosh upload release $SOLACE_MESSAGING_BOSH_RELEASE_FILE | tee -a $LOG_FILE
+ else
+  echo "A solace-messaging release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION already exists. Skipping release upload..."
+ fi
+
+fi
+
+SOLACE_VMR_BOSH_RELEASE_FILE=${SOLACE_VMR_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`}
 RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 
 echo "in function uploadAndDeployRelease. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
