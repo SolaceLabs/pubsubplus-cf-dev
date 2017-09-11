@@ -13,6 +13,8 @@ releases:
   version: latest
 - name: solace-vmr
   version: latest
+- name: solace-messaging
+  version: latest
 
 compilation:
   workers: 1
@@ -22,10 +24,10 @@ compilation:
     name: random
 
 update:
-  canaries: 0
+  canaries: 1
   canary_watch_time: 30000-240000
   update_watch_time: 30000-600000
-  max_in_flight: 3
+  max_in_flight: 1
 
 resource_pools:
 - name: common-resource-pool
