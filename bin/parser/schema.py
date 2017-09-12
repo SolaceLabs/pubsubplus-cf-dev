@@ -61,8 +61,8 @@ root = Root("root",
                     Parameter("tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[Option("not_allowed", "Not Allowed")],visibleInBoshManifest=False),
                 ],
                 "enabled": [
-                    Parameter("cf_client_id", pcfFormName="cf_credentials", parameterType=parametertypes.CredentialsPassword, optional=True),
-                    Parameter("cf_client_secret", pcfFormName="cf_credentials", parameterType=parametertypes.CredentialsIdentity, optional=True),
+                    Parameter("cf_client_id", pcfFormName="cf_credentials", parameterType=parametertypes.CredentialsPassword, optional=True, alternateName="identity"),
+                    Parameter("cf_client_secret", pcfFormName="cf_credentials", parameterType=parametertypes.CredentialsIdentity, optional=True, alternateName="password"),
                     Parameter("smf_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),

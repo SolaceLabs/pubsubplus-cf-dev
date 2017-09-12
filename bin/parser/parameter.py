@@ -18,12 +18,14 @@ class Parameter(BaseParameter):
             tileForm: Optional[TileForm]=None,
             label: Optional[str]=None,
             parameterType: parametertypes.AbstractParameter=parametertypes.String,
-            visibleInBoshManifest: Optional[bool]=True
+            visibleInBoshManifest: Optional[bool]=True,
+            alternateName: Optional[str]=None
         )-> None:
         super().__init__(name, pcfFormName=pcfFormName, defaultValue=defaultValue, tileForm=tileForm, enumValues=enumValues, label=label, parameterType=parameterType)
         self.optional = optional
         self.placeholder = placeholder
         self.visibleInBoshManifest = visibleInBoshManifest
+        self.alternateName = alternateName
 
     def generateTileTemplate(self, prefix: str, propertyListOutput, formOutput) -> None:
         fullName = prefix + "." + self.getPcfFormName() + "." + self.parameterType.pcfManifestType
@@ -82,25 +84,32 @@ class Parameter(BaseParameter):
         if "selected_option" not in outputProperties[parent.name]:
            outputProperties[parent.name]["selected_option"] = {}
 
-        if self.name not in outputProperties:
-            assignValue = propertyValue
-            if isinstance(propertyValue, dict):
-                if self.parameterType.pcfManifestType in propertyValue:
-                    assignValue = propertyValue[self.parameterType.pcfManifestType]
-                else:
-                    raise ValueError("property '" + fullPropertyName + "' expected type '" + self.parameterType.pcfManifestType + "' does not match described type(s) '" + str(propertyValue.keys()) + "'")
-            if isinstance(assignValue, str):
-                # Need to fix the newline issue when dumping yaml
-                # long strings with newlines have to be marked as a literal block
-                if "\n" in assignValue:
-                    assignValue = literal_unicode(assignValue)
+        ## Value handling
+        assignValue = propertyValue
+        if isinstance(propertyValue, dict):
+           if self.parameterType.pcfManifestType in propertyValue:
+               assignValue = propertyValue[self.parameterType.pcfManifestType]
+           else:
+               raise ValueError("property '" + fullPropertyName + "' expected type '" + self.parameterType.pcfManifestType + "' does not match described type(s) '" + str(propertyValue.keys()) + "'")
+
+        if isinstance(assignValue, str):
+            # Need to fix the newline issue when dumping yaml
+            # long strings with newlines have to be marked as a literal block
+            if "\n" in assignValue:
+                assignValue = literal_unicode(assignValue)
+
+        myFieldName = self.name
+        if self.alternateName is not None:
+           myFieldName = self.alternateName
+
+        if myFieldName not in outputProperties[parent.name]["selected_option"]:
             if self.pcfFormName is not None:
                if self.pcfFormName not in outputProperties[parent.name]["selected_option"]:
                   outputProperties[parent.name]["selected_option"][self.pcfFormName] = {}
-               outputProperties[parent.name]["selected_option"][self.pcfFormName][self.name] = assignValue
+               outputProperties[parent.name]["selected_option"][self.pcfFormName][myFieldName] = assignValue
             else:
-               outputProperties[parent.name]["selected_option"][self.name] = assignValue
+               outputProperties[parent.name]["selected_option"][myFieldName] = assignValue
         else:
-            raise ValueError("property '" + self.name + "' already found in outputProperties")
+            raise ValueError("property '" + myFieldName + "' already found in outputProperties")
 
 
