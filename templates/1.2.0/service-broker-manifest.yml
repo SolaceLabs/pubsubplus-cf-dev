@@ -4,6 +4,7 @@ applications:
   memory: 1024M
   timeout: 180
   env:
+    SOLACE_LOAD_VERSION: soltr_8.5.0.1008
     SECURITY_USER_NAME: solacedemo
     SECURITY_USER_PASSWORD: solacedemo
     BROKER_VALIDATE_CERT_DISABLED: true
