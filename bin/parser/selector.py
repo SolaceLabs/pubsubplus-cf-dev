@@ -89,3 +89,26 @@ class Selector(BaseParameter):
             else:
                 raise ValueError("property '" + self.name + "' already found in outputProperties")
 
+    def convertToBoshLiteManifestErrand(self, fullPropertyName: str, relativePropertyName: str, propertyValue, outputProperties) -> None:
+        if "." in relativePropertyName:
+            optionName, parameterName = relativePropertyName.split(".", 1)
+            enumValueNames = set([x.name for x in self.enumValues])
+            if optionName not in enumValueNames:
+                raise ValueError("property '" + fullPropertyName + "' enum option '" + optionName + "' not found in schema")
+            else:
+                matchingParameters = [parameter for parameter in self.parameters[optionName] if parameter.getPcfFormName() == parameterName]
+                if len(matchingParameters) == 0:
+                    raise ValueError("property '" + fullPropertyName + "' parameter '" + parameterName + "' not found in schema")
+                # Only one matching parameter, just call it directly
+                elif len(matchingParameters) == 1:
+                    matchingParameters[0].convertToBoshLiteManifestErrand(self, fullPropertyName, parameterName, propertyValue, outputProperties)
+                else:
+                    for parameter in matchingParameters:
+                        parameter.convertToBoshLiteManifestErrand(self, fullPropertyName, relativePropertyName, propertyValue, outputProperties)
+                return
+        else:
+            self.parameterType.validate(propertyValue)
+            # Create only if missing
+            if self.name not in outputProperties:
+                outputProperties[self.name] = {}
+            outputProperties[self.name]["value"] = propertyValue

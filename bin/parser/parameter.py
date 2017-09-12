@@ -17,11 +17,13 @@ class Parameter(BaseParameter):
             optional: Optional[bool]=None,
             tileForm: Optional[TileForm]=None,
             label: Optional[str]=None,
-            parameterType: parametertypes.AbstractParameter=parametertypes.String
+            parameterType: parametertypes.AbstractParameter=parametertypes.String,
+            visibleInBoshManifest: Optional[bool]=True
         )-> None:
         super().__init__(name, pcfFormName=pcfFormName, defaultValue=defaultValue, tileForm=tileForm, enumValues=enumValues, label=label, parameterType=parameterType)
         self.optional = optional
         self.placeholder = placeholder
+        self.visibleInBoshManifest = visibleInBoshManifest
 
     def generateTileTemplate(self, prefix: str, propertyListOutput, formOutput) -> None:
         fullName = prefix + "." + self.getPcfFormName() + "." + self.parameterType.pcfManifestType
@@ -63,6 +65,42 @@ class Parameter(BaseParameter):
                 # long strings with newlines have to be marked as a literal block
                 if "\n" in assignValue:
                     assignValue = literal_unicode(assignValue)
-            outputProperties[self.name] = assignValue
+            if self.visibleInBoshManifest:
+               outputProperties[self.name] = assignValue
         else:
             raise ValueError("property '" + self.name + "' already found in outputProperties")
+
+    def convertToBoshLiteManifestErrand(self, parent, fullPropertyName: str, relativePropertyName: str, propertyValue, outputProperties ) -> None:
+        self.parameterType.validate(propertyValue)
+
+        if parent.name not in outputProperties:
+           outputProperties[parent.name] = {}
+
+        if parent.name not in outputProperties:
+            raise ValueError("parent of property '" + self.name + "' not present in outputProperties")
+
+        if "selected_option" not in outputProperties[parent.name]:
+           outputProperties[parent.name]["selected_option"] = {}
+
+        if self.name not in outputProperties:
+            assignValue = propertyValue
+            if isinstance(propertyValue, dict):
+                if self.parameterType.pcfManifestType in propertyValue:
+                    assignValue = propertyValue[self.parameterType.pcfManifestType]
+                else:
+                    raise ValueError("property '" + fullPropertyName + "' expected type '" + self.parameterType.pcfManifestType + "' does not match described type(s) '" + str(propertyValue.keys()) + "'")
+            if isinstance(assignValue, str):
+                # Need to fix the newline issue when dumping yaml
+                # long strings with newlines have to be marked as a literal block
+                if "\n" in assignValue:
+                    assignValue = literal_unicode(assignValue)
+            if self.pcfFormName is not None:
+               if self.pcfFormName not in outputProperties[parent.name]["selected_option"]:
+                  outputProperties[parent.name]["selected_option"][self.pcfFormName] = {}
+               outputProperties[parent.name]["selected_option"][self.pcfFormName][self.name] = assignValue
+            else:
+               outputProperties[parent.name]["selected_option"][self.name] = assignValue
+        else:
+            raise ValueError("property '" + self.name + "' already found in outputProperties")
+
+

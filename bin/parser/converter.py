@@ -73,12 +73,14 @@ def main(args) -> None:
     Large.generateBoshLiteManifestJob(generatedProperties, Large.getNumInstances(args["large"], inputFile), output)
     MediumHA.generateBoshLiteManifestJob(generatedProperties, MediumHA.getNumInstances(args["medium-HA"], inputFile), output)
     LargeHA.generateBoshLiteManifestJob(generatedProperties, LargeHA.getNumInstances(args["large-HA"], inputFile), output)
+
     for job in output["jobs"]:
         for network in job["networks"]:
             for static_ip in network["static_ips"]:
                 output["networks"][0]["subnets"][0]["static"].append(static_ip)
+
     deploy_all.generateBoshLiteManifestJob(generatedProperties, inputFile, output)
-    delete_all.generateBoshLiteManifestJob(generatedProperties, inputFile,output)
+    delete_all.generateBoshLiteManifestJob(generatedProperties, inputFile, output)
 
     with open(args["out-arg"], "w") as outFile:
         yaml.dump(output, outFile, default_flow_style=False, width=100000000)

@@ -13,7 +13,8 @@ class BaseParameter(metaclass=abc.ABCMeta):
             enumValues: Optional[List[Option]]=None,
             parameterType: AbstractParameter=None,
             label: str=None,
-            tileForm:Optional[TileForm]=None
+            tileForm:Optional[TileForm]=None,
+            visibleInBoshManifest: Optional[bool]=True
         ) -> None:
         if " " in name:
             raise ValueError("Spaces not allowed in parameter names for parameter '" + name + "'")
@@ -31,6 +32,7 @@ class BaseParameter(metaclass=abc.ABCMeta):
         if parameterType.requireEnumValues is True and not enumValues:
             raise ValueError("Parameter type '" + parameterType.tileTemplateValue + "' requires enumValues, for parameter: " + name)
         self.enumValues = enumValues
+        self.visibleInBoshManifest = visibleInBoshManifest
 
     def getPcfFormName(self) -> str:
         if self.pcfFormName is not None:

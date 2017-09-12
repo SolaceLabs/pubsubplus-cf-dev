@@ -58,7 +58,7 @@ root = Root("root",
         Selector("tcp_routes_config", tileForm=tileform.tcpRouteForm, defaultValue="disabled", enumValues=[Option("disabled", "TCP Routes Disabled"), Option("enabled", "TCP Routes Enabled")],
             parameters={
                 "disabled" : [
-                    Parameter("tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[Option("not_allowed", "Not Allowed")]),
+                    Parameter("tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[Option("not_allowed", "Not Allowed")],visibleInBoshManifest=False),
                 ],
                 "enabled": [
                     Parameter("cf_client_id", pcfFormName="cf_credentials", parameterType=parametertypes.CredentialsPassword, optional=True),
@@ -66,58 +66,58 @@ root = Root("root",
                     Parameter("smf_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("smf_tls_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("smf_zip_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("web_messaging_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("web_messaging_tls_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("mqtt_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("mqtt_tls_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("mqtt_ws_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("mqtt_wss_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("rest_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                     Parameter("rest_tls_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
                         Option("not_allowed", "Not Allowed"),
                         Option("disabled_by_default", "Disabled by default"),
-                        Option("enabled_by_default", "Enabled by default")]
-                    ),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                 ]
             }
         )

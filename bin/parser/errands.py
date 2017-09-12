@@ -1,11 +1,46 @@
 import ipaddress
 from solyaml import literal_unicode
 from typing import Dict, Any, Optional, List
+from schema import root
+from selector import Selector
+
+keywordsToIgnore = [
+    "jobs"
+]
+
 
 class Errand:
     SSH_PORT = 2222 #const
     def __init__(self, name : str) -> None:
         self.name = name
+
+    def generateErrandPropertiesFromCiFile(self, root, inputFile) -> dict:
+        outputProperties = {}
+        for propertyName, propertyValue in inputFile.items():
+            if propertyName not in keywordsToIgnore:
+                name = propertyName.split(".")[0]
+                if name not in root.parameters:
+                    raise ValueError("property '" + name + "' not found in schema")
+                else:
+                    parameter = root.parameters[name]
+                    if "." in propertyName:
+                        relativeName = propertyName.split(".", 1)[1]
+                    else:
+                        relativeName = "" 
+
+                    if isinstance(parameter,Selector):
+                       parameter.convertToBoshLiteManifestErrand(propertyName, relativeName, propertyValue, outputProperties)
+                       # parameter.convertToBoshLiteManifest(propertyName, relativeName, propertyValue, outputProperties)
+                       #if "." not in propertyName:
+                       #    print("Done" , propertyName, "x" , relativeName, "x" , propertyValue )
+                       #    outputProperties[propertyName] = {}
+                       #    outputProperties[propertyName]["value"] = propertyValue
+                       #else:
+                       #   print(parameter.name)
+                       #   print(propertyName, "x" , relativeName, "x" , propertyValue )
+
+                           
+        return outputProperties 
 
     def generateBoshLiteManifestJob(self, properties : Dict[str, Any], inputFile : Dict[str, Any], outFile: List[Dict[str, Any]]) -> None:
         output = {}
@@ -43,25 +78,43 @@ class Errand:
         output["properties"]["solace_messaging"]["password"] = "solacedemo"
         output["properties"]["solace_messaging"]["enable_global_access_to_plans"] = True
 
+        output["properties"]["solace_vmr"] = {}
+
+# Make VMR host and hosts list per
+        for job in outFile["jobs"]:
+           job_name = job["name"].lower().replace("-","_")
+           # Skip Errands
+           if job_name == self.name:
+             continue
+           if 'lifecycle' in job.keys() and job["lifecycle"] == "errand":
+             continue
+           host_list = []
+           hosts_list = []
+           output["properties"]["solace_vmr"][job_name] = {}
+           output["properties"]["solace_vmr"][job_name]["host"] = []
+           output["properties"]["solace_vmr"][job_name]["hosts"] = []
+           for network in job["networks"]:
+              for static_ip in network["static_ips"]:
+                  hosts_list.append(static_ip)
+                  if( len(host_list) < 1 ):
+                    host_list.append(static_ip)
+           if( len(host_list) > 0 ):           
+             output["properties"]["solace_vmr"][job_name]["host"] = host_list
+             output["properties"]["solace_vmr"][job_name]["hosts"] = hosts_list
+
 # Simple/Flat properties
         output["properties"]["starting_port"] = properties["starting_port"]
         output["properties"]["vmr_admin_password"] = properties["admin_password"]
 
-# Handle special structured properties
-        output["properties"]["tcp_routes_config"] = {}
-        output["properties"]["tcp_routes_config"]["value"] = inputFile["tcp_routes_config"]
-        output["properties"]["tcp_routes_config"]["selected_option"] = {}
+# Handle special structured properties ( tls_config, tcp_routes_config, ... )
 
-#        output["properties"]["tcp_routes_config"]["selected_option"]["cf_credentials"] = inputFile["tcp_routes_config.enabled.cf_credentials"]
-        output["properties"]["tcp_routes_config"]["selected_option"]["cf_credentials"] = {}
-        output["properties"]["tcp_routes_config"]["selected_option"]["cf_credentials"]["identity"] = inputFile["tcp_routes_config.enabled.cf_credentials"]["identity"]
-        output["properties"]["tcp_routes_config"]["selected_option"]["cf_credentials"]["password"] = inputFile["tcp_routes_config.enabled.cf_credentials"]["password"]
+## Custom generate
+        customProperties = self.generateErrandPropertiesFromCiFile(root,inputFile)
 
-        ## Get all the tcp_routes_config.enabled.*tcp_route_enabled fields
-        output["properties"]["tcp_routes_config"]["selected_option"]["smf_tcp_route_enabled"] = inputFile["tcp_routes_config.enabled.smf_tcp_route_enabled"]
-
+        output["properties"].update(customProperties)
 
         outFile["jobs"].append(output)
 
+# Define the errands
 deploy_all = Errand("deploy-all")
 delete_all = Errand("delete-all")
