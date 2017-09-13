@@ -19,8 +19,8 @@ This guide will help you install the following VMs:
 
 ## Current and future state
 
-The initial version of this project will focus on re-using existing tools as standalone without attempting to merge them.
-The project also includes a subset of scripts that may benefit from refactoring in a single solid codebase.
+This version of the project is used as the deployment tool to support local testing by developers of Solace Messaging for PCF.
+It supports configuration driven deployments that work on a local BOSH-lite and PCFDev virtual machines.
 
 A future version of the project may attempt to use a single VM with all the tools. 
 
@@ -196,21 +196,9 @@ extract_tile.sh -t solace-messaging-1.1.0.pivotal
 
 You will find the relevant contents extracted to ~/workspace/releases
 
-### Deployment Step 2 - Install the Solace Service Broker on PCF Dev
+### Deployment Step 3 - Deploy 
 
-installServiceBroker.sh script in cli-tools can do this for you:
-- login to PCFDev
-- install Service broker
-- bind service broker to a mysql database
-- add solace-messaging as a service in PCFDev
-- show the contents of the marketplace at the end of the installation.
-
-~~~~
-installServiceBroker.sh 
-~~~~
-
-
-### Deployment Step 3 - Deploy VMR(s) to BOSH-lite
+This will deploy the VMR(s) to BOSH-lite and deploy the Solace Service Broker to add solace-messaging as a service in PCFDev
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
@@ -378,26 +366,11 @@ ssh -p 2222 admin@10.244.0.3
 cf delete-service -f solace-messaging-demo-instance
 ~~~~
 
-### Deleting the BOSH-lite deployment
+### Deleting the deployment
+
+From the cli-tools vm:
 ~~~~
 cleanup.sh
-~~~~
-
-### How to remove the solace-messaging service from PCFDev
-
-You should only do this after you have unbound and deleted any solace-messaging services you previously created.
-~~~~
-uninstallServiceBroker.sh
-~~~~
-
-### To remove a deployment from BOSH-lite
-
-_If you remove a deployment from BOSH-lite the service-broker inventory will be out-of-sync with the deployment.
-Just re-install the service broker to reset everything._
-
-~~~~
-cleanup.sh
-installServiceBroker.sh
 ~~~~
 
 ### How to delete BOSH-lite VM

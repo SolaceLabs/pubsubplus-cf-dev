@@ -270,6 +270,9 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
    exit 1
  fi
 
+ echo "Calling bosh run errand deploy-all"
+ bosh run errand deploy-all
+
 else
  >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
  exit 1

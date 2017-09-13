@@ -92,5 +92,3 @@ fi
 $SCRIPTPATH/optimizeManifest.py $MANIFEST_FILE
 echo
 $SCRIPTPATH/deployBoshManifest.sh $MANIFEST_FILE
-echo
-$SCRIPTPATH/installServiceBroker.sh

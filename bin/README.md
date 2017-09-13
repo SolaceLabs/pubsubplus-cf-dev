@@ -66,14 +66,6 @@ Most of these scripts are accompanied by help messages that are retrievable usin
   * Deletes orphaned disks.
 
 ### Service Broker Scripts
-    
-* installServiceBroker.sh
-  * Installs the service broker in PCFDev using the bosh deploy-all errand.
-    * Provisions a mysql database for the service broker.
-    * Add solace-messaging as a service.
-  
-* uninstallServiceBroker.sh
-  * The exact opposite of `installServiceBroker.sh`.
 
 * getServiceBrokerInfo.sh
   * Finds the service broker.

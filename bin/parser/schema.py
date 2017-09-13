@@ -13,7 +13,7 @@ root = Root("root",
                 "enabled": [
                     Parameter("cert_pem", pcfFormName="rsa_server_cert", parameterType=parametertypes.CertPem, placeholder="Message Router's Server Certificate"),
                     Parameter("private_key_pem", pcfFormName="rsa_server_cert", parameterType=parametertypes.PrivateKeyPem),
-                    Parameter("broker_validate_cert_disabled", parameterType=parametertypes.Boolean),
+                    Parameter("broker_validate_cert_disabled", parameterType=parametertypes.Boolean,visibleInBoshManifest=False),
                     Parameter("trusted_root_certificates", optional=True, parameterType=parametertypes.Text),
                 ],
             }

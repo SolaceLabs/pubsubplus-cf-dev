@@ -55,20 +55,24 @@ function getServiceBrokerDetails() {
  SB_FOUND=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1 | wc -l`
  SB_RUNNING=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | grep started | wc -l`
 
-## Capture a few details from the service broker
- export SB_APP=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | awk '{ print $1}'`
- export SB_URL=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | grep $SB_APP | awk '{ print $6}'`
- export SECURITY_USER_NAME=`cf env $SB_APP | grep SECURITY_USER_NAME | awk '{ print $2}'`
- export SECURITY_USER_PASSWORD=`cf env $SB_APP | grep SECURITY_USER_PASSWORD | awk '{ print $2}'`
- export VMR_SUPPORT_PASSWORD=`cf env $SB_APP | grep VMR_SUPPORT_PASSWORD | awk '{ print $2}'`
- export VMR_SUPPORT_USER=`cf env $SB_APP | grep VMR_SUPPORT_USER | awk '{ print $2}'`
- export VMR_ADMIN_PASSWORD=`cf env $SB_APP  | grep VMR_ADMIN_PASSWORD | awk '{print $2}'`
- export VMR_ADMIN_USER=`cf env $SB_APP  | grep VMR_ADMIN_USER | awk '{print $2}'`
- export STARTING_PORT=`cf env $SB_APP | grep STARTING_PORT | awk '{print $2}'`
- export SB_BASE=$SECURITY_USER_NAME:$SECURITY_USER_PASSWORD@$SB_URL
+ if [ "$SB_FOUND" -eq "1" ]; then
+  ## Capture a few details from the service broker
+   export SB_APP=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | awk '{ print $1}'`
+   export SB_URL=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | grep $SB_APP | awk '{ print $6}'`
+   export SECURITY_USER_NAME=`cf env $SB_APP | grep SECURITY_USER_NAME | awk '{ print $2}'`
+   export SECURITY_USER_PASSWORD=`cf env $SB_APP | grep SECURITY_USER_PASSWORD | awk '{ print $2}'`
+   export VMR_SUPPORT_PASSWORD=`cf env $SB_APP | grep VMR_SUPPORT_PASSWORD | awk '{ print $2}'`
+   export VMR_SUPPORT_USER=`cf env $SB_APP | grep VMR_SUPPORT_USER | awk '{ print $2}'`
+   export VMR_ADMIN_PASSWORD=`cf env $SB_APP  | grep VMR_ADMIN_PASSWORD | awk '{print $2}'`
+   export VMR_ADMIN_USER=`cf env $SB_APP  | grep VMR_ADMIN_USER | awk '{print $2}'`
+   export STARTING_PORT=`cf env $SB_APP | grep STARTING_PORT | awk '{print $2}'`
+   export SB_BASE=$SECURITY_USER_NAME:$SECURITY_USER_PASSWORD@$SB_URL
+ fi
+
  if [ "$SB_RUNNING" -eq "1" ]; then
     lookupServiceBrokerVMRs
  fi
+
 
 }
 
@@ -76,7 +80,7 @@ function lookupServiceBrokerDetails() {
 
  getServiceBrokerDetails
 
- if [ "$SB_RUNNING" -eq "1" ]; then
+ if [ "$SB_FOUND" -eq "1" ]; then
  log "ServiceBroker $SB_APP: http://${SB_URL}"
  log "Servicebroker URL BASE: ${SB_BASE} "
 

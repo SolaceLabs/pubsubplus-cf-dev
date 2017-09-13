@@ -80,6 +80,27 @@ class Errand:
 
         output["properties"]["solace_vmr"] = {}
 
+# Defaults for hosts
+        output["properties"]["solace_vmr"]["shared_vmr"] = {}
+        output["properties"]["solace_vmr"]["shared_vmr"]["host"] = []
+        output["properties"]["solace_vmr"]["shared_vmr"]["hosts"] = []
+
+        output["properties"]["solace_vmr"]["community_vmr"] = {}
+        output["properties"]["solace_vmr"]["community_vmr"]["host"] = []
+        output["properties"]["solace_vmr"]["community_vmr"]["hosts"] = []
+
+        output["properties"]["solace_vmr"]["large_vmr"] = {}
+        output["properties"]["solace_vmr"]["large_vmr"]["host"] = []
+        output["properties"]["solace_vmr"]["large_vmr"]["hosts"] = []
+
+        output["properties"]["solace_vmr"]["large_ha_vmr"] = {}
+        output["properties"]["solace_vmr"]["large_ha_vmr"]["host"] = []
+        output["properties"]["solace_vmr"]["large_ha_vmr"]["hosts"] = []
+
+        output["properties"]["solace_vmr"]["medium_ha_vmr"] = {}
+        output["properties"]["solace_vmr"]["medium_ha_vmr"]["host"] = []
+        output["properties"]["solace_vmr"]["medium_ha_vmr"]["hosts"] = []
+
 # Make VMR host and hosts list per
         for job in outFile["jobs"]:
            job_name = job["name"].lower().replace("-","_")
