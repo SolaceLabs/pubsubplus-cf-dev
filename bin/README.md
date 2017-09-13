@@ -31,12 +31,11 @@ Most of these scripts are accompanied by help messages that are retrievable usin
       Runs `generateBoshManifest.py` with its default settings.
   * Run `optimizeManifest.py`.
   * Run `deployBoshManifest.sh`.
-  * If the option is given, it will run `installServiceBroker.sh`.
-  * Run `updateServiceBrokerAppEnvironment.sh`.
+  * Run `installServiceBroker.sh`.
   
 * cleanup.sh
   * Runs `cleanupBoshDeployment.sh`.
-  * If the option is given, run `uninstallServiceBroker.sh`. Otherwise, runs `updateServiceBrokerAppEnvironment.sh` with reset option.
+  * Runs `uninstallServiceBroker.sh`.
 
 * getBoshInfo.sh
   * Prints a basic summary of the live deployment or a provided BOSH manifest.
@@ -69,9 +68,9 @@ Most of these scripts are accompanied by help messages that are retrievable usin
 ### Service Broker Scripts
     
 * installServiceBroker.sh
-  * Installs the service broker in PCFDev.
-  * Provisions a mysql database for the service broker.
-  * Add solace-messaging as a service.
+  * Installs the service broker in PCFDev using the bosh deploy-all errand.
+    * Provisions a mysql database for the service broker.
+    * Add solace-messaging as a service.
   
 * uninstallServiceBroker.sh
   * The exact opposite of `installServiceBroker.sh`.
@@ -80,11 +79,6 @@ Most of these scripts are accompanied by help messages that are retrievable usin
   * Finds the service broker.
   * Queries and displays discovered information about the inventory under management by the service broker.
   
-* updateServiceBrokerAppEnvironments
-  * Depending on if the reset option was given:
-    * Resets the service broker environments to their default values.
-    * Otherwise, update the service broker's environments based off the live deployment.
-
 ### Utility Scripts
 
 * extract_tile.sh

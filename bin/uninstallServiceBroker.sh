@@ -4,6 +4,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 
 source $SCRIPTPATH/cf-common.sh
+source $SCRIPTPATH/bosh-common.sh
 
 ## Enable or Disable exit on error
 set -e
@@ -18,39 +19,32 @@ for ORG in $(cf orgs | grep -v "Getting" | grep -v "^name"); do
 done
 
 if [ "$FOUND_ORG" -eq "0" ]; then
-  echo "solace org was not found, no Service Broker to uninstall"
+  echo "solace org was not found, no Service Broker to uninstall?!"
   exit 1
 fi
 
 switchToOrgAndSpace $SB_ORG $SB_SPACE
 
-lookupServiceBrokerDetails
+getServiceBrokerDetails
 
-FOUND_BINDING=`cf services | grep solace_messaging-p-mysql | grep solace-messaging | wc -l`
-if [ "$FOUND_BINDING" -eq "1" ]; then
-   echo "Found binding, will unbind solace-messaging solace_messaging-p-mysql"
-   cf unbind-service $SB_APP solace_messaging-p-mysql
+if [ "$SB_RUNNING" -eq "1" ]; then
+   echo "Service broker is running $SB_APP, will be uninstalled"
 fi
 
-FOUND_SERVICE=`cf services | grep solace_messaging-p-mysql | wc -l`
-if [ "$FOUND_SERVICE" -eq "1" ]; then
-  echo "Found service, will delete-service solace_messaging-p-mysql"
-  cf delete-service -f solace_messaging-p-mysql
+DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
+SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+
+if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
+   runDeleteAllErrand
+else
+  if [ "$SB_FOUND" -eq "1" ]; then
+	  echo "It seems the bosh deployment is not present, will manually delete the service broker $SB_APP"
+	  cf delete -f $SB_APP
+	  cf delete-service -f solace_messaging-p-mysql
+	  cf delete-service-broker -f solace-messaging
+	  cf delete-org -f $SB_ORG
+  fi
 fi
-
-export SOLACE_MESSAGING_FOUND=$( cf m | grep -v Getting | grep solace-messaging | wc -l )
-
-if [ "$SOLACE_MESSAGING_FOUND" -eq "1" ]; then
-  cf delete-service-broker -f solace-messaging 
-fi
-
-if [ $SB_FOUND -eq "1" ]; then
-  echo "Stopping the Solace Service Broker"
-  cf stop $SB_APP
-  cf delete -f $SB_APP
-fi
-
-cf delete-org -f $SB_ORG
 
 echo "Service broker is uninstalled, solace-messaging is no longer available as a service."
-

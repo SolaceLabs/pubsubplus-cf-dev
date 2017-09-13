@@ -16,7 +16,7 @@ function showHelp(){
     read -r -d '\0' USAGE_DESCRIPTION << EOM
 $BASIC_USAGE
 
-Cleanup the entire bosh deployment.
+Cleanup the entire bosh deployment and uninstall the service broker.
 
 optional arguments:
   -h            show this help message and exit
@@ -49,8 +49,9 @@ if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
    shutdownAllVMRJobs
 fi
 
+
+runDeleteAllErrand | tee $LOG_FILE
 deleteDeploymentAndRelease | tee $LOG_FILE
 deleteOrphanedDisks | tee $LOG_FILE
 
-echo "TIP: Use updateServiceBrokerEnvironment.sh to update the service broker's environments..."
 

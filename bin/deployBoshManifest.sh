@@ -101,5 +101,5 @@ echo
 echo "You can ssh to them using: bosh ssh [VM_NAME]"
 echo "  e.g. bosh ssh ${VM_JOBS[0]}"
 echo
-echo "TIP: Use updateServiceBrokerAppEnvironment.sh to update the service broker's environments..."
+echo "TIP: Use installServiceBroker.sh or 'bosh run errand deploy-all' to install/update a service broker if you made change to the bosh manifest. ..."
 

@@ -115,7 +115,8 @@ function shutdownAllVMRJobs() {
 function deleteDeploymentAndRelease() {
 
  DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
- RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
+ SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
 
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
     # Delete the deployment 
@@ -125,12 +126,20 @@ function deleteDeploymentAndRelease() {
    echo "No deployment found."
  fi
 
- if [ "$RELEASE_FOUND_COUNT" -eq "1" ]; then
+ if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "1" ]; then
     # solace-vmr
     echo "Deleting release solace-vmr"
     echo "yes" | bosh delete release solace-vmr
  else
-    echo "No release found"
+    echo "No solace-vmr release found"
+ fi
+
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "1" ]; then
+    # solace-messaging
+    echo "Deleting release solace-messaging"
+    echo "yes" | bosh delete release solace-messaging
+ else
+    echo "No solace-messaging release found"
  fi
 
 }
@@ -286,5 +295,17 @@ function py() {
   python3 -c "import commonUtils; commonUtils.$OP($(IFS=$','; echo "${PARAMS[*]}"))"
 
   cd $CURRENT_DIR
+}
+
+
+function runDeleteAllErrand() {
+   targetBosh
+   bosh run errand delete-all
+}
+
+
+function runDeployAllErrand() {
+  targetBosh
+  bosh run errand deploy-all
 }
 

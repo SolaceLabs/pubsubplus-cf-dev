@@ -7,7 +7,6 @@ export LOG_FILE="/tmp/bosh_cleanup.log"
 
 set -e
 
-UNINSTALL_BROKER=false
 CMD_NAME=`basename $0`
 BASIC_USAGE="usage: $CMD_NAME [-s][-h]"
 
@@ -15,19 +14,17 @@ function showUsage() {
     read -r -d '\0' USAGE_DESCRIPTION << EOM
 $BASIC_USAGE
 
-Cleanup the entire bosh deployment and update the service-broker app's environment.
+Cleanup the entire bosh deployment and uninstalls the service-broker.
 
 optional arguments:
-  -s            uninstall the service broker after deployment cleanup
   -h            show this help message and exit
 \0
 EOM
     echo "$USAGE_DESCRIPTION"
 }
 
-while getopts ":sh" arg; do
+while getopts ":h" arg; do
     case "$arg" in
-        s)  UNINSTALL_BROKER=true;;
         h)
             showUsage
             exit 0;;
@@ -37,9 +34,3 @@ while getopts ":sh" arg; do
 done
 
 $SCRIPTPATH/cleanupBoshDeployment.sh
-
-if $UNINSTALL_BROKER; then
-    $SCRIPTPATH/uninstallServiceBroker.sh
-else
-    $SCRIPTPATH/updateServiceBrokerAppEnvironment.sh -r
-fi

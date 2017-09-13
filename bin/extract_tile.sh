@@ -135,7 +135,8 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
   ( cd solace-messaging-${TILE_VERSION}/packages; tar -xzf solace_messaging.tgz )
   sed -i 's/java_buildpack_offline/java_buildpack/' solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
   echo "memory: 1024M" >> solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
-
+  echo "Keeping a copy of the service broker manifest as $WORKSPACE/service-broker-manifest.yml"
+  cp solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml $WORKSPACE/service-broker-manifest.yml
 
   ( 
     cd solace-messaging-${TILE_VERSION}/jobs

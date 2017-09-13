@@ -10,10 +10,9 @@ set -e
 export MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
 GEN_NEW_MANIFEST_FILE=true
 INTERACTIVE=false
-INSTALL_BROKER=false
 
 CMD_NAME=`basename $0`
-BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-i][-s][-h]"
+BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-i][-h]"
 
 function showUsage() {
     read -r -d '\0' USAGE_DESCRIPTION << EOM
@@ -21,7 +20,7 @@ $BASIC_USAGE
 
 Deploy BOSH VMRs.
 
-Default: A basic bosh-lite manifest will be generated and deployed with 1 instance of Shared-VMR
+Default: A basic bosh-lite manifest will be generated and deployed with 1 instance of Shared-VMR, the service broker will be installed.
 
 Note 1: the -i option does nothing if -m or -c is given
 Note 2: the -m and -c options cannot be used simultaneously
@@ -32,14 +31,13 @@ optional arguments:
   -c CI_CONFIG_FILE
         A Concourse property file from which a new bosh-manifest will be generated
   -i    Will be prompted to interactively provide options to generate a bosh-lite manifest
-  -s    Install the service broker after the deployment is finished
   -h    Show this help message and exit
 \0
 EOM
     echo "$USAGE_DESCRIPTION"
 }
 
-while getopts :m:c:ish opt; do
+while getopts :m:c:ih opt; do
     case $opt in
         m)
             EXISTING_MANIFEST_FILE="$OPTARG"
@@ -59,7 +57,6 @@ while getopts :m:c:ish opt; do
             echo
             GEN_NEW_MANIFEST_FILE=false;;
         i)  INTERACTIVE=true;;
-        s)  INSTALL_BROKER=true;;
         h)
             showUsage
             exit 0;;
@@ -96,6 +93,4 @@ $SCRIPTPATH/optimizeManifest.py $MANIFEST_FILE
 echo
 $SCRIPTPATH/deployBoshManifest.sh $MANIFEST_FILE
 echo
-$INSTALL_BROKER && $SCRIPTPATH/installServiceBroker.sh
-echo
-$SCRIPTPATH/updateServiceBrokerAppEnvironment.sh
+$SCRIPTPATH/installServiceBroker.sh
