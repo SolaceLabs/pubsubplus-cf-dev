@@ -118,7 +118,15 @@ function deleteDeploymentAndRelease() {
  SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
  SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
 
+ local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
+
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
+    echo "yes" | bosh download manifest $DEPLOYMENT_NAME $DEPLOYED_MANIFEST
+    bosh deployment $DEPLOYED_MANIFEST
+
+    echo "Calling bosh run errand delete-all"
+    bosh run errand delete-all
+
     # Delete the deployment 
     echo "Deleting deployment $DEPLOYMENT_NAME"
     echo "yes" | bosh delete deployment $DEPLOYMENT_NAME
@@ -140,6 +148,10 @@ function deleteDeploymentAndRelease() {
     echo "yes" | bosh delete release solace-messaging
  else
     echo "No solace-messaging release found"
+ fi
+ 
+ if [ -f $DEPLOYED_MANIFEST ]; then
+    rm $DEPLOYED_MANIFEST
  fi
 
 }

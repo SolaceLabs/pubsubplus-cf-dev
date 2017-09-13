@@ -50,7 +50,6 @@ if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
 fi
 
 
-runDeleteAllErrand | tee $LOG_FILE
 deleteDeploymentAndRelease | tee $LOG_FILE
 deleteOrphanedDisks | tee $LOG_FILE
 

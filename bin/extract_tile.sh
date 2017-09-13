@@ -135,24 +135,6 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
   ( cd solace-messaging-${TILE_VERSION}/packages; tar -xzf solace_messaging.tgz )
   sed -i 's/java_buildpack_offline/java_buildpack/' solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
   echo "memory: 1024M" >> solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
-
-  # Special handling to similate having trusted certs in the PCF Dev deployed broker
-  if [ -f $TEMPLATE_DIR/trusted.crt ]; then
-     echo "Will package special trusted cert $TEMPLATE_DIR/trusted.crt"
-     ( 
-       cd solace-messaging-${TILE_VERSION}/packages/solace_messaging
-       mkdir -p BOOT-INF/classes
-       keytool -keystore BOOT-INF/classes/truststore -storepass changeit -importcert -noprompt -alias TestTrustedCert -file $TEMPLATE_DIR/trusted.crt
-       JAR_FILE=$( ls solace-service-broker-*.jar | tail -1 )
-       echo "jar -uf $JAR_FILE BOOT-INF/classes/truststore"
-       jar -uf $JAR_FILE BOOT-INF/classes/truststore
-       echo "$JAR_FILE updated to contain BOOT-INF/classes/truststore"
-       jar -tf $JAR_FILE | grep truststore
-       echo "Will adjust manifest to add JAVA_OPTS: '-Djavax.net.ssl.TrustStore=classpath:truststore'"
-       sed  -i "s/env\:/env\:\n  JAVA_OPTS: '-Djavax.net.ssl.TrustStore=classpath:truststore'/" manifest.yml
-       rm -rf BOOT-INF
-     )
-  fi
   echo "Keeping a copy of the service broker manifest as $WORKSPACE/service-broker-manifest.yml"
   cp solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml $WORKSPACE/service-broker-manifest.yml
 
@@ -180,6 +162,11 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
 
   echo "Repackaging solace-messaging-${TILE_VERSION}.tgz"
   ( cd solace-messaging-${TILE_VERSION}; tar -czf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz . )
+
+  if [ -f $TEMPLATE_DIR/trusted.crt ]; then
+	 echo "Copy $TEMPLATE_DIR/trusted.crt $WORKSPACE"
+	 cp $TEMPLATE_DIR/trusted.crt $WORKSPACE
+  fi
 
   echo "Extracting is completed"
 )
