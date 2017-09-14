@@ -181,7 +181,12 @@ function getReleaseNameAndVersion() {
       export SOLACE_VMR_BOSH_RELEASE_FILE="$f"
       break
     done
+    export SOLACE_VMR_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' )
     export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    export SOLACE_VMR_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
+    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_FULL $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL"
+    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION $SOLACE_VMR_BOSH_RELEASE_VERSION"
+    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_DEV $SOLACE_VMR_BOSH_RELEASE_VERSION_DEV"
 
 
     SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-messaging-*.tgz"
@@ -194,7 +199,12 @@ function getReleaseNameAndVersion() {
       export SOLACE_MESSAGING_BOSH_RELEASE_FILE="$f"
       break
     done
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' )
     export SOLACE_MESSAGING_BOSH_RELEASE_VERSION=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
+    echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL"
+    echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION $SOLACE_MESSAGING_BOSH_RELEASE_VERSION"
+    echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV"
 
 }
 
@@ -210,18 +220,19 @@ if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
  targetBosh
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
-  local UPLOADED_RELEASE_VERSION=`bosh releases | grep solace-messaging | awk '{ print $4 }'`
+  UPLOADED_RELEASE_VERSION=`bosh releases | grep solace-messaging | awk '{ print $4 }'`
   # remove trailing '*'
   UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
+  echo "Determined solace-messaging uploaded version $UPLOADED_RELEASE_VERSION"
  fi
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ] || \
-    [ "$SOLACE_MESSAGING_BOSH_RELEASE_VERSION" '>' "$UPLOADED_RELEASE_VERSION" ]; then
+    [ "$SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL" '>' "$UPLOADED_RELEASE_VERSION" ]; then
   echo "Will upload release $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
 
   bosh upload release $SOLACE_MESSAGING_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "A solace-messaging release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION already exists. Skipping release upload..."
+  echo "A solace-messaging release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
 fi
@@ -236,18 +247,18 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  targetBosh
 
  if [ "$RELEASE_FOUND_COUNT" -gt "0" ]; then
-  local UPLOADED_RELEASE_VERSION=`bosh releases | grep solace-vmr | awk '{ print $4 }'`
+  UPLOADED_RELEASE_VERSION=`bosh releases | grep solace-vmr | awk '{ print $4 }'`
   # remove trailing '*'
   UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
  fi
 
  if [ "$RELEASE_FOUND_COUNT" -eq "0" ] || \
-    [ "$SOLACE_VMR_BOSH_RELEASE_VERSION" '>' "$UPLOADED_RELEASE_VERSION" ]; then
+    [ "$SOLACE_VMR_BOSH_RELEASE_VERSION_FULL" '>' "$UPLOADED_RELEASE_VERSION" ]; then
   echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
 
   bosh upload release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "A solace-vmr release with version greater than or equal to $SOLACE_VMR_BOSH_RELEASE_VERSION already exists. Skipping release upload..."
+  echo "A solace-vmr release with version greater than or equal to $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
  echo "Calling bosh deployment"
