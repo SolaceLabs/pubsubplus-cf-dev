@@ -196,9 +196,9 @@ extract_tile.sh -t solace-messaging-1.1.0.pivotal
 
 You will find the relevant contents extracted to ~/workspace/releases
 
-### Deployment Step 3 - Deploy 
+### Deployment Step 2 - Deploy 
 
-This will deploy the VMR(s) to BOSH-lite and deploy the Solace Service Broker to add solace-messaging as a service in PCFDev
+This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-messaging as a service in PCFDev
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
@@ -296,7 +296,7 @@ cf m
 
 You can use your browser to examine the deployed [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
 
-You will need a username and password: solacedemo is the default as set in service-broker-manifest.yml obtained from [templates](./templates)
+You will need a username and password: solacedemo is the default as set for this deployment.
 
 You can also run a script that will fetch a variety of information from the service broker
 ~~~~
