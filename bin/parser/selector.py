@@ -11,7 +11,8 @@ class Selector(BaseParameter):
             tileForm=None,
             label: str=None,
             enumValues=[],
-            parameters: Dict[str, List[BaseParameter]] = {}
+            parameters: Dict[str, List[BaseParameter]] = {},
+            boshJobFieldName: str=None
         )-> None:
         super().__init__(name, pcfFormName=pcfFormName, defaultValue=defaultValue, tileForm=tileForm, label=label, enumValues=enumValues, parameterType=parametertypes.Selector)
         if parameters is not None:
@@ -23,6 +24,7 @@ class Selector(BaseParameter):
         for parameterList in self.parameters.values():
             for parameter in parameterList:
                 parameter.setParent(self)
+        self.boshJobFieldName=boshJobFieldName
 
     def generateTileTemplate(self, prefix, propertyListOutput, formOutput) -> None:
         fullName = prefix + "." + self.name + "." + self.parameterType.pcfManifestType 
@@ -83,11 +85,14 @@ class Selector(BaseParameter):
                 return
         else:
             self.parameterType.validate(propertyValue)
+            fieldNameToUse = self.name
+            if self.boshJobFieldName is not None:
+                fieldNameToUse = self.boshJobFieldName
             # Only add if its unique
-            if self.name not in outputProperties:
-                outputProperties[self.name] = propertyValue
+            if fieldNameToUse not in outputProperties:
+                outputProperties[fieldNameToUse] = propertyValue
             else:
-                raise ValueError("property '" + self.name + "' already found in outputProperties")
+                raise ValueError("property '" + fieldNameToUse + "' already found in outputProperties")
 
     def convertToBoshLiteManifestErrand(self, fullPropertyName: str, relativePropertyName: str, propertyValue, outputProperties) -> None:
         if "." in relativePropertyName:

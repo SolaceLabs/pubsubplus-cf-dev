@@ -55,7 +55,7 @@ root = Root("root",
                 ]
             }
         ),
-        Selector("tcp_routes_config", tileForm=tileform.tcpRouteForm, defaultValue="disabled", enumValues=[Option("disabled", "TCP Routes Disabled"), Option("enabled", "TCP Routes Enabled")],
+        Selector("tcp_routes_config", tileForm=tileform.tcpRouteForm, defaultValue="disabled", boshJobFieldName="tcp_routes_enabled", enumValues=[Option("disabled", "TCP Routes Disabled"), Option("enabled", "TCP Routes Enabled")],
             parameters={
                 "disabled" : [
                     Parameter("tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[Option("not_allowed", "Not Allowed")],visibleInBoshManifest=False),
