@@ -20,13 +20,13 @@ class PoolType:
         assert ipAddress in ipaddress.ip_network('10.244.0.0/16')
         return ipAddress
 
-    def getNumInstances(self, commandLineArgs: Optional[int], inputFile : Dict[str, Any]) -> int:
+    def getNumInstances(self, commandLineArgs: Optional[int], numInstances : str) -> int:
         if commandLineArgs is not None:
             return int(commandLineArgs)
-        fileValue = inputFile["jobs"][self.name]["resource_config"]["instances"]
-        if fileValue == "automatic":
-            fileValue = 1 if not self.isHA else 3
-        return int(fileValue)
+        returnValue = numInstances
+        if numInstances == "automatic":
+            returnValue = 1 if not self.isHA else 3
+        return int(returnValue)
 
     def generateBoshLiteManifestJob(self, properties : Dict[str, Any], numInstances: int, outFile: List[Dict[str, Any]]) -> None:
         if numInstances == 0:
