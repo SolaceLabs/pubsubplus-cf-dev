@@ -101,8 +101,8 @@ class PoolType:
         output["properties"]["cf_space"] = "solace-messaging"
         outFile["jobs"].append(output)
 
-Shared = PoolType("Shared-VMR", False, "latest-evaluation")
-Community = PoolType("Community-VMR", False, "latest-community")
-Large = PoolType("Large-VMR", False, "latest-evaluation")
-MediumHA = PoolType("Medium-HA-VMR", True, "latest-evaluation")
-LargeHA = PoolType("Large-HA-VMR", True, "latest-evaluation")
+Shared = PoolType("Shared-VMR", False, "latest")
+Community = PoolType("Community-VMR", False, "latest")
+Large = PoolType("Large-VMR", False, "latest")
+MediumHA = PoolType("Medium-HA-VMR", True, "latest")
+LargeHA = PoolType("Large-HA-VMR", True, "latest")
