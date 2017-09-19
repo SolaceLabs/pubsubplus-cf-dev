@@ -81,6 +81,9 @@ def main(args):
     freeIps.sort()
 
     for job in manifest["jobs"]:
+        if 'lifecycle' in job.keys() and job["lifecycle"] == "errand":
+            continue
+
         poolName = job["name"]
         if poolName not in commonUtils.POOL_TYPES:
             continue
@@ -97,12 +100,30 @@ def main(args):
             print("Reusing {} deployed instance(s) of {}.".format(len(vmrIpList), poolName))
 
         newJobIps = freeIps[:numInstancesToAllocate]
-        print("Allocating new static IPs to job {}: {}\n".format(poolName, newJobIps))
+        print("Allocating new static IPs to job {}: {}".format(poolName, newJobIps))
         vmrIpList += newJobIps
         del freeIps[:numInstancesToAllocate]
 
         job["networks"][0]["static_ips"] = vmrIpList
         testSubnet["static"] += vmrIpList
+
+        # Update the errands with the ips
+        for errand in manifest["jobs"]:
+            if 'lifecycle' in errand.keys() and errand["lifecycle"] == "errand":
+                errandName = errand["name"]
+                jobName = job["name"].lower().replace("-","_")
+
+                host_list = []
+                host_list.append(newJobIps[0])
+                hosts_list = []
+                hosts_list.extend(newJobIps)
+
+                print("Updating errand {}: {} host {}".format(errandName, jobName, host_list))
+                print("Updating errand {}: {} hosts {}\n".format(errandName, jobName, hosts_list))
+                errand["properties"]["solace_vmr"][jobName]["host"] = []
+                errand["properties"]["solace_vmr"][jobName]["hosts"] = []
+                errand["properties"]["solace_vmr"][jobName]["host"] = host_list 
+                errand["properties"]["solace_vmr"][jobName]["hosts"] = hosts_list
 
     with open(manifestFile, 'w') as f:
         print(yaml.dump(manifest, default_flow_style=False), file=f)
