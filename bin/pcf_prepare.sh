@@ -49,7 +49,6 @@ function addBuildPack() {
 
 
 function enableTcpRoutingForSolaceRouter() {
-        gem install cf-uaac
 
 	TARGET=${1:-"uaa.local.pcfdev.io"}
 	uaac target $TARGET --skip-ssl-validation
