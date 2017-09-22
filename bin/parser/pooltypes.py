@@ -35,6 +35,7 @@ class PoolType:
         output["name"] = self.name
         output["instances"] = numInstances 
         output["persistent_disk"] = 20480
+        output["memory"] = 4096
         output["templates"] = []
         output["templates"].append({"name": "docker", "release": "docker"})
         output["templates"].append({"name": "prepare_vmr", "release": "solace-vmr"})
