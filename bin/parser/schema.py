@@ -118,6 +118,16 @@ root = Root("root",
                         Option("disabled_by_default", "Disabled by default"),
                         Option("enabled_by_default", "Enabled by default")],
                     visibleInBoshManifest=False),
+                    Parameter("amqp_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
+                        Option("not_allowed", "Not Allowed"),
+                        Option("disabled_by_default", "Disabled by default"),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
+                    Parameter("amqp_tls_tcp_route_enabled", defaultValue="not_allowed", parameterType=parametertypes.Dropdown, enumValues=[
+                        Option("not_allowed", "Not Allowed"),
+                        Option("disabled_by_default", "Disabled by default"),
+                        Option("enabled_by_default", "Enabled by default")],
+                    visibleInBoshManifest=False),
                 ]
             }
         )
