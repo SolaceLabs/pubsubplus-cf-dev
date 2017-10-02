@@ -114,9 +114,9 @@ def main(args):
                 jobName = job["name"].lower().replace("-","_")
 
                 host_list = []
-                host_list.append(newJobIps[0])
+                host_list.append(vmrIpList[0])
                 hosts_list = []
-                hosts_list.extend(newJobIps)
+                hosts_list.extend(vmrIpList)
 
                 print("Updating errand {}: {} host {}".format(errandName, jobName, host_list))
                 print("Updating errand {}: {} hosts {}\n".format(errandName, jobName, hosts_list))
