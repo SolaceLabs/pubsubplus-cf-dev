@@ -14,6 +14,8 @@ export STEMCELL_VERSION="3312.24"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
+export USE_ERRANDS=${USE_ERRANDS:-"1"}
+
 function targetBosh() {
 
   bosh target 192.168.50.4 lite
@@ -124,8 +126,10 @@ function deleteDeploymentAndRelease() {
     echo "yes" | bosh download manifest $DEPLOYMENT_NAME $DEPLOYED_MANIFEST
     bosh deployment $DEPLOYED_MANIFEST
 
-    echo "Calling bosh run errand delete-all"
-    bosh run errand delete-all
+    if [ "$USE_ERRANDS" -eq "1" ]; then
+      echo "Calling bosh run errand delete-all"
+      bosh run errand delete-all
+    fi
 
     # Delete the deployment 
     echo "Deleting deployment $DEPLOYMENT_NAME"
@@ -293,8 +297,10 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
    exit 1
  fi
 
- echo "Calling bosh run errand deploy-all"
- bosh run errand deploy-all
+ if [ "$USE_ERRANDS" -eq "1" ]; then
+   echo "Calling bosh run errand deploy-all"
+   bosh run errand deploy-all
+ fi
 
 else
  >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
