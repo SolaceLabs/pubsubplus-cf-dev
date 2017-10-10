@@ -34,7 +34,7 @@ while getopts ":h" arg; do
     esac
 done
 
-DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+DEPLOYMENT_FOUND_COUNT=`bosh -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
   echo "No deployments detected. Nothing to do..."
   echo "Terminating cleanup..."
@@ -44,7 +44,7 @@ fi
 echo "Tearind down the entire $DEPLOYMENT_NAME BOSH deployment"
 echo "Logs in file $LOG_FILE"
 
-DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+DEPLOYMENT_FOUND_COUNT=`bosh -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
    shutdownAllVMRJobs
 fi

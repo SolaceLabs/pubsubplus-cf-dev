@@ -120,78 +120,10 @@ fi
 unzip -d $WORKSPACE $TILE_FILE releases/*.tgz metadata/solace-messaging.yml
 
 ( 
-  cd $TEMP_DIR
-  echo "Looking for $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz"
-  mkdir -p solace-messaging-${TILE_VERSION} 
-  echo "Extrating contents of solace-messaging-${TILE_VERSION}.tgz"
-  ( cd solace-messaging-${TILE_VERSION}; tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz )
-
-  SB_JAR=$(tar -tzf solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | grep jar)
-  echo "Detected Solace Service Broker jar path $SB_JAR"
-  tar -xOzf solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz $SB_JAR > $WORKSPACE/releases/solace-messaging.jar
-  echo "Extracted Solace Service Broker to $WORKSPACE/releases/solace-messaging.jar"
-
-  SB_INITIAL_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'`
-  SB_INITIAL_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'`
-
-  ( cd solace-messaging-${TILE_VERSION}; tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz )
-  ( cd solace-messaging-${TILE_VERSION}/packages; tar -xzf solace_messaging.tgz )
-
-  if [ -f solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml ]; then
-    echo "memory: 1024M" >> solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
-    echo "Keeping a copy of the service broker manifest as $WORKSPACE/service-broker-manifest.yml"
-    cp solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml $WORKSPACE/service-broker-manifest.yml
-  fi
-
-  DEPLOY_ALL_INITIAL_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
-  DEPLOY_ALL_INITIAL_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
-
-  ( 
-    cd solace-messaging-${TILE_VERSION}/jobs
-    mkdir deploy-all
-    cd deploy-all
-    tar -xzf ../deploy-all.tgz 
-    echo "Modified deploy-all to use 1gb mysql plan"
-    sed -i "s/'plan', ''/'plan', '1gb'/" templates/deploy-all.sh.erb
-    echo "Repackaged deploy-all.tgz"
-    tar -czf ../deploy-all.tgz ./
-    cd ..
-    rm -rf deploy-all
-  )
-
-  DEPLOY_ALL_NEW_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
-  DEPLOY_ALL_NEW_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
-
-  ## Package and cleanup
-  ( 
-    cd solace-messaging-${TILE_VERSION}/packages
-    tar -czf solace_messaging.tgz packaging solace_messaging 
-    rm -f packaging
-    rm -rf solace_messaging 
-  )
- 
-  SB_NEW_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'` 
-  SB_NEW_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'` 
-
-  echo "Updating SHA sums in release.MF:"
-  echo "    solace-messaging SHA changed from $SB_INITIAL_SHA1 to $SB_NEW_SHA1"
-  sed -i "s/$SB_INITIAL_SHA1/$SB_NEW_SHA1/g" solace-messaging-${TILE_VERSION}/release.MF
-  echo "    solace-messaging SHA2 changed from $SB_INITIAL_SHA2 to $SB_NEW_SHA2"
-  sed -i "s/$SB_INITIAL_SHA2/$SB_NEW_SHA2/g" solace-messaging-${TILE_VERSION}/release.MF
-
-  echo "    deploy-all SHA1 changed from $DEPLOY_ALL_INITIAL_SHA1 to $DEPLOY_ALL_NEW_SHA1"
-  sed -i "s/$DEPLOY_ALL_INITIAL_SHA1/$DEPLOY_ALL_NEW_SHA1/g" solace-messaging-${TILE_VERSION}/release.MF
-  echo "    deploy-all SHA2 changed from $DEPLOY_ALL_INITIAL_SHA2 to $DEPLOY_ALL_NEW_SHA2"
-  sed -i "s/$DEPLOY_ALL_INITIAL_SHA2/$DEPLOY_ALL_NEW_SHA2/g" solace-messaging-${TILE_VERSION}/release.MF
-
-  echo "Repackaging solace-messaging-${TILE_VERSION}.tgz"
-  ( cd solace-messaging-${TILE_VERSION}; tar -czf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz . )
-
   if [ -f $TEMPLATE_DIR/trusted.crt ]; then
 	 echo "Copy $TEMPLATE_DIR/trusted.crt $WORKSPACE"
 	 cp $TEMPLATE_DIR/trusted.crt $WORKSPACE
   fi
-
   echo "Extracting is completed"
 )
 

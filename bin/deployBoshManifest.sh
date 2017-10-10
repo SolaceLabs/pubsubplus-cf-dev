@@ -78,7 +78,7 @@ echo
 prepareBosh
 uploadAndDeployRelease
 
-DEPLOYMENT_FOUND_COUNT=`2>&1 bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+DEPLOYMENT_FOUND_COUNT=`2>&1 bosh -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
     echo "Bosh deployment $DEPLOYMENT_NAME cannot be found. Exiting..."
     exit 1
@@ -98,6 +98,6 @@ for VM in ${VM_JOBS[@]}; do
 done
 
 echo
-echo "You can ssh to them using: bosh ssh [VM_NAME]"
+echo "You can ssh to them using: bosh -e lite ssh [VM_NAME]"
 echo "  e.g. bosh -e lite ssh ${VM_JOBS[0]}"
 echo

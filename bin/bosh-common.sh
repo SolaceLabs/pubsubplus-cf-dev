@@ -21,6 +21,7 @@ export USE_ERRANDS=${USE_ERRANDS:-"1"}
 export BOSH_CMD="/usr/local/bin/bosh"
 export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
+export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 
 function targetBosh() {
   
@@ -76,87 +77,7 @@ done
 
 }
 
-## XXXXX
-function XXXdeleteVMR() {
-
- echo "In deleteVMR"
-
- VM_JOB=$1
-
- echo "Looking for VM job $VM_JOB" 
- VM_FOUND_COUNT=`$BOSH_CMD -e lite vms | grep $VM_JOB | wc -l`
- VM_RUNNING_FOUND_COUNT=`$BOSH_CMD -e lite vms | grep $VM_JOB | grep running |  wc -l`
- DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
- RELEASE_FOUND_COUNT=`$BOSH_CMD -e lite releases | grep solace-vmr | wc -l`
-
-
- if [ "$VM_RUNNING_FOUND_COUNT" -eq "1" ]; then
-
-   echo "Will stop monit jobs if any are running"
-   $BOSH_CMD -e lite ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit stop all" 
-
-   RUNNING_COUNT=`$BOSH_CMD -e lite ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit summary" | grep running | wc -l`
-   MAX_WAIT=60
-   while [ "$RUNNING_COUNT" -gt "0" ] && [ "$MAX_WAIT" -gt "0" ]; do
-   	echo "Waiting for monit to finish shutdown - found $RUNNING_COUNT still running"
-	sleep 5
-        let MAX_WAIT=MAX_WAIT-5
-        RUNNING_COUNT=`$BOSH_CMD -e lite ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit summary " | grep running | wc -l`
-   done
-
- fi
-
- if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
-    # Delete the deployment 
-    echo "Deleting deployment $DEPLOYMENT_NAME"
-    echo "yes" | $BOSH_CMD -e lite delete-deployment -d $DEPLOYMENT_NAME
- else
-   echo "No deployment found."
- fi
-
- if [ "$RELEASE_FOUND_COUNT" -eq "1" ]; then
-    # solace-vmr
-    echo "Deleting release solace-vmr"
-    echo "yes" | $BOSH_CMD -e lite delete-release solace-vmr
- else
-    echo "No release found"
- fi
-
-}
-
-## XXXX
-function XXXuploadAndDeployRelease() {
-
-RELEASE_FILE=`ls releases/solace-vmr/solace-vmr-*.tgz | tail -1`
-
-echo "in function uploadAndDeployRelease. RELEASE_FILE: $RELEASE_FILE"
-
-if [ -f $RELEASE_FILE ]; then
-
- targetBosh
-
- echo "Will upload release $RELEASE_FILE"
-
- $BOSH_CMD -e lite upload-release $RELEASE_FILE | tee -a $LOG_FILE
-
- echo "Calling bosh deployment"
-
- # $BOSH_CMD -e lite deployment $MANIFEST_FILE | tee -a $LOG_FILE
-
- echo "Will deploy VMR with name $VMR_JOB_NAME , having POOL_NAME: $POOL_NAME, and using $SOLACE_DOCKER_IMAGE" | tee -a $LOG_FILE
-
- echo "yes" | $BOSH_CMD -e lite -d $DEPLOYMENT_NAME deploy $MANIFEST_FILE | tee -a $LOG_FILE
-
-else
- echo "Could not locate a release file in releases/solace-vmr/solace-vmr-*.tgz"
- exit 1
-fi
-
-}
-
 #################################
-
-
 
 function shutdownVMRJobs() {
 
@@ -190,9 +111,7 @@ function shutdownVMRJobs() {
 
 function shutdownAllVMRJobs() {
     local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
-    echo "yes" | $BOSH_CMD -e lite download manifest $DEPLOYMENT_NAME $DEPLOYED_MANIFEST
-    $BOSH_CMD -e lite deployment $DEPLOYED_MANIFEST
-    $BOSH_CMD -e lite deployment
+    $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME manifest > $DEPLOYED_MANIFEST
     echo "Shutting down all VMR jobs..."
     VMR_JOBS=$(py "getManifestJobNames" $DEPLOYED_MANIFEST)
     for VMR_JOB_NAME in ${VMR_JOBS[@]}; do
@@ -219,8 +138,7 @@ function deleteDeploymentAndRelease() {
  local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
 
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
-    echo "yes" | $BOSH_CMD -e lite download manifest $DEPLOYMENT_NAME $DEPLOYED_MANIFEST
-    $BOSH_CMD -e lite deployment $DEPLOYED_MANIFEST
+    $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME manifest > $DEPLOYED_MANIFEST
 
     if [ "$USE_ERRANDS" -eq "1" ]; then
       echo "Calling bosh run-errand delete-all"
@@ -229,7 +147,7 @@ function deleteDeploymentAndRelease() {
 
     # Delete the deployment 
     echo "Deleting deployment $DEPLOYMENT_NAME"
-    echo "yes" | $BOSH_CMD -e lite delete deployment $DEPLOYMENT_NAME
+    $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME delete-deployment 
  else
    echo "No deployment found."
  fi
@@ -237,7 +155,7 @@ function deleteDeploymentAndRelease() {
  if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "1" ]; then
     # solace-vmr
     echo "Deleting release solace-vmr"
-    echo "yes" | $BOSH_CMD -e lite delete release solace-vmr
+    $BOSH_CMD -n -e lite delete-release solace-vmr
  else
     echo "No solace-vmr release found"
  fi
@@ -245,7 +163,7 @@ function deleteDeploymentAndRelease() {
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "1" ]; then
     # solace-messaging
     echo "Deleting release solace-messaging"
-    echo "yes" | $BOSH_CMD -e lite delete release solace-messaging
+    $BOSH_CMD -n -e lite delete-release solace-messaging
  else
     echo "No solace-messaging release found"
  fi
@@ -364,7 +282,7 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
     echo "Will deploy VMR with name $VMR_JOB_NAME, having POOL_NAME: $POOL_NAME, and using $SOLACE_DOCKER_IMAGE_NAME" | tee -a $LOG_FILE
  done
 
- echo "yes" | $BOSH_CMD -e lite -d $DEPLOYMENT_NAME deploy $MANIFEST_FILE | tee -a $LOG_FILE
+ $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME deploy $MANIFEST_FILE | tee -a $LOG_FILE
 
 
  $BOSH_CMD -e lite vms

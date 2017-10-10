@@ -60,7 +60,7 @@ done
 if [ -z "$MANIFEST_FILE" ]; then
     USING_DEPLOYED_MANIFEST=true
     MANIFEST_FILE=$WORKSPACE/"deployed-manifest.yml"
-    echo "yes" | $BOSH_CMD -e lite download manifest $DEPLOYMENT_NAME $MANIFEST_FILE
+    $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME manifest > $MANIFEST_FILE
 
     DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
     if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
