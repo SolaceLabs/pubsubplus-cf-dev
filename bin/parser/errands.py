@@ -3,6 +3,7 @@ from solyaml import literal_unicode
 from typing import Dict, Any, Optional, List
 from schema import root
 from selector import Selector
+import yaml
 
 keywordsToIgnore = [
     "jobs"
@@ -42,7 +43,16 @@ class Errand:
                            
         return outputProperties 
 
-    def generateBoshLiteManifestJob(self, properties : Dict[str, Any], inputFile : Dict[str, Any], outFile: List[Dict[str, Any]]) -> None:
+    def generateBoshLiteManifestJob(self, properties : Dict[str, Any], inputFile : Dict[str, Any], inputMetaFile : Dict[str, Any], outFile: List[Dict[str, Any]]) -> None:
+
+        ## Look for solace_messaging app_manifest to be used as starter
+        for job_type in inputMetaFile["job_types"]:
+           if job_type["name"] == self.name:
+              errand_manifest_str = job_type["manifest"];
+              errandManifest = yaml.load(errand_manifest_str)
+              # print("Found my errand manifest " , errand_manifest_str  )
+
+
         output = {}
         output["name"] = self.name
         output["instances"] = 1
@@ -73,10 +83,31 @@ class Errand:
         output["properties"]["security"]["user"] = "solacedemo"
         output["properties"]["security"]["password"] = "solacedemo"
 
+
         output["properties"]["solace_messaging"] = {}
+
         output["properties"]["solace_messaging"]["user"] = "solacedemo"
         output["properties"]["solace_messaging"]["password"] = "solacedemo"
         output["properties"]["solace_messaging"]["enable_global_access_to_plans"] = True
+
+
+        # Test specific settings
+        output["properties"]["solace_messaging"]["auto_services"] = []
+        output["properties"]["solace_messaging"]["auto_services"].append({ "name": "p-mysql", "plan" : "1gb" } )
+
+        ## Start with app_manifest of tile
+        output["properties"]["solace_messaging"]["app_manifest"] = errandManifest["solace_messaging"]["app_manifest"]
+
+        # Using 1GB
+        output["properties"]["solace_messaging"]["app_manifest"]["memory"] = "1024M"
+
+
+        ## TODO: See about adding generic manifest processing
+
+        ## TODO: FIX ME, get these from the inputFile tcp routes cf credentials 
+        output["properties"]["solace_messaging"]["app_manifest"]["env"]["SOLACE_ROUTER_CLIENT_ID"] = "solace_router"
+        output["properties"]["solace_messaging"]["app_manifest"]["env"]["SOLACE_ROUTER_CLIENT_SECRET"] = "1234"
+
 
         output["properties"]["solace_vmr"] = {}
 
@@ -131,9 +162,12 @@ class Errand:
 
 ## Custom generate
         customProperties = self.generateErrandPropertiesFromCiFile(root,inputFile)
-
         output["properties"].update(customProperties)
 
+
+
+
+## Add the job
         outFile["jobs"].append(output)
 
 # Define the errands

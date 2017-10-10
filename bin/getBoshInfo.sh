@@ -60,9 +60,9 @@ done
 if [ -z "$MANIFEST_FILE" ]; then
     USING_DEPLOYED_MANIFEST=true
     MANIFEST_FILE=$WORKSPACE/"deployed-manifest.yml"
-    echo "yes" | bosh download manifest $DEPLOYMENT_NAME $MANIFEST_FILE
+    echo "yes" | $BOSH_CMD -e lite download manifest $DEPLOYMENT_NAME $MANIFEST_FILE
 
-    DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+    DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
     if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
         echo "No active deployment found. Nothing to do..."
         exit 0

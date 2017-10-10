@@ -34,14 +34,14 @@ def getTestNetworkIps(manifest):
     return testHosts
 
 def getDeployedIps(deploymentName):
-    deploymentCount = subprocess.check_output("bosh deployments | grep {} | wc -l".format(deploymentName),
+    deploymentCount = subprocess.check_output("bosh -e lite deployments | grep {} | wc -l".format(deploymentName),
         shell=True, stderr=subprocess.DEVNULL)
 
     if int(deploymentCount) == 0:
         return None
 
     deployedManifest = yaml.load(
-        subprocess.check_output("bosh download manifest {}".format(deploymentName),
+        subprocess.check_output("bosh -e lite download manifest {}".format(deploymentName),
             shell=True, stderr=subprocess.DEVNULL))
 
     deployedIpConfig = {}

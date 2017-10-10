@@ -35,7 +35,7 @@ class PoolType:
         output["name"] = self.name
         output["instances"] = numInstances 
         output["persistent_disk"] = 20480
-        output["memory"] = 4096
+        output["memory"] = 6144
         output["templates"] = []
         output["templates"].append({"name": "docker", "release": "docker"})
         output["templates"].append({"name": "prepare_vmr", "release": "solace-vmr"})
@@ -53,7 +53,7 @@ class PoolType:
         output["properties"]["containers"].append({})
         output["properties"]["containers"][0]["name"] = "solace"
         output["properties"]["containers"][0]["image"] = "solace-bosh"
-        output["properties"]["containers"][0]["memory"] = "4G"
+        output["properties"]["containers"][0]["memory"] = "6G"
         output["properties"]["containers"][0]["uts"] = "host"
         output["properties"]["containers"][0]["privileged"] = True
         output["properties"]["containers"][0]["shm_size"] = "2G"

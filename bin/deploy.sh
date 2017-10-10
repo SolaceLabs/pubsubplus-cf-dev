@@ -11,6 +11,8 @@ export MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
 GEN_NEW_MANIFEST_FILE=true
 INTERACTIVE=false
 
+export TILE_METADATA_FILE=${TILE_METADATA_MANIFEST_FILE:-$WORKSPACE/metadata/solace-messaging.yml}
+
 CMD_NAME=`basename $0`
 BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-i][-h]"
 
@@ -53,7 +55,7 @@ while getopts :m:c:ih opt; do
             echo "Will convert CI-config file to bosh-lite manifest file:"
             echo "    Input CI-Config:      $OPTARG"
             echo "    Output Bosh Manifest: $MANIFEST_FILE"
-            $SCRIPTPATH/parser/converter.py --in-file="$CI_CONFIG_FILE" --out-file="$MANIFEST_FILE"
+            $SCRIPTPATH/parser/converter.py --in-file="$CI_CONFIG_FILE" --in-meta-file=$TILE_METADATA_FILE --out-file="$MANIFEST_FILE"
             echo
             GEN_NEW_MANIFEST_FILE=false;;
         i)  INTERACTIVE=true;;

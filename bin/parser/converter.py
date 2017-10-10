@@ -7,7 +7,7 @@ from pooltypes import Shared, Community, Large, MediumHA, LargeHA
 from errands import deploy_all, delete_all
 
 MANIFEST_TEMPLATE = """name: solace-vmr-warden-deployment
-director_uuid: <%= `bosh status --uuid` %>
+director_uuid: <%= `bosh -e lite env  --json | jq '.Tables[].Rows[].uuid'` %>
 
 releases:
 - name: docker
@@ -60,6 +60,9 @@ def main(args) -> None:
     with open(args["in-arg"], "r") as inFile:
         inputFile = yaml.load(inFile)
 
+    with open(args["in-meta-arg"], "r") as inMetaFile:
+        inputMetaFile = yaml.load(inMetaFile)
+
     output = yaml.load(MANIFEST_TEMPLATE)
     output["jobs"] = []
     generatedProperties = root.generatePropertiesFromCiFile(inputFile)
@@ -86,8 +89,8 @@ def main(args) -> None:
             for static_ip in network["static_ips"]:
                 output["networks"][0]["subnets"][0]["static"].append(static_ip)
 
-    deploy_all.generateBoshLiteManifestJob(generatedProperties, inputFile, output)
-    delete_all.generateBoshLiteManifestJob(generatedProperties, inputFile, output)
+    deploy_all.generateBoshLiteManifestJob(generatedProperties, inputFile, inputMetaFile, output)
+    delete_all.generateBoshLiteManifestJob(generatedProperties, inputFile, inputMetaFile, output)
 
     with open(args["out-arg"], "w") as outFile:
         yaml.dump(output, outFile, default_flow_style=False, width=100000000)
@@ -95,6 +98,7 @@ def main(args) -> None:
 if __name__ == "__main__":
     parser = argparse.ArgumentParser("Convert a CI config file to a bosh-lite manifest file")
     parser.add_argument("--in-file", dest="in-arg", required=True, help="CI property input file")
+    parser.add_argument("--in-meta-file", dest="in-meta-arg", required=True, help="Tile metadata input file")
     parser.add_argument("--out-file", dest="out-arg", default="output/manifest.out.yml", help="Bosh-lite manifest generated file, default \"manifest.out.yml\"")
     parser.add_argument("--shared-VMRs", dest="shared", default=None, help="Number of Shared VMR instances, default 1", type=int)
     parser.add_argument("--community-VMRs", dest="community", default=None, help="Number of Community VMR instances, default 1", type=int)

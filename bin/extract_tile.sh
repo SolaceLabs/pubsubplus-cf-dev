@@ -117,7 +117,7 @@ if [ -d $WORKSPACE/releases ]; then
  rm -rf $WORKSPACE/releases
 fi
 
-unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
+unzip -d $WORKSPACE $TILE_FILE releases/*.tgz metadata/solace-messaging.yml
 
 ( 
   cd $TEMP_DIR
@@ -136,9 +136,12 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
 
   ( cd solace-messaging-${TILE_VERSION}; tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz )
   ( cd solace-messaging-${TILE_VERSION}/packages; tar -xzf solace_messaging.tgz )
-  echo "memory: 1024M" >> solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
-  echo "Keeping a copy of the service broker manifest as $WORKSPACE/service-broker-manifest.yml"
-  cp solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml $WORKSPACE/service-broker-manifest.yml
+
+  if [ -f solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml ]; then
+    echo "memory: 1024M" >> solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml
+    echo "Keeping a copy of the service broker manifest as $WORKSPACE/service-broker-manifest.yml"
+    cp solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml $WORKSPACE/service-broker-manifest.yml
+  fi
 
   DEPLOY_ALL_INITIAL_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
   DEPLOY_ALL_INITIAL_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
@@ -149,7 +152,7 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
     cd deploy-all
     tar -xzf ../deploy-all.tgz 
     echo "Modified deploy-all to use 1gb mysql plan"
-    sed -i 's/SVC_PLAN\=\"\"/SVC_PLAN\=\"1gb\"/' templates/deploy-all.sh.erb
+    sed -i "s/'plan', ''/'plan', '1gb'/" templates/deploy-all.sh.erb
     echo "Repackaged deploy-all.tgz"
     tar -czf ../deploy-all.tgz ./
     cd ..

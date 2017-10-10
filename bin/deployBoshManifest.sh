@@ -62,7 +62,7 @@ $SCRIPTPATH/getBoshInfo.sh -m $MANIFEST_FILE
 
 echo "Checking for existing deployment..."
 
-DEPLOYMENT_FOUND_COUNT=`2>&1 bosh deployments | grep $DEPLOYMENT_NAME | wc -l`
+DEPLOYMENT_FOUND_COUNT=`2>&1 $BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
    echo "A bosh deployment is already done."
    echo
@@ -85,7 +85,7 @@ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
 fi
 
 POOL_NAMES=$(py "getPoolNames")
-VM_JOBS=`2>&1 bosh vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | tr '\n' ' '`
+VM_JOBS=`2>&1 bosh -e lite vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | tr '\n' ' '`
 
 if [ -z "$VM_JOBS" ]; then
     echo "No deployed VMs could be found."
@@ -99,5 +99,5 @@ done
 
 echo
 echo "You can ssh to them using: bosh ssh [VM_NAME]"
-echo "  e.g. bosh ssh ${VM_JOBS[0]}"
+echo "  e.g. bosh -e lite ssh ${VM_JOBS[0]}"
 echo
