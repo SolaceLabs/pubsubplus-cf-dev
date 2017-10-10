@@ -131,7 +131,8 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
   tar -xOzf solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz $SB_JAR > $WORKSPACE/releases/solace-messaging.jar
   echo "Extracted Solace Service Broker to $WORKSPACE/releases/solace-messaging.jar"
 
-  SB_INITIAL_SHA=`sha1sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'`
+  SB_INITIAL_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'`
+  SB_INITIAL_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'`
 
   ( cd solace-messaging-${TILE_VERSION}; tar -xzf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz )
   ( cd solace-messaging-${TILE_VERSION}/packages; tar -xzf solace_messaging.tgz )
@@ -139,7 +140,8 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
   echo "Keeping a copy of the service broker manifest as $WORKSPACE/service-broker-manifest.yml"
   cp solace-messaging-${TILE_VERSION}/packages/solace_messaging/manifest.yml $WORKSPACE/service-broker-manifest.yml
 
-  DEPLOY_ALL_INITIAL_SHA=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
+  DEPLOY_ALL_INITIAL_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
+  DEPLOY_ALL_INITIAL_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
 
   ( 
     cd solace-messaging-${TILE_VERSION}/jobs
@@ -154,7 +156,8 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
     rm -rf deploy-all
   )
 
-  DEPLOY_ALL_NEW_SHA=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
+  DEPLOY_ALL_NEW_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
+  DEPLOY_ALL_NEW_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/jobs/deploy-all.tgz | awk '{ print $1 }'`
 
   ## Package and cleanup
   ( 
@@ -164,13 +167,19 @@ unzip -d $WORKSPACE $TILE_FILE releases/*.tgz
     rm -rf solace_messaging 
   )
  
-  SB_NEW_SHA=`sha1sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'` 
+  SB_NEW_SHA1=`sha1sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'` 
+  SB_NEW_SHA2=`sha256sum solace-messaging-${TILE_VERSION}/packages/solace_messaging.tgz | awk '{ print $1 }'` 
 
-  echo "Updating sha1 in release.MF:"
-  echo "    solace-messaging sha1 changed from $SB_INITIAL_SHA to $SB_NEW_SHA"
-  sed -i "s/$SB_INITIAL_SHA/$SB_NEW_SHA/g" solace-messaging-${TILE_VERSION}/release.MF
-  echo "    deploy-all sha1 changed from $DEPLOY_ALL_INITIAL_SHA to $DEPLOY_ALL_NEW_SHA"
-  sed -i "s/$DEPLOY_ALL_INITIAL_SHA/$DEPLOY_ALL_NEW_SHA/g" solace-messaging-${TILE_VERSION}/release.MF
+  echo "Updating SHA sums in release.MF:"
+  echo "    solace-messaging SHA changed from $SB_INITIAL_SHA1 to $SB_NEW_SHA1"
+  sed -i "s/$SB_INITIAL_SHA1/$SB_NEW_SHA1/g" solace-messaging-${TILE_VERSION}/release.MF
+  echo "    solace-messaging SHA2 changed from $SB_INITIAL_SHA2 to $SB_NEW_SHA2"
+  sed -i "s/$SB_INITIAL_SHA2/$SB_NEW_SHA2/g" solace-messaging-${TILE_VERSION}/release.MF
+
+  echo "    deploy-all SHA1 changed from $DEPLOY_ALL_INITIAL_SHA1 to $DEPLOY_ALL_NEW_SHA1"
+  sed -i "s/$DEPLOY_ALL_INITIAL_SHA1/$DEPLOY_ALL_NEW_SHA1/g" solace-messaging-${TILE_VERSION}/release.MF
+  echo "    deploy-all SHA2 changed from $DEPLOY_ALL_INITIAL_SHA2 to $DEPLOY_ALL_NEW_SHA2"
+  sed -i "s/$DEPLOY_ALL_INITIAL_SHA2/$DEPLOY_ALL_NEW_SHA2/g" solace-messaging-${TILE_VERSION}/release.MF
 
   echo "Repackaging solace-messaging-${TILE_VERSION}.tgz"
   ( cd solace-messaging-${TILE_VERSION}; tar -czf $WORKSPACE/releases/solace-messaging-${TILE_VERSION}.tgz . )
