@@ -87,24 +87,25 @@ function shutdownVMRJobs() {
 
  echo "Looking for VM job $VM_JOB" 
  VM_FOUND_COUNT=`$BOSH_CMD -e lite vms | grep $VM_JOB | wc -l`
- VM_RUNNING_FOUND_COUNT=`$BOSH_CMD -e lite vms | grep $VM_JOB | grep running |  wc -l`
+ VM_RUNNING_FOUND_COUNT=`$BOSH_CMD -e lite vms --json | jq '.Tables[].Rows[] | select(.process_state=="running") | .instance' | grep $VM_JOB |  wc -l`
  DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
  RELEASE_FOUND_COUNT=`$BOSH_CMD -e lite releases | grep solace-vmr | wc -l`
 
  if [ "$VM_RUNNING_FOUND_COUNT" -eq "1" ]; then
 
-   echo "Will stop monit jobs if any are running"
-   $BOSH_CMD -e lite ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit stop all" 
+   echo "Will stop monit jobs if any are running on $DEPLOYMENT_NAME / $VM_JOB"
+   $BOSH_CMD -e lite -d $DEPLOYMENT_NAME ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit stop all" 
 
-   RUNNING_COUNT=`$BOSH_CMD -e lite ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit summary" | grep running | wc -l`
+   RUNNING_COUNT=`$BOSH_CMD -e lite -d $DEPLOYMENT_NAME ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit summary" | grep running | wc -l`
    MAX_WAIT=60
    while [ "$RUNNING_COUNT" -gt "0" ] && [ "$MAX_WAIT" -gt "0" ]; do
    	echo "Waiting for monit to finish shutdown - found $RUNNING_COUNT still running"
 	sleep 5
         let MAX_WAIT=MAX_WAIT-5
-        RUNNING_COUNT=`$BOSH_CMD -e lite ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit summary " | grep running | wc -l`
+        RUNNING_COUNT=`$BOSH_CMD -e lite -d $DEPLOYMENT_NAME ssh $VM_JOB "sudo /var/vcap/bosh/bin/monit summary " | grep running | wc -l`
    done
-
+ else
+  echo "Did not find running job $VM_JOB"
  fi
 
 }
@@ -113,18 +114,10 @@ function shutdownAllVMRJobs() {
     local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
     $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME manifest > $DEPLOYED_MANIFEST
     echo "Shutting down all VMR jobs..."
-    VMR_JOBS=$(py "getManifestJobNames" $DEPLOYED_MANIFEST)
+    VMR_JOBS=$(bosh -e lite -d $DEPLOYMENT_NAME vms --json | jq '.Tables[].Rows[] | select(.process_state=="running") | .instance' | sed 's/\"//g' )
     for VMR_JOB_NAME in ${VMR_JOBS[@]}; do
-        VM_FOUND_COUNT=$($BOSH_CMD -e lite vms | grep $VMR_JOB_NAME | wc -l)
-        echo "$VMR_JOB_NAME: Found $VM_FOUND_COUNT running VMs"
-        echo
-        I=0
-        while [ "$I" -lt "$VM_FOUND_COUNT" ]; do
-            echo "Shutting down $VMR_JOB_NAME/$I"
-            shutdownVMRJobs $VMR_JOB_NAME/$I | tee $LOG_FILE
-            echo
-            I=$(($I+1))
-        done
+        echo "Shutting down $VMR_JOB_NAME"
+        shutdownVMRJobs $VMR_JOB_NAME | tee $LOG_FILE
     done
     rm $DEPLOYED_MANIFEST
 }
