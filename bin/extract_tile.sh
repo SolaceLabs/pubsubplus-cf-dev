@@ -117,7 +117,12 @@ if [ -d $WORKSPACE/releases ]; then
  rm -rf $WORKSPACE/releases
 fi
 
-unzip -d $WORKSPACE $TILE_FILE releases/*.tgz metadata/solace-messaging.yml
+if [ -d $WORKSPACE/metadata ]; then
+ echo "Clean up of old metadata"
+ rm -rf $WORKSPACE/metadata
+fi
+
+unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz metadata/solace-messaging.yml
 
 ( 
   if [ -f $TEMPLATE_DIR/trusted.crt ]; then
