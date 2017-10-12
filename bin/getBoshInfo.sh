@@ -122,11 +122,11 @@ for i in "${!POOL_NAMES[@]}"; do
     echo "    HA_ENABLED     ${HA_ENABLED[i]}"
     echo "    NUM_INSTANCES  ${NUM_INSTANCES[i]}"
 
-    INSTANCE_COUNT=0
-    while [ "$INSTANCE_COUNT" -lt "${NUM_INSTANCES[i]}" ];  do
-         echo "    VM/$INSTANCE_COUNT           ${VMR_JOB_NAMES[i]}/$INSTANCE_COUNT"
-         let INSTANCE_COUNT=INSTANCE_COUNT+1
-    done
+#    INSTANCE_COUNT=0
+#    while [ "$INSTANCE_COUNT" -lt "${NUM_INSTANCES[i]}" ];  do
+#         echo "    VM/$INSTANCE_COUNT           ${VMR_JOB_NAMES[i]}/$INSTANCE_COUNT"
+#         let INSTANCE_COUNT=INSTANCE_COUNT+1
+#    done
     echo
 done
 

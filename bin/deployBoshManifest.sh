@@ -85,7 +85,8 @@ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
 fi
 
 POOL_NAMES=$(py "getPoolNames")
-VM_JOBS=`2>&1 bosh -e lite vms | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | tr '\n' ' '`
+echo "Looking for Jobs in Pools $POOL_NAMES"
+VM_JOBS=`2>&1 bosh -e lite vms | awk '{ print $1 }' | grep -Eo "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/(.*)" | tr '\n' ' '`
 
 if [ -z "$VM_JOBS" ]; then
     echo "No deployed VMs could be found."
@@ -99,5 +100,5 @@ done
 
 echo
 echo "You can ssh to them using: bosh -e lite ssh [VM_NAME]"
-echo "  e.g. bosh -e lite ssh ${VM_JOBS[0]}"
+echo "  e.g. bosh -e lite -d $DEPLOYMENT_NAME ssh ${VM_JOBS[0]}"
 echo
