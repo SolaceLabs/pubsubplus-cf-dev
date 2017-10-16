@@ -36,7 +36,10 @@ done
 
 DEPLOYMENT_FOUND_COUNT=`bosh -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
-  echo "No deployments detected. Nothing to do..."
+  echo "No deployments detected."
+  echo "Will cleanup any orphaned disks"
+  deleteOrphanedDisks | tee $LOG_FILE
+  echo
   echo "Terminating cleanup..."
   exit 0
 fi

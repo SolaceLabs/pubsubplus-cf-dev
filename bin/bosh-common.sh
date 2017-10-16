@@ -68,11 +68,11 @@ function deleteOrphanedDisks() {
 
 $BOSH_CMD -e lite disks --orphaned
 
-ORPHANED_DISKS=`$BOSH_CMD -e lite disks --orphaned | grep -v "| Disk"  | grep "^|"  | awk -F\| '{ print $2 }'`
+ORPHANED_DISKS=$( $BOSH_CMD -e lite disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment="solace-vmr-warden-deployment") | .disk_cid' | sed 's/\"//g' )
 
 for DISK_ID in $ORPHANED_DISKS; do
 	echo "Will delete $DISK_ID"
-	$BOSH_CMD -e lite delete disk $DISK_ID
+	$BOSH_CMD -e lite -n delete-disk $DISK_ID
 done
 
 }
