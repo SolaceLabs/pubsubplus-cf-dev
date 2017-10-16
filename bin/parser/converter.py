@@ -74,15 +74,15 @@ def main(args) -> None:
     for job in inputFile["jobs"]:
         numInstances = str(inputFile["jobs"][job]["resource_config"]["instances"])
         if job == "Shared-VMR":
-            Shared.generateBoshLiteManifestJob(generatedProperties, Shared.getNumInstances(args["shared"], numInstances), output)
+            Shared.generateBoshLiteManifestJob(generatedProperties, Shared.getNumInstances(args["shared"], numInstances), inputFile, inputMetaFile, output)
         if job == "Large-VMR":
-            Large.generateBoshLiteManifestJob(generatedProperties, Large.getNumInstances(args["large"], numInstances), output)
+            Large.generateBoshLiteManifestJob(generatedProperties, Large.getNumInstances(args["large"], numInstances), inputFile, inputMetaFile, output)
         if job == "Community-VMR":
-            Community.generateBoshLiteManifestJob(generatedProperties, Community.getNumInstances(args["community"], numInstances), output)
+            Community.generateBoshLiteManifestJob(generatedProperties, Community.getNumInstances(args["community"], numInstances), inputFile, inputMetaFile, output)
         if job == "Medium-HA-VMR":
-            MediumHA.generateBoshLiteManifestJob(generatedProperties, MediumHA.getNumInstances(args["medium-HA"], numInstances), output)
+            MediumHA.generateBoshLiteManifestJob(generatedProperties, MediumHA.getNumInstances(args["medium-HA"], numInstances),inputFile, inputMetaFile,  output)
         if job == "Large-HA-VMR":
-            LargeHA.generateBoshLiteManifestJob(generatedProperties, LargeHA.getNumInstances(args["large-HA"], numInstances), output)
+            LargeHA.generateBoshLiteManifestJob(generatedProperties, LargeHA.getNumInstances(args["large-HA"], numInstances), inputFile, inputMetaFile, output)
 
     for job in output["jobs"]:
         for network in job["networks"]:

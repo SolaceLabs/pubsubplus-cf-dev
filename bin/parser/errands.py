@@ -2,46 +2,13 @@ import ipaddress
 from solyaml import literal_unicode
 from typing import Dict, Any, Optional, List
 from schema import root
-from selector import Selector
 import yaml
-
-keywordsToIgnore = [
-    "jobs"
-]
 
 
 class Errand:
     SSH_PORT = 2222 #const
     def __init__(self, name : str) -> None:
         self.name = name
-
-    def generateErrandPropertiesFromCiFile(self, root, inputFile) -> dict:
-        outputProperties = {}
-        for propertyName, propertyValue in inputFile.items():
-            if propertyName not in keywordsToIgnore:
-                name = propertyName.split(".")[0]
-                if name not in root.parameters:
-                    raise ValueError("property '" + name + "' not found in schema")
-                else:
-                    parameter = root.parameters[name]
-                    if "." in propertyName:
-                        relativeName = propertyName.split(".", 1)[1]
-                    else:
-                        relativeName = "" 
-
-                    if isinstance(parameter,Selector):
-                       parameter.convertToBoshLiteManifestErrand(propertyName, relativeName, propertyValue, outputProperties)
-                       # parameter.convertToBoshLiteManifest(propertyName, relativeName, propertyValue, outputProperties)
-                       #if "." not in propertyName:
-                       #    print("Done" , propertyName, "x" , relativeName, "x" , propertyValue )
-                       #    outputProperties[propertyName] = {}
-                       #    outputProperties[propertyName]["value"] = propertyValue
-                       #else:
-                       #   print(parameter.name)
-                       #   print(propertyName, "x" , relativeName, "x" , propertyValue )
-
-                           
-        return outputProperties 
 
     def generateBoshLiteManifestJob(self, properties : Dict[str, Any], inputFile : Dict[str, Any], inputMetaFile : Dict[str, Any], outFile: List[Dict[str, Any]]) -> None:
 
@@ -161,7 +128,7 @@ class Errand:
 # Handle special structured properties ( tls_config, tcp_routes_config, ... )
 
 ## Custom generate
-        customProperties = self.generateErrandPropertiesFromCiFile(root,inputFile)
+        customProperties = root.generateSelectorPropertiesFromCiFile(inputFile)
         output["properties"].update(customProperties)
 
 

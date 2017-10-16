@@ -1,6 +1,7 @@
 import ipaddress
 from solyaml import literal_unicode
 from typing import Dict, Any, Optional, List
+from schema import root
 
 class PoolType:
     freeIpAddress = ipaddress.IPv4Address('10.244.0.3')
@@ -28,7 +29,8 @@ class PoolType:
             returnValue = 1 if not self.isHA else 3
         return int(returnValue)
 
-    def generateBoshLiteManifestJob(self, properties : Dict[str, Any], numInstances: int, outFile: List[Dict[str, Any]]) -> None:
+
+    def generateBoshLiteManifestJob(self, properties : Dict[str, Any], numInstances: int, inputFile : Dict[str, Any], inputMetaFile : Dict[str, Any], outFile: List[Dict[str, Any]]) -> None:
         if numInstances == 0:
             return
         output = {}
@@ -100,6 +102,12 @@ class PoolType:
         output["properties"]["cf_client_secret"] = "1234"
         output["properties"]["cf_organization"] = "solace"
         output["properties"]["cf_space"] = "solace-messaging"
+
+        ## Custom generate
+        customProperties = root.generateSelectorPropertiesFromCiFile(inputFile)
+        output["properties"].update(customProperties)
+
+
         outFile["jobs"].append(output)
 
 Shared = PoolType("Shared-VMR", False, "latest")
