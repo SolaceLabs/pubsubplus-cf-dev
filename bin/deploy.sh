@@ -8,7 +8,6 @@ export LOG_FILE="/tmp/bosh_deploy.log"
 set -e
 
 export MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
-
 export GEN_NEW_MANIFEST_FILE=true
 export INTERACTIVE=false
 
@@ -32,7 +31,7 @@ Note 1: the -i option does nothing if -m or -c is given
 Note 2: the -m and -c options cannot be used simultaneously
 
 optional arguments:
-  -e    Indicates to use the enterprise edition
+  -e    Use the enterprise vmr edition
   -m MANIFEST_FILE
         Manifest that will be deployed
   -c CI_CONFIG_FILE
@@ -44,34 +43,22 @@ EOM
     echo "$USAGE_DESCRIPTION"
 }
 
-while getopts :m:ec:ih opt; do
+export USE_EXISTING=false
+export USE_CI_FILE=false
+
+while getopts :em:c:ih opt; do
     case $opt in
-        e) 
-	    EDITION_OPT="enterprise"
-	    echo "Using VMR Enterprise Edition"
-	    ;;
+        e)  EDITION_OPT="enterprise";;
         m)
             EXISTING_MANIFEST_FILE="$OPTARG"
-            echo "Will use bosh-lite manifest file $EXISTING_MANIFEST_FILE"
-	    echo "With VMR Enterprise: $EDITION_OPT"
-            if ! [ "$EXISTING_MANIFEST_FILE" -ef "$MANIFEST_FILE" ]; then
-                cp $EXISTING_MANIFEST_FILE $MANIFEST_FILE
-                echo "Copied $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
-            fi
-            echo
-            GEN_NEW_MANIFEST_FILE=false
+	    USE_EXISTING=true
+	    GEN_NEW_MANIFEST_FILE=false
 	    ;;
         c)
             CI_CONFIG_FILE="$OPTARG"
-            echo "Will convert CI-config file to bosh-lite manifest file:"
-            echo "    Input CI-Config:      $OPTARG"
-            echo "    Output Bosh Manifest: $MANIFEST_FILE"
-            $SCRIPTPATH/parser/converter.py --edition="$EDITION_OPT" --in-file="$CI_CONFIG_FILE" --in-meta-file=$TILE_METADATA_FILE --out-file="$MANIFEST_FILE"
-            echo
-            GEN_NEW_MANIFEST_FILE=false
-	    ;;
-        i)  INTERACTIVE=true
-	    ;;
+	    USE_CI_FILE=true
+            GEN_NEW_MANIFEST_FILE=false;;
+        i)  INTERACTIVE=true;;
         h)
             showUsage
             exit 0;;
@@ -80,6 +67,24 @@ while getopts :m:ec:ih opt; do
     esac
 done
 
+if $USE_EXISTING; then
+  echo "Will use bosh-lite manifest file $EXISTING_MANIFEST_FILE"
+  if ! [ "$EXISTING_MANIFEST_FILE" -ef "$MANIFEST_FILE" ]; then
+	cp $EXISTING_MANIFEST_FILE $MANIFEST_FILE
+ 	echo "Copied $EXISTING_MANIFEST_FILE to $MANIFEST_FILE"
+  fi
+  echo
+fi	
+
+if $USE_CI_FILE; then
+  echo "Using VMR edition $EDITION_OPT"
+  echo "Will convert CI-config file to bosh-lite manifest file:"
+  echo "    Input CI-Config:      $OPTARG"
+  echo "    Output Bosh Manifest: $MANIFEST_FILE"
+  $SCRIPTPATH/parser/converter.py --edition="$EDITION_OPT" --in-file="$CI_CONFIG_FILE" --in-meta-file=$TILE_METADATA_FILE --out-file="$MANIFEST_FILE"
+  echo
+fi
+            
 if [ -n "$EXISTING_MANIFEST_FILE" ] && [ -n "$CI_CONFIG_FILE" ]; then
     showUsage
     >&2 echo "The -m and -c options cannot be used simultaneously"
@@ -103,7 +108,7 @@ if $GEN_NEW_MANIFEST_FILE; then
     $SCRIPTPATH/generateBoshManifest.py $MANIFEST_GEN_OPTS
     echo
 fi
-exit 1
+
 $SCRIPTPATH/pcf_prepare.sh
 echo
 $SCRIPTPATH/optimizeManifest.py $MANIFEST_FILE
