@@ -100,7 +100,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser("Convert a CI config file to a bosh-lite manifest file")
     parser.add_argument("--in-file", dest="in-arg", required=True, help="CI property input file")
     parser.add_argument("--in-meta-file", dest="in-meta-arg", required=True, help="Tile metadata input file")
-    parser.add_argument("--out-file", dest="out-arg", default="output/manifest.out.yml", help="Bosh-lite manifest generated file, default \"manifest.out.yml\"")
+    parser.add_argument("--out-file", dest="out-arg", default="manifest.out.yml", help="Bosh-lite manifest generated file, default \"manifest.out.yml\"")
     parser.add_argument("--shared-VMRs", dest="shared", default=None, help="Number of Shared VMR instances, default 1", type=int)
     parser.add_argument("--community-VMRs", dest="community", default=None, help="Number of Community VMR instances, default 1", type=int)
     parser.add_argument("--large-VMRs", dest="large", default=None, help="Number of Large VMR instances, default 1", type=int)
