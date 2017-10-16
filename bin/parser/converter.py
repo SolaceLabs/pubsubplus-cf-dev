@@ -67,6 +67,7 @@ def main(args) -> None:
     assert "vmr_admin_password" in generatedProperties
     generatedProperties["admin_password"] = generatedProperties["vmr_admin_password"]
     del generatedProperties["vmr_admin_password"]
+    generatedProperties["edition"] = args["edition"]
 
     for job in inputFile["jobs"]:
         numInstances = str(inputFile["jobs"][job]["resource_config"]["instances"])
@@ -101,4 +102,5 @@ if __name__ == "__main__":
     parser.add_argument("--large-VMRs", dest="large", default=None, help="Number of Large VMR instances, default 1", type=int)
     parser.add_argument("--medium-HA-VMRs", dest="medium-HA", default=None, help="Number of Medium HA VMR instances, default 1", type=int)
     parser.add_argument("--large-HA-VMRs", dest="large-HA", default=None, help="Number of Large HA VMR instances, default 1", type=int)
+    parser.add_argument("--edition", dest="edition", default="evaluation", help="VMR Platform/Edition in use, default: evaluation" )
     main(vars(parser.parse_args()))
