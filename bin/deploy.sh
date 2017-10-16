@@ -13,6 +13,9 @@ INTERACTIVE=false
 
 export TILE_METADATA_FILE=${TILE_METADATA_MANIFEST_FILE:-$WORKSPACE/metadata/solace-messaging.yml}
 
+## Default using Evaluation edition
+export EDITION_OPT="evaluation"
+
 CMD_NAME=`basename $0`
 BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-i][-h]"
 
@@ -39,8 +42,9 @@ EOM
     echo "$USAGE_DESCRIPTION"
 }
 
-while getopts :m:c:ih opt; do
+while getopts e:m:c:ih opt; do
     case $opt in
+        e)  EDITION_OPT="enterprise";;
         m)
             EXISTING_MANIFEST_FILE="$OPTARG"
             echo "Will use bosh-lite manifest file $EXISTING_MANIFEST_FILE"
@@ -55,7 +59,7 @@ while getopts :m:c:ih opt; do
             echo "Will convert CI-config file to bosh-lite manifest file:"
             echo "    Input CI-Config:      $OPTARG"
             echo "    Output Bosh Manifest: $MANIFEST_FILE"
-            $SCRIPTPATH/parser/converter.py --in-file="$CI_CONFIG_FILE" --in-meta-file=$TILE_METADATA_FILE --out-file="$MANIFEST_FILE"
+            $SCRIPTPATH/parser/converter.py --edition="$EDITION_OPT" --in-file="$CI_CONFIG_FILE" --in-meta-file=$TILE_METADATA_FILE --out-file="$MANIFEST_FILE"
             echo
             GEN_NEW_MANIFEST_FILE=false;;
         i)  INTERACTIVE=true;;
