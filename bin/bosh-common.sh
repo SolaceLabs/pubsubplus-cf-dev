@@ -73,6 +73,9 @@ ORPHANED_DISKS=$( $BOSH_CMD -e lite disks --orphaned --json | jq '.Tables[].Rows
 for DISK_ID in $ORPHANED_DISKS; do
 	echo "Will delete $DISK_ID"
 	$BOSH_CMD -e lite -n delete-disk $DISK_ID
+	echo
+	echo "Orphaned Disk $DISK_ID was deleted"
+	echo
 done
 
 }
