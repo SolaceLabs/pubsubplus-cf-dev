@@ -27,10 +27,16 @@ sudo locale-gen en_CA.UTF-8
 apt-get update
 sudo apt-get -y install zsh
 sudo chsh -s $(which zsh)
-sudo gem install bosh_cli --no-ri --no-rdoc
 sudo apt-get -y install subversion
 sudo apt-get -y install rake
 sudo apt-get -y install git
+
+echo "Installing bosh cli"
+wget -q --directory-prefix=/tmp https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-2.0.40-linux-amd64
+sudo mv /tmp/bosh-cli-2.0.40-linux-amd64 /usr/local/bin/bosh
+sudo chmod +x /usr/local/bin/bosh
+echo "Installed bosh: "`bosh -v`
+
 
 echo "Adding cf"
 sudo curl -s -L "https://cli.run.pivotal.io/stable?release=linux64-binary&source=github" | tar -zx && mv cf /usr/bin/cf
