@@ -8,7 +8,14 @@ export LOG_FILE="/tmp/bosh_deploy.log"
 set -e
 
 export MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
-export DEFAULT_CONFIG_FILE=${DEFAULT_CONFIG_FILE:-$TEMPLATES/1.2.0/deployment_properties.yml}
+
+export TILE_FILE=${TILE_FILE:-$WORKSPACE/*.pivotal}
+export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-ubuntu101-enterprise//g' | sed 's/\.pivotal//g' )
+export TEMPLATE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-ubuntu101-enterprise//g' | sed 's/\.pivotal//g' | awk -F\- '{ print $1 }' )
+export TILE_FILE_PATH=$(readlink -f "$TILE_FILE")
+export TEMPLATE_DIR=/home/ubuntu/solace-messaging-cf-dev/templates/$TILE_VERSION 
+export DEFAULT_CONFIG_FILE=${DEFAULT_CONFIG_FILE:-$TEMPLATE_DIR/deployment_properties.yml}
+
 export GEN_NEW_MANIFEST_FILE=true
 
 export TILE_METADATA_FILE=${TILE_METADATA_MANIFEST_FILE:-$WORKSPACE/metadata/solace-messaging.yml}
