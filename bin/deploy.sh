@@ -8,8 +8,8 @@ export LOG_FILE="/tmp/bosh_deploy.log"
 set -e
 
 export MANIFEST_FILE=${MANIFEST_FILE:-$WORKSPACE/bosh-solace-manifest.yml}
+export DEFAULT_CONFIG_FILE=${DEFAULT_CONFIG_FILE:-$TEMPLATES/1.2.0/deployment_properties.yml}
 export GEN_NEW_MANIFEST_FILE=true
-export INTERACTIVE=false
 
 export TILE_METADATA_FILE=${TILE_METADATA_MANIFEST_FILE:-$WORKSPACE/metadata/solace-messaging.yml}
 
@@ -17,7 +17,7 @@ export TILE_METADATA_FILE=${TILE_METADATA_MANIFEST_FILE:-$WORKSPACE/metadata/sol
 export EDITION_OPT="evaluation"
 
 export CMD_NAME=`basename $0`
-export BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-i][-h]"
+export BASIC_USAGE="usage: $CMD_NAME [-m MANIFEST_FILE][-c CI_CONFIG_FILE][-h]"
 
 function showUsage() {
     read -r -d '\0' USAGE_DESCRIPTION << EOM
@@ -27,8 +27,7 @@ Deploy BOSH VMRs.
 
 Default: A basic bosh-lite manifest will be generated and deployed with 1 instance of Shared-VMR, the service broker will be installed.
 
-Note 1: the -i option does nothing if -m or -c is given
-Note 2: the -m and -c options cannot be used simultaneously
+Note: the -m and -c options cannot be used simultaneously
 
 optional arguments:
   -e    Use the enterprise vmr edition
@@ -36,7 +35,6 @@ optional arguments:
         Manifest that will be deployed
   -c CI_CONFIG_FILE
         A Concourse property file from which a new bosh-manifest will be generated
-  -i    Will be prompted to interactively provide options to generate a bosh-lite manifest
   -h    Show this help message and exit
 \0
 EOM
@@ -46,7 +44,7 @@ EOM
 export USE_EXISTING=false
 export USE_CI_FILE=false
 
-while getopts :em:c:ih opt; do
+while getopts :em:c:h opt; do
     case $opt in
         e)  EDITION_OPT="enterprise";;
         m)
@@ -58,7 +56,6 @@ while getopts :em:c:ih opt; do
             CI_CONFIG_FILE="$OPTARG"
 	    USE_CI_FILE=true
             GEN_NEW_MANIFEST_FILE=false;;
-        i)  INTERACTIVE=true;;
         h)
             showUsage
             exit 0;;
@@ -93,19 +90,11 @@ fi
 
 if $GEN_NEW_MANIFEST_FILE; then
     echo "A new manifest will be generated..."
-    echo
-    $INTERACTIVE && $SCRIPTPATH/generateBoshManifest.py -h && echo
+    echo "Will convert DEFAULT-config file to bosh-lite manifest file:"
+    echo "    Input CI-Config:      $DEFAULT_CONFIG_FILE"
+    echo "    Output Bosh Manifest: $MANIFEST_FILE"
+    $SCRIPTPATH/parser/converter.py --edition="$EDITION_OPT" --in-file="$DEFAULT_CONFIG_FILE" --in-meta-file=$TILE_METADATA_FILE --out-file="$MANIFEST_FILE"
     echo "MANIFEST_FILE set to $MANIFEST_FILE"
-    echo
-
-    if $INTERACTIVE; then
-        read -p "Please indicate the options that will be used to generate this manifest (Will proceed with the default settings if none provided): generateBoshManifest.py " MANIFEST_GEN_OPTS
-    else
-        echo "-i option was not given, manifest will be generated using default settings..."
-    fi
-
-    echo
-    $SCRIPTPATH/generateBoshManifest.py $MANIFEST_GEN_OPTS
     echo
 fi
 

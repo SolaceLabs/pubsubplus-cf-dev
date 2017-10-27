@@ -41,7 +41,7 @@ def getDeployedIps(deploymentName):
         return None
 
     deployedManifest = yaml.load(
-        subprocess.check_output("bosh -e lite download manifest {}".format(deploymentName),
+            subprocess.check_output("bosh -e lite -d {} manifest".format(deploymentName),
             shell=True, stderr=subprocess.DEVNULL))
 
     deployedIpConfig = {}

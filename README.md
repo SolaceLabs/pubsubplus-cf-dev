@@ -202,36 +202,26 @@ This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the So
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
-**Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate.
+**Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate and evaluation vmr edition.
 ~~~~
 deploy.sh
 ~~~~
 
-Run the deployment script in interactive mode for more customizable deployment options.
+The current concourse property file used as default can be found and edited under Templates/1.2.0/.  
+
+**Example:** Simply use -e to use the enterprise vmr edition.
 ~~~~
-deploy.sh -i
+deploy.sh -e
 ~~~~
 
-Which will then prompt you for further input on the kind of deployment you want.
+**Example:** Use a customized concourse property file from which a new bosh-manifest will be generated. 
 ~~~~
-Please indicate the options that will be used to generate this manifest (Will proceed with the default settings if none provided): generateBoshManifest.py
-~~~~
-
-_Only the script's options need to be provided for this prompt. The script name,_ `generateBoshManifest.py `_, is already provided and is only shown in the following example commands for visual clarity._
-
-**Example:** Deploy a Community-VMR with no self-signed server certificate.
-~~~~
-generateBoshManifest.py -p Community-VMR --no-cert
+deploy.sh -c custom_properties.yml
 ~~~~
 
-**Example:** Deploy a Medium-HA-VMR that requests 3 VMR instances and uses a self-signed server certificate.
+The deployment script has other options which are documented in the helper.
 ~~~~
-generateBoshManifest.py -p Medium-HA-VMR
-~~~~
-
-**Example:** Deploy 1 Shared-VMR and 2 Large-VMRs (for a total of 3 VMR instances) which will all use a self-signed server certificate.
-~~~~
-generateBoshManifest.py -p Shared-VMR Large-VMR:2
+deploy.sh
 ~~~~
 
 _The current deployment can be updated by simply rerunning the deployment script._
@@ -248,11 +238,6 @@ Pool name to service plan mapping:
 - Medium-HA-VMR => medium-ha
 - Large-HA-VMR => large-ha
 
-Aside from interactive mode, the deployment script has other options which are documented in the helper.
-
-~~~~
-deploy.sh -h
-~~~~
 
 ## Using the Deployment
 
