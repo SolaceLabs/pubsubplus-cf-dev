@@ -7,11 +7,6 @@ export PATH=$SOLACE_MESSAGING_CF_DEV/bin:$PATH
 ## Just in case
 chmod +x $SOLACE_MESSAGING_CF_DEV/bin/*.sh
 
-## Just to get bosh-lite going with any fuss
-#if [ ! -f $HOME/.bosh_config ]; then
-#  cp $SOLACE_MESSAGING_CF_DEV/.bosh_config $HOME/.bosh_config
-#fi
-
 echo
 echo
 cat $SOLACE_MESSAGING_CF_DEV/.banner
