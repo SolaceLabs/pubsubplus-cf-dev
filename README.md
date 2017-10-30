@@ -327,14 +327,14 @@ cf dev resume
 From the cli-tools vm:
 
 ~~~~
-bosh vms
+bosh -e lite vms
 ~~~~
 
 ### Access the VMR cli
 
 Get the list of vms, to find the IP address of the VMR instance you want:
 ~~~~
-bosh vms
+bosh -e lite vms
 ~~~~
 
 Now ssh to the VMR, the default password is 'admin'.
