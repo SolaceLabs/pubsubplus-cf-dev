@@ -72,6 +72,16 @@ sudo mv /tmp/spiff /usr/bin/spiff
 rm -f /tmp/spiff_linux_amd64.zip
 which spiff
 
+echo "Installing ruby"
+sudo apt-get -y install ruby ruby-dev
+
+sudo gem install bundle
+
+echo "Installing Cloud Foundry uaac"
+sudo gem install cf-uaac
+
+
+
 echo '' >> .profile
 if [ -n "$SOLACE_MESSAGING_CF_DEV_REPO" ]; then
     echo "export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO}" >> .profile
