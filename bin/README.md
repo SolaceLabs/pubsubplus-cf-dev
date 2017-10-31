@@ -21,30 +21,21 @@ Most of these scripts are accompanied by help messages that are retrievable usin
 
 * deploy.sh
   * Depending on if the input is:
-    1. To run in Interactive Mode  
-      Prompts you for input for `generateBoshManifest.py` and generates a new bosh manifest at `$MANIFEST`.
-    2. A Bosh Manifest  
-      Copies the given manifest to `$MANIFEST`. Be warned that if the input is `$MANIFEST` itself, that it might be overwritten during the deployment process.
-    3. A Tile Config File  
+    3. A Config File  
       Pass it through `parser/converter.py` to convert it to a BOSH manifest saved to `$MANIFEST`.
     4. No Input  
-      Runs `generateBoshManifest.py` with its default settings.
+      Uses a default Config file from templates.
   * Run `optimizeManifest.py`.
   * Run `deployBoshManifest.sh`.
-  * Run `installServiceBroker.sh`.
   
 * cleanup.sh
   * Runs `cleanupBoshDeployment.sh`.
-  * Runs `uninstallServiceBroker.sh`.
 
 * getBoshInfo.sh
   * Prints a basic summary of the live deployment or a provided BOSH manifest.
 
 #### Modular BOSH Deployment Component Scripts
 
-* generateBoshManifest.py
-  * Generates a basic BOSH manifest to `$MANIFEST` using the provided parameters and the correct [templates](./templates) as specified by the version of the pivotal tile.
-  
 * optimizeManifest.py
   * Modifies the provided manifest file against the live deployment to maintain the following conditions:
     * If the given manifest contains VMR(s) that are already deployed, the manifest's VMR job(s) will reuse them.
