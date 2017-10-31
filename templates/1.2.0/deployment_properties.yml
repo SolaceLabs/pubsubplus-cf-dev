@@ -153,7 +153,6 @@ jobs:
       internet_connected: false
   Large-VMR:
     resource_config:
-      # vm_type_id: medium.disk
       persistent_disk:
         size_mb: automatic
       instances: 0
@@ -176,7 +175,4 @@ jobs:
         size_mb: automatic
       instances: 0
       internet_connected: false
-
-    # Job-specific properties can be passed in here as well, like this:
-#   property_name: property_value
 
