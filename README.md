@@ -207,37 +207,14 @@ _If not sure what to pick just use the default with no parameters. Otherwise, pl
 deploy.sh
 ~~~~
 
-The current concourse property file used as default can be found and edited under Templates/1.2.0/.  
+The deployment property file used as default can be found under [templates](templates/1.2.0/),  you can make a copy and edit it.
 
-**Example:** Simply use -e to use the enterprise vmr edition.
-~~~~
-deploy.sh -e
-~~~~
-
-**Example:** Use a customized concourse property file from which a new bosh-manifest will be generated. 
+**Example:** Use a customized deployment property file from which a new bosh-manifest will be generated. 
 ~~~~
 deploy.sh -c custom_properties.yml
 ~~~~
 
-The deployment script has other options which are documented in the helper.
-~~~~
-deploy.sh
-~~~~
-
 _The current deployment can be updated by simply rerunning the deployment script._
-
-_Keep in mind that not all Tile Releases contain all solace-messaging service plans.
-And that you may only deploy a single service plan which is controlled by the pool name (-p) to BOSH-lite.
-The flag for the pool name (-p) will correspond to a service plan in the marketplace_
-
-Pool name to service plan mapping:
-
-- Shared-VMR => shared
-- Large-VMR => large
-- Community-VMR => community
-- Medium-HA-VMR => medium-ha
-- Large-HA-VMR => large-ha
-
 
 ## Using the Deployment
 
