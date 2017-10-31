@@ -166,10 +166,10 @@ The goal of the deployment steps is to install Solace Messaging into the running
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
-For my example I have downloaded version 1.1.0 and placed it in:
+For my example I have downloaded version 1.2.0 and placed it in:
 
 ~~~~
-solace-messaging-cf-dev/workspace/solace-messaging-1.1.0.pivotal
+solace-messaging-cf-dev/workspace/solace-messaging-1.2.0.pivotal
 ~~~~
 
 
@@ -191,7 +191,7 @@ Use extract_tile.sh to extract the relevant contents we need.
 
 ~~~~
 cd workspace
-extract_tile.sh -t solace-messaging-1.1.0.pivotal
+extract_tile.sh -t solace-messaging-1.2.0.pivotal
 ~~~~
 
 You will find the relevant contents extracted to ~/workspace/releases
