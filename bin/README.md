@@ -3,11 +3,11 @@ To support testing a bosh release directly by developers and users of PCFDev.
 
 Requires a [bosh-lite] (https://github.com/cloudfoundry/bosh-lite) 
 - Assumes installation with default networking options. 
-- Scripts need to be able to target bosh: bosh target 192.168.50.4 lite
+- Scripts need to be able to target bosh.
 
 
 - The files in [templates](../templates/) are used to generate a bosh deployment manifest
-- The [templates](../templates) contain parameters that assume you have installed the Solace Service Broker in a locally accessible [PCF Dev](https://pivotal.io/pcf-dev)
+- The [templates](../templates) contain parameters that assume you a locally accessible [PCF Dev](https://pivotal.io/pcf-dev)
 
 ## Scripts
 
@@ -21,9 +21,9 @@ Most of these scripts are accompanied by help messages that are retrievable usin
 
 * deploy.sh
   * Depending on if the input is:
-    3. A Config File  
+    1. A Config File  
       Pass it through `parser/converter.py` to convert it to a BOSH manifest saved to `$MANIFEST`.
-    4. No Input  
+    2. No Input  
       Uses a default Config file from templates.
   * Run `optimizeManifest.py`.
   * Run `deployBoshManifest.sh`.
