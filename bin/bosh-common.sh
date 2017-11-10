@@ -144,11 +144,12 @@ function deleteDeploymentAndRelease() {
     # Delete the deployment 
     echo "Deleting deployment $DEPLOYMENT_NAME"
     $BOSH_CMD -n -e lite -d $DEPLOYMENT_NAME delete-deployment 
+    echo
  else
    echo "No deployment found."
  fi
 
- if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "1" ]; then
+ if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -ge "1" ]; then
     # solace-vmr
     echo "Deleting release solace-vmr"
     $BOSH_CMD -n -e lite delete-release solace-vmr
@@ -156,7 +157,7 @@ function deleteDeploymentAndRelease() {
     echo "No solace-vmr release found"
  fi
 
- if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "1" ]; then
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -ge "1" ]; then
     # solace-messaging
     echo "Deleting release solace-messaging"
     $BOSH_CMD -n -e lite delete-release solace-messaging

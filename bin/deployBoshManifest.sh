@@ -64,9 +64,9 @@ echo "Checking for existing deployment..."
 
 DEPLOYMENT_FOUND_COUNT=`2>&1 $BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
-   echo "A bosh deployment is already done."
+   echo "A bosh deployment exists and will be updated/upraded."
    echo
-   shutdownAllVMRJobs
+#   shutdownAllVMRJobs
 else
    echo "No existing bosh deployment found. Continuing..."
 fi
