@@ -1,22 +1,25 @@
 ##
 
-export SOLACE_MESSAGING_CF_DEV=$HOME/solace-messaging-cf-dev
+export MY_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+export SOLACE_MESSAGING_CF_DEV=${SOLACE_MESSAGING_CF_DEV:-$MY_HOME}
 
 export PATH=$SOLACE_MESSAGING_CF_DEV/bin:$PATH
 
-## Just in case
-chmod +x $SOLACE_MESSAGING_CF_DEV/bin/*.sh
+export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 
-echo
-echo
-cat $SOLACE_MESSAGING_CF_DEV/.banner
-echo
-echo
+source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh
+
+if [ -z $SEEN_BANNER ]; then
+ echo
+ echo
+ cat $SOLACE_MESSAGING_CF_DEV/.banner
+ echo
+ echo
+ export SEEN_BANNER=1
+fi
 
 printf "SOLACE_MESSAGING_CF_DEV\t\t%s\n" "$SOLACE_MESSAGING_CF_DEV"
-
-# Used by most scripts
-export WORKSPACE=$HOME/workspace
 
 printf "WORKSPACE\t\t\t%s\n" "$WORKSPACE"
 
@@ -59,41 +62,12 @@ else
 fi
 
 
-
-
 ## Test BOSH-Lite access
-
-export BOSH_CMD="/usr/local/bin/bosh"
-export BOSH_CLIENT=${BOSH_CLIENT:-admin}
-export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
-
-function targetBosh() {
-  
-  if [ ! -d $HOME/bosh-lite ]; then
-     (cd $HOME; git clone https://github.com/cloudfoundry/bosh-lite.git)
-  fi
-
- # bosh target 192.168.50.4 alias as 'lite'
- BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e 192.168.50.4 --ca-cert=~/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
-  if [ $? -eq 0 ]; then
-    BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD -e lite log-in )
-    if [ $? -eq 0 ]; then
-       export BOSHLITE=1
-    else
-       export BOSHLITE=0
-       echo $BOSH_LOGIN_LOG
-    fi
-  else
-     export BOSHLITE=0
-     echo $BOSH_TARGET_LOG
-  fi
-
-}
 
 export BOSHLITE=0
 printf "BOSH-lite\t\t\t%s\n" "Access attempt (may take some time)"
 
-ping -q -c 5 -w 10 192.168.50.4 > /dev/null
+ping -q -c 5 -w 10 $BOSH_IP > /dev/null
 if [ $? -eq "0" ]; then
   targetBosh
 else
