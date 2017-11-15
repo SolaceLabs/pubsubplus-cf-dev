@@ -2,7 +2,8 @@
 
 export SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$SCRIPT")
-export LOG_FILE=${LOG_FILE:-"/tmp/bosh_deploy.log"}
+export WORKSPACE=${WORKSPACE:-"$HOME/workspace"}
+export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
 set -e
 COMMON=${COMMON:-bosh-common.sh}

@@ -5,7 +5,7 @@ export MY_BIN_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export PYTHONPATH=$MY_BIN_HOME
 
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
-export LOG_FILE=${LOG_FILE:-"/tmp/bosh_deploy.log"}
+export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
 export SOLACE_DOCKER_BOSH_VERSION="30.1.4"
 export SOLACE_DOCKER_BOSH=${SOLACE_DOCKER_BOSH:-"$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"}
@@ -68,11 +68,11 @@ function prepareBosh() {
 
   FOUND_STEMCELL=`$BOSH_CMD stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
-    if [ ! -f /tmp/$STEMCELL_NAME ]; then
-        wget -O /tmp/$STEMCELL_NAME $STEMCELL_URL
+    if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
+        wget -O $WORKSPACE/$STEMCELL_NAME $STEMCELL_URL
     fi
     echo "Uploading stemcell"
-    $BOSH_CMD upload-stemcell /tmp/$STEMCELL_NAME
+    $BOSH_CMD upload-stemcell $WORKSPACE/$STEMCELL_NAME
   else
      echo "$STEMCELL_NAME was found $FOUND_STEMCELL"
   fi

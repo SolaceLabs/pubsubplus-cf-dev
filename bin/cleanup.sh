@@ -3,7 +3,8 @@
 export SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$SCRIPT")
 
-export LOG_FILE="/tmp/bosh_cleanup.log"
+export WORKSPACE=${WORKSPACE:-"$HOME/workspace"}
+export LOG_FILE=${LOG_FILE:-"$WORKSPACE/cleanup.log"}
 
 set -e
 
