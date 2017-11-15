@@ -126,6 +126,7 @@ cd solace-messaging-cf-dev
 cd workspace
 git clone https://github.com/cloudfoundry/bosh-lite
 cp ../bin/create_swap.sh bosh-lite
+dos2unix create_swap.sh
 cd bosh-lite
 ~~~~
 
