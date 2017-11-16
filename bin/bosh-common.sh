@@ -7,8 +7,8 @@ export PYTHONPATH=$MY_BIN_HOME
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
-export SOLACE_DOCKER_BOSH_VERSION="30.1.4"
-export SOLACE_DOCKER_BOSH=${SOLACE_DOCKER_BOSH:-"$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"}
+export SOLACE_DOCKER_BOSH_VERSION=$( cd $WORKSPACE/releases && ls docker* | sed 's/docker-//g' | sed 's/.tgz//g')
+export SOLACE_DOCKER_BOSH="$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"
 
 export STEMCELL_VERSION="3468"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
@@ -60,7 +60,7 @@ function prepareBosh() {
 
   FOUND_DOCKER_RELEASE=`$BOSH_CMD releases | grep "docker" | grep $SOLACE_DOCKER_BOSH_VERSION | wc -l`
   if [ "$FOUND_DOCKER_RELEASE" -eq "0" ]; then
-     echo "Uploading docker bosh"
+     echo "Uploading docker bosh $SOLACE_DOCKER_BOSH"
      $BOSH_CMD upload-release $SOLACE_DOCKER_BOSH
   else
      echo "$SOLACE_DOCKER_BOSH was found $FOUND_DOCKER_RELEASE"
