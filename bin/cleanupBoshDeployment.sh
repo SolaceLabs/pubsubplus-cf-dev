@@ -4,6 +4,7 @@ export SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export WORKSPACE=${WORKSPACE:-"$HOME/workspace"}
+mkdir -p $WORKSPACE
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_cleanup.log"}
 
 set -e
