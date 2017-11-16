@@ -55,7 +55,8 @@ class PoolType:
         output["properties"]["containers"].append({})
         output["properties"]["containers"][0]["name"] = "solace"
         output["properties"]["containers"][0]["image"] = "solace-bosh"
-        output["properties"]["containers"][0]["memory"] = "6G"
+        output["properties"]["containers"][0]["memory"] = "4G"
+        output["properties"]["containers"][0]["memory_swap"] = "6G"
         output["properties"]["containers"][0]["uts"] = "host"
         output["properties"]["containers"][0]["privileged"] = True
         output["properties"]["containers"][0]["shm_size"] = "2G"

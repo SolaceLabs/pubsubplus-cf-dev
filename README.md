@@ -125,6 +125,7 @@ But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-l
 cd solace-messaging-cf-dev
 cd workspace
 git clone https://github.com/cloudfoundry/bosh-lite
+cp ../bin/create_swap.sh bosh-lite
 cd bosh-lite
 ~~~~
 
@@ -132,15 +133,18 @@ cd bosh-lite
   - Use VM_MEMORY=5000 if you want to host a single VMR
   - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
   - In general, use VM_MEMORY=5000 * [Number-of-VMRs]
+  - Also note the additional swap space, use 2048 Mb per VMR.
  
  - On Linux: 
 ~~~~
 VM_MEMORY=5000 vagrant up --provider=virtualbox
+vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 ~~~~
  - On Windows:
 ~~~~
 set VM_MEMORY=5000
 vagrant up --provider=virtualbox
+vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 ~~~~
 
 * VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
@@ -304,14 +308,14 @@ cf dev resume
 From the cli-tools vm:
 
 ~~~~
-bosh -e lite vms
+bosh vms
 ~~~~
 
 ### Access the VMR cli
 
 Get the list of vms, to find the IP address of the VMR instance you want:
 ~~~~
-bosh -e lite vms
+bosh vms
 ~~~~
 
 Now ssh to the VMR, the default password is 'admin'.
