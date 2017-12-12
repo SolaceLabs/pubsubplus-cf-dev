@@ -295,7 +295,13 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  done
 
  $BOSH_CMD -n deploy $MANIFEST_FILE | tee -a $LOG_FILE
+ BOSH_DEPLOY_RETURN_CODE=${PIPESTATUS[0]}
 
+ if [ "$BOSH_DEPLOY_RETURN_CODE" -ne "0" ]; then
+   >&2 echo "bosh deploy returned a non-zero code - deployment failed"
+   >&2 echo "Aborting"
+   exit 1
+ fi
 
  $BOSH_CMD vms
  DEPLOYMENT_FOUND_COUNT=`2>&1 $BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
