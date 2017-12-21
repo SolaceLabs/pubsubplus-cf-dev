@@ -7,9 +7,6 @@ export PYTHONPATH=$MY_BIN_HOME
 export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
-export SOLACE_DOCKER_BOSH_VERSION="30.1.4"
-export SOLACE_DOCKER_BOSH=${SOLACE_DOCKER_BOSH:-"$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"}
-
 export STEMCELL_VERSION="3468"
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
@@ -53,17 +50,19 @@ function targetBosh() {
 
 
 function prepareBosh() {
-
   echo "In function prepareBosh"
 
   targetBosh
+  $BOSH_CMD releases
 
+  SOLACE_DOCKER_BOSH_VERSION=$( cd $WORKSPACE/releases && ls docker* | sed 's/docker-//g' | sed 's/.tgz//g')
+  SOLACE_DOCKER_BOSH="$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"
   FOUND_DOCKER_RELEASE=`$BOSH_CMD releases | grep "docker" | grep $SOLACE_DOCKER_BOSH_VERSION | wc -l`
   if [ "$FOUND_DOCKER_RELEASE" -eq "0" ]; then
-     echo "Uploading docker bosh"
+     echo "Uploading docker bosh $SOLACE_DOCKER_BOSH version $SOLACE_DOCKER_BOSH_VERSION"
      $BOSH_CMD upload-release $SOLACE_DOCKER_BOSH
   else
-     echo "$SOLACE_DOCKER_BOSH was found $FOUND_DOCKER_RELEASE"
+     echo "$SOLACE_DOCKER_BOSH_VERSION was found"
   fi
 
   FOUND_STEMCELL=`$BOSH_CMD stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
@@ -76,6 +75,8 @@ function prepareBosh() {
   else
      echo "$STEMCELL_NAME was found $FOUND_STEMCELL"
   fi
+
+  $BOSH_CMD releases
 
 }
 
@@ -163,7 +164,7 @@ function deleteDeploymentAndRelease() {
    echo "No deployment found."
  fi
 
- if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "1" ]; then
+ if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -ge "1" ]; then
     # solace-vmr
     echo "Deleting release solace-vmr"
     $BOSH_CMD -n delete-release solace-vmr
@@ -171,7 +172,7 @@ function deleteDeploymentAndRelease() {
     echo "No solace-vmr release found"
  fi
 
- if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "1" ]; then
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -ge "1" ]; then
     # solace-messaging
     echo "Deleting release solace-messaging"
     $BOSH_CMD -n delete-release solace-messaging
@@ -294,7 +295,13 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
  done
 
  $BOSH_CMD -n deploy $MANIFEST_FILE | tee -a $LOG_FILE
+ BOSH_DEPLOY_RETURN_CODE=${PIPESTATUS[0]}
 
+ if [ "$BOSH_DEPLOY_RETURN_CODE" -ne "0" ]; then
+   >&2 echo "bosh deploy returned a non-zero code - deployment failed"
+   >&2 echo "Aborting"
+   exit 1
+ fi
 
  $BOSH_CMD vms
  DEPLOYMENT_FOUND_COUNT=`2>&1 $BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`

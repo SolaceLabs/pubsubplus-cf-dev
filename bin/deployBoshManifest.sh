@@ -3,6 +3,7 @@
 export SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$SCRIPT")
 export WORKSPACE=${WORKSPACE:-"$HOME/workspace"}
+mkdir -p $WORKSPACE
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
 set -e
@@ -65,9 +66,8 @@ echo "Checking for existing deployment..."
 
 DEPLOYMENT_FOUND_COUNT=`2>&1 $BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
 if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
-   echo "A bosh deployment is already done."
+   echo "A bosh deployment exists and will be updated/upraded."
    echo
-   shutdownAllVMRJobs
 else
    echo "No existing bosh deployment found. Continuing..."
 fi

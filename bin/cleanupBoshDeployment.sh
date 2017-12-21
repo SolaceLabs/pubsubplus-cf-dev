@@ -4,6 +4,7 @@ export SCRIPT=$(readlink -f "$0")
 export SCRIPTPATH=$(dirname "$SCRIPT")
 
 export WORKSPACE=${WORKSPACE:-"$HOME/workspace"}
+mkdir -p $WORKSPACE
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_cleanup.log"}
 
 set -e
@@ -45,14 +46,8 @@ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
   exit 0
 fi
 
-echo "Tearind down the entire $DEPLOYMENT_NAME BOSH deployment"
+echo "Tearing down the entire $DEPLOYMENT_NAME BOSH deployment"
 echo "Logs in file $LOG_FILE"
-
-DEPLOYMENT_FOUND_COUNT=`bosh -e lite deployments | grep $DEPLOYMENT_NAME | wc -l`
-if [ "$DEPLOYMENT_FOUND_COUNT" -gt "0" ]; then
-   shutdownAllVMRJobs
-fi
-
 
 deleteDeploymentAndRelease | tee $LOG_FILE
 deleteOrphanedDisks | tee $LOG_FILE
