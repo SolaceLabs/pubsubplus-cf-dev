@@ -1,0 +1,10 @@
+solace_router_client_secret: 1234
+starting_port: 6000
+solace_broker_cf_organization: solace
+solace_broker_cf_space: solace-messaging
+is_enterprise_mode: false
+apply_open_security_group: true
+vmr_admin_password: admin1
+vmr_edition: evaluation
+solace_load_version: soltr_8.7.0.1027
+solace_service_broker_jar: solace-service-broker-0.0.1068.jar
