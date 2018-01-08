@@ -4,7 +4,8 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
 
-export BUILD_PACK_VERSION=3.13
+#export BUILD_PACK_VERSION=3.13
+export BUILD_PACK_VERSION=4.7.1
 
 export TEMP_DIR=$(mktemp -d)
 
@@ -50,9 +51,9 @@ function addBuildPack() {
 
 function enableTcpRoutingForSolaceRouter() {
 
-	TARGET=${1:-"uaa.local.pcfdev.io"}
+	TARGET=${1:-"uaa.$SYSTEM_DOMAIN"}
 	uaac target $TARGET --skip-ssl-validation
-	uaac token client get admin -s admin-client-secret
+	uaac token client get admin -s $UAA_ADMIN_CLIENT_SECRET
         FOUND_CLIENT=$( uaac clients | grep name | grep solace_router | wc -l )
 
 	if [ "$FOUND_CLIENT" -eq "0" ]; then

@@ -24,6 +24,10 @@ export SB_SPACE=${SB_SPACE:-"solace-messaging"}
 export TEST_ORG=${TEST_ORG:-"solace-test"}
 export TEST_SPACE=${TEST_SPACE:-"test"}
 
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"local.pcfdev.io"}
+export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
+export UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET:-"admin-client-secret"}
+
 ####################################### FUNCTIONS ###########################################
 
 function log() {
@@ -353,9 +357,9 @@ function restartServiceBroker() {
 
 function pcfdev_login() {
  export PCFDEV=0 
- cf api https://api.local.pcfdev.io --skip-ssl-validation > /dev/null
+ cf api https://api.$SYSTEM_DOMAIN --skip-ssl-validation > /dev/null
  if [ $? -eq 0 ]; then
-    cf auth admin admin > /dev/null
+    cf auth admin $CF_ADMIN_PASSWORD > /dev/null
     if [ $? -eq 0 ]; then
        export PCFDEV=1 
     else

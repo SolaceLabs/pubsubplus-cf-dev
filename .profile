@@ -8,6 +8,9 @@ export PATH=$SOLACE_MESSAGING_CF_DEV/bin:$PATH
 
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"local.pcfdev.io"}
+export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
+
 source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh
 
 if [ -z $SEEN_BANNER ]; then
@@ -31,12 +34,12 @@ if [ "$CF_API_FOUND" -eq "0" ]; then
 
    printf  "PCFDev \t\t\t\t%s\n" "Access attempt (may take some time)"
 
-   ping -q -c 5 -w 10 api.local.pcfdev.io > /dev/null
+   ping -q -c 5 -w 10 api.$SYSTEM_DOMAIN > /dev/null
    if [ $? -eq "0" ]; then
     export PCFDEV=0
-    cf api https://api.local.pcfdev.io --skip-ssl-validation > /dev/null
+    cf api https://api.$SYSTEM_DOMAIN --skip-ssl-validation > /dev/null
     if [ $? -eq 0 ]; then
-       cf auth admin admin > /dev/null
+       cf auth admin $CF_ADMIN_PASSWORD > /dev/null
        if [ $? -eq 0 ]; then
           export PCFDEV=1
        else
