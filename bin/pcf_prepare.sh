@@ -4,8 +4,7 @@ SCRIPT=$(readlink -f "$0")
 SCRIPTPATH=$(dirname "$SCRIPT")
 WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
 
-#export BUILD_PACK_VERSION=3.13
-export BUILD_PACK_VERSION=4.7.1
+export JAVA_BUILD_PACK_VERSION=${JAVA_BUILD_PACK_VERSION:-"3.13"}
 
 export TEMP_DIR=$(mktemp -d)
 
@@ -29,9 +28,9 @@ function addBuildPack() {
       echo "Will make a new buildpack and add to pcfdev"
       ( 
         cd $WORKSPACE
-        wget -O java-buildpack-${BUILD_PACK_VERSION}.tgz https://github.com/cloudfoundry/java-buildpack/archive/v${BUILD_PACK_VERSION}.tar.gz
-	tar -xzf java-buildpack-${BUILD_PACK_VERSION}.tgz
-	cd java-buildpack-${BUILD_PACK_VERSION}
+        wget -O java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz https://github.com/cloudfoundry/java-buildpack/archive/v${JAVA_BUILD_PACK_VERSION}.tar.gz
+	tar -xzf java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz
+	cd java-buildpack-${JAVA_BUILD_PACK_VERSION}
 	if [ -f $WORKSPACE/trusted.crt ]; then
 		echo "Will add a CA trusted certificate to the JVM"
 		mkdir -p resources/open_jdk_jre/lib/security
@@ -39,11 +38,11 @@ function addBuildPack() {
 	fi
 	bundle install
 	bundle exec rake clean package OFFLINE=true PINNED=true
-	cf create-buildpack  java_buildpack_offline build/java-buildpack-offline-v${BUILD_PACK_VERSION}.zip 0 --enable
+	cf create-buildpack  java_buildpack_offline build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 0 --enable
       )
    else
 	echo "Found java build pack there already :"
-   	cf buildpacks | grep java_buildpack_offline | grep java-buildpack-offline-v${BUILD_PACK_VERSION}.zip 
+   	cf buildpacks | grep java_buildpack_offline | grep java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 
    fi
 
 }
