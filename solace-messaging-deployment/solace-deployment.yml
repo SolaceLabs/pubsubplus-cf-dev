@@ -47,6 +47,18 @@ instance_groups:
   - name: vmr_agent
     release: solace-vmr
     consumes: {}
+  - name: route_registrar
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
+  - name: route_registrar_active
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
   properties:
     admin_password: ((vmr_admin_password))
     admin_user: admin
@@ -206,6 +218,18 @@ instance_groups:
   - name: vmr_agent
     release: solace-vmr
     consumes: {}
+  - name: route_registrar
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
+  - name: route_registrar_active
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
 - name: Large-HA-VMR
   stemcell: default
   instances: 0
@@ -233,6 +257,18 @@ instance_groups:
   - name: vmr_agent
     release: solace-vmr
     consumes: {}
+  - name: route_registrar
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
+  - name: route_registrar_active
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
   properties:
     admin_password: ((vmr_admin_password))
     admin_user: admin
@@ -326,6 +362,18 @@ instance_groups:
   - name: vmr_agent
     release: solace-vmr
     consumes: {}
+  - name: route_registrar
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
+  - name: route_registrar_active
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
   properties:
     admin_password: ((vmr_admin_password))
     admin_user: admin
@@ -419,6 +467,18 @@ instance_groups:
   - name: vmr_agent
     release: solace-vmr
     consumes: {}
+  - name: route_registrar
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
+  - name: route_registrar_active
+    release: solace-vmr
+    consumes:
+      nats_link:
+        from: nats
+        deployment: ((cf_deployment))
   properties:
     admin_password: ((vmr_admin_password))
     admin_user: admin
