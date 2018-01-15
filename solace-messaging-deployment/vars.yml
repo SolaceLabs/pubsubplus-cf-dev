@@ -1,11 +1,7 @@
 apply_open_security_group: true
 cf_deployment: cf
-is_enterprise_mode: false
 solace_broker_cf_organization: solace
 solace_broker_cf_space: solace-messaging
-solace_load_version: soltr_8.7.0.1027
 solace_router_client_secret: 1234
-solace_service_broker_jar: solace-service-broker-0.0.1068.jar
 starting_port: 6000
 vmr_admin_password: admin1
-vmr_edition: evaluation

@@ -1,0 +1,4 @@
+solace_vmr_load_version: soltr_8.7.0.1027
+solace_service_broker_jar: solace-service-broker-0.0.1069.jar
+solace_vmr_edition: evaluation
+is_enterprise_mode: false

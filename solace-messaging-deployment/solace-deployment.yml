@@ -22,7 +22,7 @@ stemcells:
 instance_groups:
 - name: Shared-VMR
   stemcell: default
-  instances: 1
+  instances: 0
   vm_type: small-highmem
   memory: 6144
   azs:
@@ -127,7 +127,7 @@ instance_groups:
     vmr_agent_port: 18080
 - name: Community-VMR
   stemcell: default
-  instances: 1
+  instances: 0
   vm_type: small-highmem
   memory: 6144
   azs:
@@ -588,7 +588,7 @@ instance_groups:
         env:
           IS_ENTERPRISE_MODE: '((is_enterprise_mode))'
           JBP_CONFIG_CONTAINER_CERTIFICATE_TRUST_STORE: '{enabled: true}'
-          SOLACE_LOAD_VERSION: ((solace_load_version))
+          SOLACE_LOAD_VERSION: 'UNSET_SOLACE_VMR_LOAD_VERSION'
           SOLACE_ROUTER_CLIENT_ID: solace_router
           SOLACE_ROUTER_CLIENT_SECRET: ((solace_router_client_secret))
         memory: 1024M
@@ -644,7 +644,7 @@ instance_groups:
         env:
           IS_ENTERPRISE_MODE: '((is_enterprise_mode))'
           JBP_CONFIG_CONTAINER_CERTIFICATE_TRUST_STORE: '{enabled: true}'
-          SOLACE_LOAD_VERSION: ((solace_load_version))
+          SOLACE_LOAD_VERSION: 'UNSET_SOLACE_VMR_LOAD_VERSION'
           SOLACE_ROUTER_CLIENT_ID: solace_router
           SOLACE_ROUTER_CLIENT_SECRET: ((solace_router_client_secret))
         memory: 1024M
