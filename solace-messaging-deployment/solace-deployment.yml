@@ -81,14 +81,12 @@ instance_groups:
                     echo 'exit 0' >> /sbin/dhclient && \
                     echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \
                     chmod +x /sbin/dhclient
-      encrypted_vars:
-      - DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1
       env_vars:
       - NODE_TYPE=MESSAGE_ROUTING_NODE
       - SERVICE_SSH_PORT=2222
-      - ALWAYS_DIE_ON_FAILURE=1
-      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
+      - SYSTEM_SCALING_MAXCONNECTIONCOUNT=1000
       - USERNAME_ADMIN_GLOBALACCESSLEVEL=admin
+      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
       image: solace-bosh
       memory: 4G
       memory_swap: 6G
@@ -159,14 +157,12 @@ instance_groups:
                     echo 'exit 0' >> /sbin/dhclient && \
                     echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \
                     chmod +x /sbin/dhclient
-      encrypted_vars:
-      - DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1
       env_vars:
       - NODE_TYPE=MESSAGE_ROUTING_NODE
       - SERVICE_SSH_PORT=2222
-      - ALWAYS_DIE_ON_FAILURE=1
-      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
+      - SYSTEM_SCALING_MAXCONNECTIONCOUNT=100
       - USERNAME_ADMIN_GLOBALACCESSLEVEL=admin
+      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
       image: solace-bosh
       memory: 4G
       memory_swap: 6G
@@ -291,14 +287,12 @@ instance_groups:
                     echo 'exit 0' >> /sbin/dhclient && \
                     echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \
                     chmod +x /sbin/dhclient
-      encrypted_vars:
-      - DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1
       env_vars:
       - NODE_TYPE=MESSAGE_ROUTING_NODE
       - SERVICE_SSH_PORT=2222
-      - ALWAYS_DIE_ON_FAILURE=1
-      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
+      - SYSTEM_SCALING_MAXCONNECTIONCOUNT=10000
       - USERNAME_ADMIN_GLOBALACCESSLEVEL=admin
+      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
       image: solace-bosh
       memory: 4G
       memory_swap: 6G
@@ -396,14 +390,12 @@ instance_groups:
                     echo 'exit 0' >> /sbin/dhclient && \
                     echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \
                     chmod +x /sbin/dhclient
-      encrypted_vars:
-      - DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1
       env_vars:
       - NODE_TYPE=MESSAGE_ROUTING_NODE
       - SERVICE_SSH_PORT=2222
-      - ALWAYS_DIE_ON_FAILURE=1
-      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
+      - SYSTEM_SCALING_MAXCONNECTIONCOUNT=10000
       - USERNAME_ADMIN_GLOBALACCESSLEVEL=admin
+      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
       image: solace-bosh
       memory: 4G
       memory_swap: 6G
@@ -501,14 +493,12 @@ instance_groups:
                     echo 'exit 0' >> /sbin/dhclient && \
                     echo '3a:40:d5:42:f4:86' > /usr/sw/.nodeIdentifyingMacAddr && \
                     chmod +x /sbin/dhclient
-      encrypted_vars:
-      - DEBUG_USERNAME_ROOT_ENCRYPTEDPASSWORD=solace1
       env_vars:
       - NODE_TYPE=MESSAGE_ROUTING_NODE
       - SERVICE_SSH_PORT=2222
-      - ALWAYS_DIE_ON_FAILURE=1
-      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
+      - SYSTEM_SCALING_MAXCONNECTIONCOUNT=1000
       - USERNAME_ADMIN_GLOBALACCESSLEVEL=admin
+      - USERNAME_ADMIN_PASSWORD=((vmr_admin_password))
       image: solace-bosh
       memory: 4G
       memory_swap: 6G
