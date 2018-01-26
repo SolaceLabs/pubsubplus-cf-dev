@@ -1,7 +1,7 @@
 #!/bin/bash
 
-export SCRIPT=$(readlink -f "$0")
-export SCRIPTPATH=$(dirname "$SCRIPT")
+export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export CMD_NAME=`basename $0`
 

@@ -1,7 +1,8 @@
 #!/bin/bash
 
-SCRIPT=$(readlink -f "$0")
-SCRIPTPATH=$(dirname "$SCRIPT")
+export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
 
 export JAVA_BUILD_PACK_VERSION=${JAVA_BUILD_PACK_VERSION:-"3.13"}
