@@ -1,7 +1,0 @@
-apply_open_security_group: true
-cf_deployment: cf
-solace_broker_cf_organization: solace
-solace_broker_cf_space: solace-messaging
-solace_router_client_secret: 1234
-starting_port: 6000
-vmr_admin_password: admin1
