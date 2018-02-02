@@ -7,25 +7,26 @@ import yaml
 
 class Errand:
     SSH_PORT = 2222 #const
-    def __init__(self, name : str) -> None:
+    def __init__(self, name : str, release : str, property_source : str = '' ) -> None:
         self.name = name
+        self.release = release
+        self.property_source = property_source
 
     def generateBoshLiteManifestJob(self, properties : Dict[str, Any], inputFile : Dict[str, Any], inputMetaFile : Dict[str, Any], outFile: List[Dict[str, Any]]) -> None:
 
         ## Look for solace_messaging app_manifest to be used as starter
         for job_type in inputMetaFile["job_types"]:
-           if job_type["name"] == self.name:
+           if job_type["name"] == self.name or job_type["name"] == self.property_source: 
               errand_manifest_str = job_type["manifest"];
               errandManifest = yaml.load(errand_manifest_str)
               # print("Found my errand manifest " , errand_manifest_str  )
-
 
         output = {}
         output["name"] = self.name
         output["instances"] = 1
         output["lifecycle"] = "errand"
         output["templates"] = []
-        output["templates"].append({"name": self.name, "release": "solace-messaging"})
+        output["templates"].append({"name": self.name, "release": self.release})
         output["resource_pool"] = "common-resource-pool"
         output["networks"] = []
         output["networks"].append({})
@@ -124,7 +125,6 @@ class Errand:
 #           if( len(host_list) > 0 ):           
 #             output["properties"]["solace_vmr"][job_name]["host"] = host_list
 #             output["properties"]["solace_vmr"][job_name]["hosts"] = hosts_list
-#
 # Simple/Flat properties
         output["properties"]["starting_port"] = properties["starting_port"]
         output["properties"]["vmr_admin_password"] = properties["admin_password"]
@@ -142,5 +142,6 @@ class Errand:
         outFile["jobs"].append(output)
 
 # Define the errands
-deploy_all = Errand("deploy-all")
-delete_all = Errand("delete-all")
+deploy_all = Errand("deploy-all", "solace-messaging")
+delete_all = Errand("delete-all", "solace-messaging")
+tests = Errand("tests", "solace-vmr", "deploy-all")

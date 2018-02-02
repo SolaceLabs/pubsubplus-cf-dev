@@ -4,7 +4,7 @@ import argparse
 from schema import root
 import yaml
 from pooltypes import Shared, Community, Large, MediumHA, LargeHA
-from errands import deploy_all, delete_all
+from errands import deploy_all, delete_all, tests
 
 MANIFEST_TEMPLATE = """name: solace-vmr-warden-deployment
 director_uuid: <%= `bosh -e lite env  --json | jq '.Tables[].Rows[].uuid'` %>
@@ -91,6 +91,7 @@ def main(args) -> None:
                 output["networks"][0]["subnets"][0]["static"].append(static_ip)
 
     deploy_all.generateBoshLiteManifestJob(generatedProperties, inputFile, inputMetaFile, output)
+    tests.generateBoshLiteManifestJob(generatedProperties, inputFile, inputMetaFile, output)
     delete_all.generateBoshLiteManifestJob(generatedProperties, inputFile, inputMetaFile, output)
 
     with open(args["out-arg"], "w") as outFile:

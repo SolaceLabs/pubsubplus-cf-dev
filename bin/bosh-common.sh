@@ -322,6 +322,11 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
    $BOSH_CMD run-errand deploy-all
  fi
 
+ if [ "$USE_ERRANDS" -eq "1" ]; then
+   echo "Calling $BOSH_CMD run-errand tests"
+   $BOSH_CMD run-errand tests
+ fi
+
 else
  >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
  exit 1
@@ -355,6 +360,10 @@ function runDeleteAllErrand() {
    $BOSH_CMD run-errand delete-all
 }
 
+function runTestsErrand() {
+   targetBosh
+   $BOSH_CMD run-errand tests
+}
 
 function runDeployAllErrand() {
   targetBosh
