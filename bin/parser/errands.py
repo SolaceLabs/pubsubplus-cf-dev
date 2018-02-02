@@ -76,51 +76,55 @@ class Errand:
         output["properties"]["solace_messaging"]["app_manifest"]["env"]["SOLACE_ROUTER_CLIENT_SECRET"] = "1234"
 
 
-        output["properties"]["solace_vmr"] = {}
+#        output["properties"]["solace_vmr"] = {}
 
 # Defaults for hosts
-        output["properties"]["solace_vmr"]["shared_vmr"] = {}
-        output["properties"]["solace_vmr"]["shared_vmr"]["host"] = []
-        output["properties"]["solace_vmr"]["shared_vmr"]["hosts"] = []
 
-        output["properties"]["solace_vmr"]["community_vmr"] = {}
-        output["properties"]["solace_vmr"]["community_vmr"]["host"] = []
-        output["properties"]["solace_vmr"]["community_vmr"]["hosts"] = []
-
-        output["properties"]["solace_vmr"]["large_vmr"] = {}
-        output["properties"]["solace_vmr"]["large_vmr"]["host"] = []
-        output["properties"]["solace_vmr"]["large_vmr"]["hosts"] = []
-
-        output["properties"]["solace_vmr"]["large_ha_vmr"] = {}
-        output["properties"]["solace_vmr"]["large_ha_vmr"]["host"] = []
-        output["properties"]["solace_vmr"]["large_ha_vmr"]["hosts"] = []
-
-        output["properties"]["solace_vmr"]["medium_ha_vmr"] = {}
-        output["properties"]["solace_vmr"]["medium_ha_vmr"]["host"] = []
-        output["properties"]["solace_vmr"]["medium_ha_vmr"]["hosts"] = []
-
+        output["properties"]["provides"] = {} 
+        output["properties"]["consumes"] = {}
+        output["properties"]["consumes"]["solace_vmr_shared_vmr"] = { "from": "shared_vmr_list" } 
+#        output["properties"]["solace_vmr"]["shared_vmr"] = {}
+#        output["properties"]["solace_vmr"]["shared_vmr"]["host"] = []
+#        output["properties"]["solace_vmr"]["shared_vmr"]["hosts"] = []
+#
+#        output["properties"]["solace_vmr"]["community_vmr"] = {}
+#        output["properties"]["solace_vmr"]["community_vmr"]["host"] = []
+#        output["properties"]["solace_vmr"]["community_vmr"]["hosts"] = []
+#
+#        output["properties"]["solace_vmr"]["large_vmr"] = {}
+#        output["properties"]["solace_vmr"]["large_vmr"]["host"] = []
+#        output["properties"]["solace_vmr"]["large_vmr"]["hosts"] = []
+#
+#        output["properties"]["solace_vmr"]["large_ha_vmr"] = {}
+#        output["properties"]["solace_vmr"]["large_ha_vmr"]["host"] = []
+#        output["properties"]["solace_vmr"]["large_ha_vmr"]["hosts"] = []
+#
+#        output["properties"]["solace_vmr"]["medium_ha_vmr"] = {}
+#        output["properties"]["solace_vmr"]["medium_ha_vmr"]["host"] = []
+#        output["properties"]["solace_vmr"]["medium_ha_vmr"]["hosts"] = []
+#
 # Make VMR host and hosts list per
-        for job in outFile["jobs"]:
-           job_name = job["name"].lower().replace("-","_")
-           # Skip Errands
-           if job_name == self.name:
-             continue
-           if 'lifecycle' in job.keys() and job["lifecycle"] == "errand":
-             continue
-           host_list = []
-           hosts_list = []
-           output["properties"]["solace_vmr"][job_name] = {}
-           output["properties"]["solace_vmr"][job_name]["host"] = []
-           output["properties"]["solace_vmr"][job_name]["hosts"] = []
-           for network in job["networks"]:
-              for static_ip in network["static_ips"]:
-                  hosts_list.append(static_ip)
-                  if( len(host_list) < 1 ):
-                    host_list.append(static_ip)
-           if( len(host_list) > 0 ):           
-             output["properties"]["solace_vmr"][job_name]["host"] = host_list
-             output["properties"]["solace_vmr"][job_name]["hosts"] = hosts_list
-
+#        for job in outFile["jobs"]:
+#           job_name = job["name"].lower().replace("-","_")
+#           # Skip Errands
+#           if job_name == self.name:
+#             continue
+#           if 'lifecycle' in job.keys() and job["lifecycle"] == "errand":
+#             continue
+#           host_list = []
+#           hosts_list = []
+#           output["properties"]["solace_vmr"][job_name] = {}
+#           output["properties"]["solace_vmr"][job_name]["host"] = []
+#           output["properties"]["solace_vmr"][job_name]["hosts"] = []
+#           for network in job["networks"]:
+#              for static_ip in network["static_ips"]:
+#                  hosts_list.append(static_ip)
+#                  if( len(host_list) < 1 ):
+#                    host_list.append(static_ip)
+#           if( len(host_list) > 0 ):           
+#             output["properties"]["solace_vmr"][job_name]["host"] = host_list
+#             output["properties"]["solace_vmr"][job_name]["hosts"] = hosts_list
+#
 # Simple/Flat properties
         output["properties"]["starting_port"] = properties["starting_port"]
         output["properties"]["vmr_admin_password"] = properties["admin_password"]

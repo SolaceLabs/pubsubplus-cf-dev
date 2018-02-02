@@ -42,6 +42,9 @@ class PoolType:
         output["templates"].append({"name": "docker", "release": "docker"})
         output["templates"].append({"name": "prepare_vmr", "release": "solace-vmr"})
         output["templates"].append({"name": "containers", "release": "solace-vmr"})
+        output["templates"][2]["consumes"] = {} 
+        output["templates"][2]["provides"] = {}
+        output["templates"][2]["provides"]["vmr_instance"] = {"as": self.name.lower().replace("-","_") + "_list"}
         output["templates"].append({"name": "vmr_agent", "release": "solace-vmr"})
         output["properties"] = {}
         output["resource_pool"] = "common-resource-pool"

@@ -120,10 +120,10 @@ def main(args):
 
                 print("Updating errand {}: {} host {}".format(errandName, jobName, host_list))
                 print("Updating errand {}: {} hosts {}\n".format(errandName, jobName, hosts_list))
-                errand["properties"]["solace_vmr"][jobName]["host"] = []
-                errand["properties"]["solace_vmr"][jobName]["hosts"] = []
-                errand["properties"]["solace_vmr"][jobName]["host"] = host_list 
-                errand["properties"]["solace_vmr"][jobName]["hosts"] = hosts_list
+                #errand["properties"]["solace_vmr"][jobName]["host"] = []
+                #errand["properties"]["solace_vmr"][jobName]["hosts"] = []
+                #errand["properties"]["solace_vmr"][jobName]["host"] = host_list 
+                #errand["properties"]["solace_vmr"][jobName]["hosts"] = hosts_list
 
     with open(manifestFile, 'w') as f:
         print(yaml.dump(manifest, default_flow_style=False), file=f)
