@@ -15,7 +15,7 @@ export USE_ERRANDS=${USE_ERRANDS:-"1"}
 
 ######################################
 
-export BOSH_IP="192.168.50.4"
+export BOSH_IP=${BOSH_IP:-"192.168.50.4"}
 export BOSH_CMD="/usr/local/bin/bosh"
 export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
@@ -25,26 +25,40 @@ export BOSH_DEPLOYMENT=${BOSH_DEPLOYMENT:-$DEPLOYMENT_NAME}
 
 
 function targetBosh() {
-  
-  if [ ! -d $WORKSPACE/bosh-lite ]; then
-     (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
-  fi
 
-  # bosh target $BOSH_IP alias as 'lite'
-  BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
-  if [ $? -eq 0 ]; then
-    # Login will rely on BOSH_* env vars..
-    BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD log-in )
-    if [ $? -eq 0 ]; then
-       export BOSHLITE=1
+  
+  if [ ! -f $WORKSPACE/.bosh_env ] && [ ! -d $WORKSPACE/bosh-lite ]; then
+     # Old bosh-lite
+
+     (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
+     # bosh target $BOSH_IP alias as 'lite'
+     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
+   if [ $? -eq 0 ]; then
+      # Login will rely on BOSH_* env vars..
+      BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD log-in )
+      if [ $? -eq 0 ]; then
+         export BOSH_ACCESS=1
+      else
+         export BOSH_ACCESS=0
+         echo $BOSH_LOGIN_LOG
+      fi
     else
-       export BOSHLITE=0
-       echo $BOSH_LOGIN_LOG
+      export BOSH_ACCESS=0
+      echo $BOSH_TARGET_LOG
     fi
-  else
-     export BOSHLITE=0
-     echo $BOSH_TARGET_LOG
-  fi
+
+   else
+     ## Not the old bosh-lite
+     BOSH_LOGIN_LOG=$( $BOSH_CMD log-in )
+     if [ $? -eq 0 ]; then
+        export BOSH_ACCESS=1
+     else
+        export BOSH_ACCESS=0
+        echo $BOSH_LOGIN_LOG
+     fi
+     # Unset the old default
+     unset BOSH_DEPLOYMENT
+   fi
 
 }
 
