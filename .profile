@@ -8,7 +8,7 @@ export PATH=$SOLACE_MESSAGING_CF_DEV/bin:$PATH
 
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 
-export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"local.pcfdev.io"}
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
 
 source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh

@@ -24,7 +24,7 @@ export SB_SPACE=${SB_SPACE:-"solace-messaging"}
 export TEST_ORG=${TEST_ORG:-"solace-test"}
 export TEST_SPACE=${TEST_SPACE:-"test"}
 
-export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"local.pcfdev.io"}
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
 export UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET:-"admin-client-secret"}
 

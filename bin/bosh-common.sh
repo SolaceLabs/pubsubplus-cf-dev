@@ -4,7 +4,7 @@ export MY_BIN_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export PYTHONPATH=$MY_BIN_HOME
 
-export DEPLOYMENT_NAME=${DEPLOYMENT_NAME:-"solace-vmr-warden-deployment"}
+export DEPLOYMENT_NAME="solace_messaging"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
 export STEMCELL_VERSION="3468"
@@ -84,7 +84,7 @@ function deleteOrphanedDisks() {
 
 $BOSH_CMD disks --orphaned
 
-ORPHANED_DISKS=$( $BOSH_CMD disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment="solace-vmr-warden-deployment") | .disk_cid' | sed 's/\"//g' )
+ORPHANED_DISKS=$( $BOSH_CMD disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment="solace_messaging") | .disk_cid' | sed 's/\"//g' )
 
 for DISK_ID in $ORPHANED_DISKS; do
 	echo "Will delete $DISK_ID"
