@@ -46,18 +46,21 @@ grep "starting_port:" $CI_CONFIG_FILE >> $VARSPATH
 grep 'secret:' $CI_CONFIG_FILE >> $VARSPATH
 sed -i 's/secret:/vmr_admin_password:/' $VARSPATH
 
-#awk '/instances:/{i++}i==1' $CI_CONFIG_FILE >> $VARSPATH
-awk '/Shared-VMR:/ {for(i=1; i<6; i++) {if( i == 6 ) {getline; print}}}' $CI_CONFIG_FILE >> $VARSPATH
+awk '/instances:/{i++}i==1' $CI_CONFIG_FILE >> $VARSPATH
+#awk '/Shared-VMR:/ {for(i=1; i<6; i++) {if( i == 6 ) {getline; print}}}' $CI_CONFIG_FILE >> $VARSPATH
 sed -i 's/instances:/shared_plan_instances:/' $VARSPATH
 awk '/instances:/{i++}i==2' $CI_CONFIG_FILE >> $VARSPATH
 sed -i 's/ instances:/large_plan_instances:/' $VARSPATH
 awk '/instances:/{i++}i==3' $CI_CONFIG_FILE >> $VARSPATH
 sed -i 's/ instances:/community_plan_instances:/' $VARSPATH
+sed -i 's/automatic/1/' $VARSPATH
 awk '/instances:/{i++}i==4' $CI_CONFIG_FILE >> $VARSPATH
 sed -i 's/ instances:/medium_ha_plan_instances:/' $VARSPATH
 awk '/instances:/{i++}i==5' $CI_CONFIG_FILE >> $VARSPATH
 sed -i 's/ instances:/large_ha_plan_instances:/' $VARSPATH
+sed -i 's/automatic/3/' $VARSPATH
 sed "s/^[ \t]*//" -i $VARSPATH
+
 
 sed -i '/internet_connected:/d' $VARSPATH
 sed -i '/resource_config:/d' $VARSPATH
@@ -74,12 +77,18 @@ sed -i 's/"//' $VARSPATH
 
 if [[ $(grep 'tls_config: enabled' $CI_CONFIG_FILE) ]]; then
     echo 'solace_vmr_cert:' > $TLS_PATH 
-    sed -n '/private_key_pem:/,/-----END CERTIFICATE-----/ p' $CI_CONFIG_FILE >>$TLS_PATH
+    sed -n '/private_key_pem:/,/-----END CERTIFICATE-----/ p' $CI_CONFIG_FILE >> $TLS_PATH
     sed -i 's/ cert_pem:/ certificate:/' $TLS_PATH
     sed -i 's/ private_key_pem:/ private_key: | /' $TLS_PATH
+    if [[ $(grep 'tls_config.enabled.trusted_root_certificates:' $CI_CONFIG_FILE) ]]; then
+        sed -n '/tls_config.enabled.trusted_root_certificates/,/-----END CERTIFICATE-----/ p' $CI_CONFIG_FILE >> $TLS_PATH
+    fi
     sed -i 's/*//g' $TLS_PATH
     sed -i '/^$/d' $TLS_PATH
     export tls="-t $TLS_PATH"
+ #   if [[ $(grep 'broker_validate_cert_disabled: true' $CI_CONFIG_FILE) ]]; then
+  #      export tls='-n'
+   # fi
 else 
     export tls='' 
 fi
@@ -91,15 +100,15 @@ if [[ $(grep 'ldap_config: enabled' $CI_CONFIG_FILE) ]]; then
 
     grep 'ldap_start_tls:'  $CI_CONFIG_FILE >> $LDAP_PATH
     sed -i 's/ldap_config.enabled.ldap_start_tls/  start_tls/' $LDAP_PATH
-    echo '  ldap_credentials:' >> $LDAP_PATH
     awk '/ldap_credentials:/ {for(i=0; i<=2; i++) {getline; print}}' $CI_CONFIG_FILE >> $LDAP_PATH
-    sed -i 's/identity:/\  identity:/' $LDAP_PATH 
-    sed -i 's/password:/\  password:/' $LDAP_PATH
+    sed -i 's/identity:/username:/' $LDAP_PATH 
+    sed -i 's/password:/password:/' $LDAP_PATH
     grep 'ldap_user_search_base:'  $CI_CONFIG_FILE >> $LDAP_PATH
     sed -i 's/ldap_config.enabled.ldap_user_search_base/  user_search_base/' $LDAP_PATH
 
     if [[ $(grep 'management_access_auth_scheme: ldap_server' $CI_CONFIG_FILE) ]]; then
 	echo 'management_access_auth_scheme:' >> $LDAP_PATH  
+        export ldap_mgmt='-b' 
 
         grep 'ldap_mgmt_read_only_groups:' $CI_CONFIG_FILE >> $LDAP_PATH
         sed -i 's/management_access_auth_scheme.ldap_server.ldap_mgmt_read_only_groups/  mgmt_read_only_groups/'  $LDAP_PATH
@@ -110,6 +119,11 @@ if [[ $(grep 'ldap_config: enabled' $CI_CONFIG_FILE) ]]; then
         grep 'ldap_mgmt_admin_groups:' $CI_CONFIG_FILE >> $LDAP_PATH
         sed -i 's/management_access_auth_scheme.ldap_server.ldap_mgmt_admin_groups/  mgmt_admin_groups/' $LDAP_PATH
     fi
+    
+    if [[ $(grep 'application_access_auth_scheme: ldap_server' $CI_CONFIG_FILE) ]]; then
+        export ldap_app='-c' 
+    fi 
+  
     export ldap="-l $LDAP_PATH"
 else 
     export ldap=''
@@ -194,7 +208,7 @@ fi
 
 function deploy() { 
 cd $SCRIPTPATH/../cf-solace-messaging-deployment/dev
-echo ./solace_deploy.sh -v $VARSPATH $tls $syslog $ldap $tcp $enterprise
+./solace_deploy.sh -v $VARSPATH $tls $syslog $ldap $tcp $enterprise $ldap_mgmt $ldap_app
 } 
 
 makeVarsFiles
