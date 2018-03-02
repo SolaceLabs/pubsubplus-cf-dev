@@ -1,4 +1,4 @@
-#Using cf-solace-messaging deployment on Windows: 
+# Using cf-solace-messaging deployment on Windows: 
 
 To use the new manifest on windows, use the ops file found in this folder [make_windows_deployment.yml](operations/make_windows_deployment.yml), in the bosh deploy command. More info about the bosh deploy command can be found in cf-solace-messaging dev repository. 
 
