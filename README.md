@@ -323,10 +323,10 @@ vagrant suspend
 
 cd ../workspace/bosh-lite
 vagrant suspend
-~~~
+~~~~
 
 (and to suspend the PCFDev VM on windows:)
-~~~
+~~~~
 cf dev suspend
 ~~~~
 
