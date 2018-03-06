@@ -3,7 +3,7 @@
 This project provides instructions and tools to support installing and using a Solace Pivotal Tile 
 on a local computer having enough resources.
 
-This is an overview of what this project will help you install:
+This is an overview of what this project will help you install if you are using a windows deployment: (on linux, the pcf dev vm will be inside the bosh-lite vm) 
 
 ![](resources/overview.png)
 
@@ -12,17 +12,18 @@ This guide will help you install the following VMs:
 * cli-tools to provide a reliable environment to run the scripts of this project.
   - Tested with 512mb of ram, just enough to run some scripts. 
   - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
-* PCF Dev for hosting the solace service broker and your applications.
+* PCF Dev for hosting the solace service broker and your applications (if you are using windows). 
   - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
-* BOSH-lite for hosting VMRs.
+* BOSH-lite for hosting VMRs (and cloud foundry, and cloud-foundry sql; if you are using linux).
   - Size as recommended below to fit the VMRs.
 
 ## Current and future state
 
 This version of the project is used as the deployment tool to support local testing by developers of Solace Messaging for PCF.
-It supports configuration driven deployments that work on a local BOSH-lite and PCFDev virtual machines.
+It supports configuration driven deployments that work on a local BOSH-lite and PCFDev virtual machines on windows, and a local BOSH-lite virtual machine on linux.
+The reason that BOSH-lite and PCFDev virtual machines must both be used on windows, is because we are using bucc to support more functionality, and it is not yet compatible with windows. The other reason that we are using these 2 VMS is because with the single BOSH-lite deployment on windows, the cf logging does not work yet. A future version of this project might address these issues with windows. 
 
-A future version of the project may attempt to use a single VM with all the tools. 
+A future version of the project may also attempt to use a single VM with all the tools. 
 
 ## Hardware Requirements
 
@@ -37,7 +38,7 @@ You will also need at least 40GB of free disk space.
 
 ## Installation 
 
-The goal of the installation steps is to start the required VMs.
+The goal of the installation steps is to start the required VMs. (Only BOSH-lite is required on Linux)
 
 ![](resources/installation.png)
 
@@ -88,7 +89,63 @@ exit
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
 another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
 
-### Installation Step 2 - PCFDev
+### Installation Step 2 - BOSH-lite
+
+We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s) (and CF if you are using linux).
+
+But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite):
+
+* By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
+* Clone bosh-lite in the workspace of this project.
+
+~~~
+cd solace-messaging-cf-dev
+cd workspace
+git clone https://github.com/cloudfoundry/bosh-lite
+cp ../bin/create_swap.sh bosh-lite
+cd bosh-lite
+~~~
+
+* Then start bosh-lite:
+  - Use VM_MEMORY=5000 if you want to host a single VMR
+  - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
+  - In general, use VM_MEMORY=5000 * [Number-of-VMRs]
+  - Also note the additional swap space, use 2048 Mb per VMR.
+
+ - On Linux:
+~~~
+VM_MEMORY=5000 vagrant up --provider=virtualbox
+vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
+~~~
+
+To set up bucc, the script can be found in the submodule [cf-solace-messaging-depoyment](https://github.com/SolaceLabs/cf-solace-messaging-deployment). 
+Make sure this submodule is downloaded and cd into the repository and run the setup_bosh_bucc.sh script found in the 'dev' directory. This will download and set up the bucc cli. 
+This also requires you to be logged into the cli-tools vm: 
+~~~~
+cd solace-messaging-cf-dev
+cd cli-tools
+vagrant ssh
+~~~
+
+~~~
+cd cf-solace-messaging-deployment/dev
+./setup_bosh_bucc 
+~~
+
+ - On Windows:
+~~~
+set VM_MEMORY=5000
+vagrant up --provider=virtualbox
+vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
+~~~
+
+* VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
+  - bosh-lite/bin/add-route
+  - bosh-lite/bin/add-route.bat
+
+_Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
+
+### Installation Step 3 - PCFDev
 
 PCFDev provides a local installation of cloud foundry in a box to help test applications.
 
@@ -98,7 +155,15 @@ You can also add services to PCF Dev, such as solace-messaging and use solace-me
 
 Our goal is to to add solace-messaging as a service in PCFDev.
 
-But first you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
+ - If you are using linux, you can deploy CF and CF-mysql (the same thing as deploying PCFDev) in bosh-lite. In order to do this, use the scripts in the git submodule [cf-solace-messaging-depoyment](https://github.com/SolaceLabs/cf-solace-messaging-deployment).
+
+~~~
+cd cf-solace-messaging-deployment/dev
+./cf_deploy.sh 
+./cf_mysql_deploy.sh 
+~~ 
+
+ - If you are using windows, you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
 
 * Install [cf cli - The Cloud Foundry Command Line Interface](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
 * Install [PCF Plugin which is used by cf cli](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
@@ -111,47 +176,6 @@ cf dev start -m 4096
 At this point PCFDev is locally installed and ready to host applications and services.
 
 Optionally, you may follow the full [Getting started with pivotal cloud foundry introduction guide](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/introduction), as you would learn how to install a test application in PCFDev.
-
-### Installation Step 3 - BOSH-lite
-
-We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
-
-But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite):
-
-* By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
-* Clone bosh-lite in the workspace of this project.
-
-~~~~
-cd solace-messaging-cf-dev
-cd workspace
-git clone https://github.com/cloudfoundry/bosh-lite
-cp ../bin/create_swap.sh bosh-lite
-cd bosh-lite
-~~~~
-
-* Then start bosh-lite: 
-  - Use VM_MEMORY=5000 if you want to host a single VMR
-  - Use VM_MEMORY=15000 if you want to host 3 VMRs that can form an HA Group
-  - In general, use VM_MEMORY=5000 * [Number-of-VMRs]
-  - Also note the additional swap space, use 2048 Mb per VMR.
- 
- - On Linux: 
-~~~~
-VM_MEMORY=5000 vagrant up --provider=virtualbox
-vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
-~~~~
- - On Windows:
-~~~~
-set VM_MEMORY=5000
-vagrant up --provider=virtualbox
-vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
-~~~~
-
-* VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
-  - bosh-lite/bin/add-route 
-  - bosh-lite/bin/add-route.bat 
-
-_Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
 ## Solace Messaging Deployment
 
@@ -191,11 +215,12 @@ vagrant ssh
 
 The pivotal file is a zip file. We need to peel this onion to get the parts we need.
 
-Use extract_tile.sh to extract the relevant contents we need.
+Use extract_tile.sh in the cf-solace-messaging-deployment repo to extract and then upload the relevant contents we need.
 
 ~~~~
-cd workspace
+cd cf-solace-messaging-deployment/dev
 extract_tile.sh -t solace-messaging-1.2.0.pivotal
+solace_upload_releases.sh
 ~~~~
 
 You will find the relevant contents extracted to ~/workspace/releases
@@ -206,23 +231,30 @@ This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the So
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
+ - On Linux: 
+
 **Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate and evaluation vmr edition.
 ~~~~
-deploy.sh
+./solace_deploy.sh
 ~~~~
 
 The deployment property file used as default can be found under [templates](templates/1.2.0/),  you can make a copy and edit it.
 
 **Example:** Use a customized deployment property file from which a new bosh-manifest will be generated. 
 ~~~~
-deploy.sh -c custom_properties.yml
+cd solace-messaging-cf-dev/bin
+./deployer.sh -c custom_properties.yml
 ~~~~
+
+ - On Windows: 
+
+To deploy on windows you will need to modify the deploy script (solace_deploy.sh) in cf-solace-messaging-deployment/dev in the bosh command to use the windows operations file, and change the domains to local.pcfdev.io. More details on this in the [operations](operations) directory. Once this script has been modified, you can use it to deploy on windows with a separate PCFDev VM, or just run the bosh deploy command directly. 
 
 _The current deployment can be updated by simply rerunning the deployment script._
 
 ## Using the Deployment
 
-At this stage, solace-messaging is a service in PCFDev, and the BOSH-lite VMR deployment will auto register with the service broker
+At this stage, solace-messaging is a service in PCFDev or CF, and the BOSH-lite VMR deployment will auto register with the service broker
 and become available for use in PCFDev.
 
 _You can use 'cf' from cli-tools, or directly from your host computer, they both access the same PCFDev instance_
@@ -242,10 +274,19 @@ You can go ahead download and test the [Solace Sample Apps](https://github.com/S
 
 ## How to login and access PCFDev
 
+On Windows: 
+
 ~~~~
 cf api https://api.local.pcfdev.io --skip-ssl-validation
 cf auth admin admin
 ~~~~
+
+On Linux: 
+
+~~~
+cf api https://api.bosh-lite.com --skip-ssl-validation
+cf auth admin admin
+~~~
 
 ## How to see what is offered in the marketplace
 
@@ -283,7 +324,10 @@ vagrant suspend
 
 cd ../workspace/bosh-lite
 vagrant suspend
+~~~
 
+(and to suspend the PCFDev VM on windows:)
+~~~
 cf dev suspend
 ~~~~
 
