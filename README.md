@@ -125,12 +125,10 @@ This also requires you to be logged into the cli-tools vm:
 cd solace-messaging-cf-dev
 cd cli-tools
 vagrant ssh
-~~~
 
-~~~
 cd cf-solace-messaging-deployment/dev
 ./setup_bosh_bucc 
-~~
+~~~
 
  - On Windows:
 ~~~
