@@ -128,6 +128,7 @@ vagrant ssh
 
 cd cf-solace-messaging-deployment/dev
 ./setup_bosh_bucc 
+exit
 ~~~~
 
  - On Windows:
@@ -155,11 +156,11 @@ Our goal is to to add solace-messaging as a service in PCFDev.
 
  - If you are using linux, you can deploy CF and CF-mysql (the same thing as deploying PCFDev) in bosh-lite. In order to do this, use the scripts in the git submodule [cf-solace-messaging-depoyment](https://github.com/SolaceLabs/cf-solace-messaging-deployment).
 
-~~~
+~~~~
 cd cf-solace-messaging-deployment/dev
 ./cf_deploy.sh 
 ./cf_mysql_deploy.sh 
-~~ 
+~~~~ 
 
  - If you are using windows, you need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
 
