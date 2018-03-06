@@ -128,7 +128,7 @@ vagrant ssh
 
 cd cf-solace-messaging-deployment/dev
 ./setup_bosh_bucc 
-~~~
+~~~~
 
  - On Windows:
 ~~~
