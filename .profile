@@ -55,7 +55,7 @@ if [ "$CF_API_FOUND" -eq "0" ]; then
    if [ $PCFDEV -eq "1" ]; then
     printf  "PCFDev \t\t\t\t%s\n" "OK"
    else
-    printf  "PCFDev \t\t\t\t%s\n" "WARN: PCFDev is not accessible. Is it installed? running? is routing enabled?"
+    printf  "PCFDev \t\t\t\t%s\n" "WARN: PCFDev is not accessible. Is it installed? running? is routing enabled? Is it running on Windows?"
    fi
 
 else

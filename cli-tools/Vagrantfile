@@ -83,6 +83,11 @@ else
 fi
 echo 'echo "Will use solace-messaging-cf-dev from git repo $SOLACE_MESSAGING_CF_DEV_REPO"' >> .profile
 
+if [n "$CF_SOLACE_MESSAGING_DEPLOYMENT" ]; then 
+    echo "export CF_SOLACE_MESSAGING_DEPLOYMENT_REPO=$CF_SOLACE_MESSAGING-DEPLOYMENT" >> .profile
+fi
+    
+
 if [ -n "$BRANCH" ]; then
     echo "export BRANCH=${BRANCH}" >> .profile
 fi
@@ -93,6 +98,9 @@ echo ' git clone $SOLACE_MESSAGING_CF_DEV_REPO' >> .profile
 echo ' if [ ! -z "$BRANCH" ]; then' >> .profile
 echo '    cd solace-messaging-cf-dev' >> .profile
 echo '    git checkout $BRANCH' >> .profile
+echo '    git submodule update --init --recursive' >> .profile
+# in older versions of git if you use --init option, already initialized submodules may not be updated. (this is why there are two git submodule updates) 
+echo '    git submodule update --recursive' >> .profile
 echo ' fi' >> .profile
 echo 'fi' >> .profile
 
@@ -105,13 +113,13 @@ INSTALL_AND_CONFIGURE
 
 Vagrant.configure(2) do |config|
 
-  config.vm.synced_folder "../workspace", "/home/ubuntu/workspace",type: "nfs"
+  config.vm.synced_folder "../workspace", "/home/vagrant/workspace",type: "nfs"
   # provider configuration: vmware
   config.vm.provider "vmware_fusion" do |v|
     v.vmx["memsize"]  = conf['vm.ram'] || 1024
   end
 
-  config.vm.box = conf['box_name'] || 'ubuntu/trusty-cloud-init'
+  config.vm.box = conf['box_name'] || 'vagrant/trusty-cloud-init'
   config.vm.box_url = conf['box_url'] if conf['box_url']
   config.vm.hostname = conf["host_name"] || "vagranthost"
 
@@ -181,7 +189,7 @@ Vagrant.configure(2) do |config|
   end
 
   #Install and configure the workstation
-  config.vm.provision :shell, :inline => $install_and_config_workstation, env: {"SOLACE_MESSAGING_CF_DEV_REPO" => ENV["SOLACE_MESSAGING_CF_DEV_REPO"], "BRANCH" => ENV["BRANCH"] }
+  config.vm.provision :shell, :inline => $install_and_config_workstation, env: {"SOLACE_MESSAGING_CF_DEV_REPO" => ENV["SOLACE_MESSAGING_CF_DEV_REPO"], "BRANCH" => ENV["BRANCH"], "CF_SOLACE_MESSAGING_DEPLOYMENT_REPO" => ENV["CF_SOLACE_MESSAGING_DEPLOYMENT_REPO"] }
   # config.vm.provision :shell, :inline => $run_always, run: 'always'
   config.vm.provision :shell, path: "on_startup.sh", run: 'always'
 
