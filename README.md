@@ -22,7 +22,7 @@ This guide will help you install the following VMs:
 # Linux Deployment
 Here is an overview of what this project will help you install if you are using a linux deployment: 
 
-![](resources/overview-linux.png)
+![](resources/Overview-linux.png)
 
 This guide will help you prepare the following deployments:
 
