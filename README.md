@@ -56,7 +56,7 @@ You will also need at least 40GB of free disk space.
 
 ## Installation 
 
-The goal of the installation steps is to start the required VMs. Click [here](#installation-on-linux] for the installation steps for linux. 
+The goal of the installation steps is to start the required VMs. Click [here](#installation-on-linux) for the installation steps for linux. 
 
 ![](resources/installation.png)
 
@@ -107,7 +107,31 @@ exit
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
 another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
 
-### Installation Step 2 - BOSH-lite
+### Installation Step 2 - PCFDev
+
+PCFDev provides a local installation of cloud foundry in a box to help test applications.
+
+Using PCFDev you can install and test applications, bind to services that are available in PCFDev.
+
+You can also add services to PCF Dev, such as solace-messaging and use solace-messaging with your applications.
+
+Our goal is to to add solace-messaging as a service in PCFDev.
+
+You need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
+
+* Install [cf cli - The Cloud Foundry Command Line Interface](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
+* Install [PCF Plugin which is used by cf cli](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
+* Start PCF Dev, using 4GB of ram. You may choose to adjust this.
+
+~~~~
+cf dev start -m 4096
+~~~~
+
+At this point PCFDev is locally installed and ready to host applications and services.
+
+Optionally, you may follow the full [Getting started with pivotal cloud foundry introduction guide](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/introduction), as you would learn how to install a test application in PCFDev.
+
+### Installation Step 3 - BOSH-lite
 
 We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
 
@@ -141,30 +165,6 @@ vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
   - bosh-lite/bin/add-route.bat
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
-
-### Installation Step 3 - PCFDev
-
-PCFDev provides a local installation of cloud foundry in a box to help test applications.
-
-Using PCFDev you can install and test applications, bind to services that are available in PCFDev.
-
-You can also add services to PCF Dev, such as solace-messaging and use solace-messaging with your applications.
-
-Our goal is to to add solace-messaging as a service in PCFDev.
-
-You need to install [PCFDev](https://pivotal.io/pcf-dev). Please follow these instructions:
-
-* Install [cf cli - The Cloud Foundry Command Line Interface](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
-* Install [PCF Plugin which is used by cf cli](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
-* Start PCF Dev, using 4GB of ram. You may choose to adjust this.
-
-~~~~
-cf dev start -m 4096
-~~~~
-
-At this point PCFDev is locally installed and ready to host applications and services.
-
-Optionally, you may follow the full [Getting started with pivotal cloud foundry introduction guide](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/introduction), as you would learn how to install a test application in PCFDev.
 
 ### Installation on Linux 
 
