@@ -166,7 +166,9 @@ vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
-### Installation on Linux 
+### Installation on Linux: 
+
+The goal of the installation is to prepare the required deployments.
 
 ![](resources/installation-linux.png)
 
