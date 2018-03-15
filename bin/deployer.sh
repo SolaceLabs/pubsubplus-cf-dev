@@ -87,9 +87,10 @@ function makeVarsFiles() {
 
   if [[ $(grep 'tls_config: enabled' $CI_CONFIG_FILE) ]]; then
     echo 'solace_vmr_cert:' > $TLS_PATH 
-    sed -n '/private_key_pem:/,/-----END CERTIFICATE-----/ p' $CI_CONFIG_FILE >> $TLS_PATH
+    sed -n '/cert_pem:/,/-----END CERTIFICATE-----/ p' $CI_CONFIG_FILE >> $TLS_PATH
     sed -i 's/ cert_pem:/ certificate:/' $TLS_PATH
-    sed -i 's/ private_key_pem:/ private_key: | /' $TLS_PATH
+    sed -n '/private_key_pem:/,/-----END RSA PRIVATE KEY-----/ p' $CI_CONFIG_FILE >> $TLS_PATH
+    sed -i 's/ private_key_pem:/ private_key: /' $TLS_PATH
     if [[ $(grep 'tls_config.enabled.trusted_root_certificates:' $CI_CONFIG_FILE) ]]; then
       sed -n '/tls_config.enabled.trusted_root_certificates/,/-----END CERTIFICATE-----/ p' $CI_CONFIG_FILE >> $TLS_PATH
     fi
@@ -116,7 +117,7 @@ function makeVarsFiles() {
     sed -i 's/ldap_config.enabled.ldap_start_tls/  start_tls/' $LDAP_PATH
     grep 'ldap_user_search_base:'  $CI_CONFIG_FILE >> $LDAP_PATH
     sed -i 's/ldap_config.enabled.ldap_user_search_base/  user_search_base/' $LDAP_PATH
-   
+    sed -i 's/"/ /g' $LDAP_PATH  
 
     if [[ $(grep 'management_access_auth_scheme: ldap_server' $CI_CONFIG_FILE) ]]; then
 	echo 'management_access_auth_scheme:' >> $LDAP_PATH  
@@ -131,7 +132,7 @@ function makeVarsFiles() {
         grep 'ldap_mgmt_admin_groups:' $CI_CONFIG_FILE >> $LDAP_PATH
         sed -i 's/management_access_auth_scheme.ldap_server.ldap_mgmt_admin_groups/  mgmt_admin_groups/' $LDAP_PATH
     fi
-    
+    sed -i 's/"/ /g' $LDAP_PATH
     if [[ $(grep 'application_access_auth_scheme: ldap_server' $CI_CONFIG_FILE) ]]; then
         ldap_app='-c' 
     fi 
