@@ -6,11 +6,12 @@ It is also important that -o solace-messaging-cf-dev/operations/make_windows_dep
 
 The other important thing in the bosh deploy command is to change 
 ~~~
--v app-domain=bosh-lite.com 
+-v app-domain=bosh-lite.com \
+-v system-domain=bosh-lite.com
 ~~~ 
 to be: 
 ~~~
- -v app-domain=local.pcfdev.io
+ -v app-domain=local.pcfdev.io \
+ -v system-domain=local.pcfdev.io
 ~~~
-and make the same change for -v system-domain. 
 
