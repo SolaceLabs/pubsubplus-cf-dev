@@ -242,7 +242,7 @@ function findServiceBrokerVersion() {
 function deploy() {
     #deploys solace vmr and service broker using configuration from tile config
  
-    deployScript="$SCRIPTPATH/../cf-solace-messaging-deployment/dev"
+    deployScript="$SCRIPTPATH/dev"
     cd $deployScript
     $deployScript/solace_deploy.sh -v $VARSPATH $tls $tls_dis $syslog $ldap $tcp $enterprise $ldap_mgmt $ldap_app
 } 
