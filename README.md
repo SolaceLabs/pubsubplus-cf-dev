@@ -247,21 +247,20 @@ VM_MEMORY=5000 vagrant up --provider=virtualbox
 vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 ~~~
 
-To set up bucc, the script can be found in the submodule [cf-solace-messaging-depoyment](https://github.com/SolaceLabs/cf-solace-messaging-deployment). 
-Make sure this submodule is downloaded and cd into the repository and run the setup_bosh_bucc.sh script found in the 'dev' directory. This will download and set up the bucc cli, and create a swap file and enable routing so communication can work between your hosting computer and the VMs. 
+To set up bucc, the script can be found in [bin/dev](solace-messaging-cf-dev/bin/dev). This will download and set up the bucc cli, and create a swap file and enable routing so communication can work between your hosting computer and the VMs. 
 
 ~~~~
-cd cf-solace-messaging-deployment/dev
-./setup_bosh_bucc 
+cd bin/dev
+./setup_bosh_bucc.sh 
 exit
 ~~~~
 
 ### Installation Step 3 - Deploy CF and p-mysql 
 
-You can deploy CF and CF-mysql in bosh-lite to host the solace service broker. In order to do this, use the scripts in the git submodule [cf-solace-messaging-depoyment](https://github.com/SolaceLabs/cf-solace-messaging-deployment). This script will install the cf-cli, deploy cf, and then install p-mysql inside cf. 
+You can deploy CF and CF-mysql in bosh-lite to host the solace service broker. In order to do this, use the scripts in the [bin/dev](solace-messaging-cf-dev/bin/dev) directory. This script will install the cf-cli, deploy cf, and then install p-mysql inside cf. 
 
 ~~~~
-cd cf-solace-messaging-deployment/dev
+cd bin/dev
 ./cf_deploy.sh 
 ./cf_mysql_deploy.sh 
 ~~~~ 
@@ -304,10 +303,10 @@ vagrant ssh
 
 The pivotal file is a zip file. We need to peel this onion to get the parts we need.
 
-Use extract_tile.sh in the cf-solace-messaging-deployment repo to extract and then upload the relevant contents we need.
+Use extract_tile.sh in the [bin/dev](bin/dev) directory to extract and then upload the relevant contents we need.
 
 ~~~~
-cd cf-solace-messaging-deployment/dev
+cd bin/dev
 extract_tile.sh -t solace-messaging-1.2.0.pivotal
 solace_upload_releases.sh
 ~~~~
@@ -337,7 +336,7 @@ cd solace-messaging-cf-dev/bin
 
  - On Windows: 
 
-To deploy on windows you will need to modify the deploy script (solace_deploy.sh) in cf-solace-messaging-deployment/dev in the bosh command to use the windows operations file, and change the domains to local.pcfdev.io. More details on this in the [operations](operations) directory. Once this script has been modified, you can use it to deploy on windows with a separate PCFDev VM, or just run the bosh deploy command directly. 
+To deploy on windows you will need to modify the deploy script (solace_deploy.sh) in bin/dev in the bosh command to use the windows operations file, and change the domains to local.pcfdev.io. More details on this in the [operations](operations) directory. Once this script has been modified, you can use it to deploy on windows with a separate PCFDev VM, or just run the bosh deploy command directly. 
 
 _The current deployment can be updated by simply rerunning the deployment script._
 
