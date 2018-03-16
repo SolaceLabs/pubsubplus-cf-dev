@@ -54,7 +54,7 @@ RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
 
 You will also need at least 40GB of free disk space.
 
-## Installation 
+## Installation on Windows 
 
 The goal of the installation steps is to start the required VMs. Click [here](#installation-on-linux) for the installation steps for linux. 
 
@@ -166,7 +166,7 @@ vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
-### Installation on Linux: 
+## Installation on Linux: 
 
 The goal of the installation is to prepare the required deployments.
 
@@ -184,11 +184,10 @@ Directly on your computer, you must have or get the following:
 * Install latest [Vagrant](https://www.vagrantup.com/downloads.htm) (version 1.9.1+)
 * Shell access, use your preferred shell.
 
-_The setup was last tested on Windows host with 32GB of RAM, using:_
-- git version 2.8.2.windows.1
-- cf version 6.21.1+6fd3c9f-2016-08-10
-- Vagrant 1.9.1
-- VirtualBox Version 5.1.10 r112026 (Qt5.6.2)
+_The setup was last tested on Linux host with 64GB of RAM, using:_
+- git version 1.8.3.1
+- Vagrant 1.9.7
+- VirtualBox Version 5.1.22 r115126 
 
 If you are installing this in a VM you will need to ensure that:
 
@@ -219,9 +218,9 @@ exit
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
 another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
 
-### Installation Step 2 - BOSH-lite
+### Installation Step 2 - BOSH-lite or BUCC
 
-We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s) (and CF if you are using linux).
+We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace VMR(s).
 
 But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite):
 
@@ -247,7 +246,10 @@ VM_MEMORY=5000 vagrant up --provider=virtualbox
 vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 ~~~
 
-To set up bucc, the script can be found in [bin/dev](solace-messaging-cf-dev/bin/dev). This will download and set up the bucc cli, and create a swap file and enable routing so communication can work between your hosting computer and the VMs. 
+
+Alternatively, if you are using linux you can use bosh-lite wrapped in bucc, which means you do not have to follow the steps above, and instead can run the script setup_bosh_bucc. 
+
+To set up bucc, the script can be found in [bin/dev](bin/dev). This will download and set up the bucc cli, and create a swap file and enable routing so communication can work between your hosting computer and the VMs. 
 
 ~~~~
 cd bin/dev
@@ -257,7 +259,7 @@ exit
 
 ### Installation Step 3 - Deploy CF and p-mysql 
 
-You can deploy CF and CF-mysql in bosh-lite to host the solace service broker. In order to do this, use the scripts in the [bin/dev](solace-messaging-cf-dev/bin/dev) directory. This script will install the cf-cli, deploy cf, and then install p-mysql inside cf. 
+You can deploy CF and CF-mysql in bosh-lite to host the solace service broker. In order to do this, use the scripts in the [bin/dev](bin/dev) directory. This script will install the cf-cli, deploy cf, and then install p-mysql inside cf. 
 
 ~~~~
 cd bin/dev
