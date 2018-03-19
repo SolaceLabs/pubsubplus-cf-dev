@@ -7,6 +7,8 @@ This project provides instructions and tools to support installing and using a S
 
 If you are using Windows, there are a few limitations to the deployment. Windows is not yet supported by BUCC so you will have to deploy BOSH-Lite locally. Additionally, cf logging does not work in BOSH-Lite if it is deployed in windows, so you will need to set up a separate PCFDev virtual machine to host the CF deployment and p-mysql. Therefore the steps for deploying on windows and linux differ, and both are outlined in this document.
 
+The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messaging-deployment/](https://github.com/SolaceDev/cf-solace-messaging-deployment/) contains the tools (including operations files) used by this repository to deploy solace messaging with bosh. 
+
 ## Table of Contents:
 
 * [Hardware Requirements](#hardware-requirements)
@@ -253,12 +255,11 @@ vagrant ssh
 
 The pivotal file is a zip file. We need to peel this onion to get the parts we need.
 
-Use extract_tile.sh in the [bin/dev](bin/dev) directory to extract and then upload the relevant contents we need.
+Use extract_tile.sh to extract and then upload the relevant contents we need.
 
 ~~~~
-cd bin/dev
-extract_tile.sh -t solace-messaging-1.4.0.pivotal
-solace_upload_releases.sh
+./extract_tile.sh -t solace-messaging-1.4.0.pivotal
+./solace_upload_releases.sh
 ~~~~
 
 You will find the relevant contents extracted to ~/workspace/releases
@@ -292,10 +293,10 @@ _The current deployment can be updated by simply rerunning the deployment script
 
 ## Using the Deployment
 
-At this stage, solace-messaging is a service in PCFDev or CF, and the BOSH-lite VMR deployment will auto register with the service broker
-and become available for use in PCFDev.
+At this stage, solace-messaging is a service in the CF Deployment, and the BOSH-lite VMR deployment will auto register with the service broker
+and become available for use in CF.
 
-_You can use 'cf' from cli-tools, or directly from your host computer, they both access the same PCFDev instance_
+_You can use 'cf' from cli-tools, or directly from your host computer, they both access the same CF instance_
 
 For example if you deployed the default Shared-VMR, a "shared" service plan will be available and you can do this:
 
@@ -310,7 +311,7 @@ You can go ahead download and test the [Solace Sample Apps](https://github.com/S
 
 # Other useful commands and tools
 
-## How to login and access PCFDev
+## How to login and access CF
 
 On Windows: 
 
@@ -321,9 +322,9 @@ cf auth admin admin
 
 On Linux: 
 
+This can be executed in the cli-tools vm, locally it will need to be ran inside solace-messaging-cf-dev/bin.
 ~~~
-cf api https://api.bosh-lite.com --skip-ssl-validation
-cf auth admin admin
+./cf_env.sh 
 ~~~
 
 ## How to see what is offered in the marketplace
@@ -339,7 +340,16 @@ cf m
 
 ## Service Broker
 
-You can use your browser to examine the deployed [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
+
+
+You can use your browser to examine the deployed service broker dashboard: 
+
+* On Windows: 
+ [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
+
+* On Linux: 
+ [ service broker dashboard ](http://solace-messaging.bosh-lite.com/)
+
 
 You will need a username and password: solacedemo is the default as set for this deployment.
 
@@ -354,6 +364,9 @@ The VMs we created can be suspended and resumed at a later time.
 This way you don't need to recreate them. Their state is saved to disk.
 
 ### Suspending all VMS
+
+* On Windows: 
+
 ~~~~
 cd solace-messaging-cf-dev
 
@@ -362,14 +375,25 @@ vagrant suspend
 
 cd ../workspace/bosh-lite
 vagrant suspend
-~~~~
 
-(and to suspend the PCFDev VM on windows:)
-~~~~
 cf dev suspend
 ~~~~
 
+* On Linux: 
+
+~~~~
+cd solace-messaging-cf-dev
+
+cd cli-tools
+vagrant suspend
+~~~~ 
+
+Bucc is not intended to be suspended and then re-run, however it can be preserved through virtualbox. In the virtual box GUI there is a list of running vms. If you right click on the bucc vm, click pause, and then hover over the 'close' option, and click 'save state', to its left. This will also save the CF deployment inside bucc. 
+
 ### Resuming all VMS
+
+* On Windows: 
+
 ~~~~
 cd solace-messaging-cf-dev
 
@@ -382,8 +406,19 @@ vagrant resume
 cf dev resume
 ~~~~
 
+* On Linux: 
 
-## Working with VMR in the BOSH-lite deployment
+~~~~
+cd solace-messaging-cf-dev
+
+cd cli-tools
+vagrant resume
+~~~~
+
+Again, bucc is not intended to be resumed, although if you have paused and saved it through virtualbox, you can resume by right clicking the bucc vm and selecting 'start' > 'headless start'. 
+The CF deployment should be resumed through this as well. 
+
+## Working with VMR in the BOSH deployment
 
 ### Listing the VMs
 
@@ -400,8 +435,7 @@ Get the list of vms, to find the IP address of the VMR instance you want:
 bosh vms
 ~~~~
 
-Now ssh to the VMR, the default password is 'admin'.
-_You can find the admin password and other goodies in the generated manifest in ~workspace/bosh-solace-manifest.yml_
+******************************************Now ssh to the VMR, the default password is 'admin'.
 
 ~~~~
 ssh -p 2222 admin@10.244.0.3
@@ -425,6 +459,8 @@ cleanup.sh
 
 On your host computer (not cli-tools)
 
+* On Windows 
+
 ~~~~
 cd solace-messaging-cf-dev
 cd workspace
@@ -432,9 +468,17 @@ cd bosh-lite
 vagrant destroy
 ~~~~
 
+* On Linux
+
+~~~~
+bucc down
+~~~~
+
 ### How to delete cli-tools VM
 
 On your host computer (not cli-tools)
+
+* For both Windows and Linux
 
 ~~~~
 cd solace-messaging-cf-dev
@@ -444,9 +488,18 @@ vagrant destroy
 
 ### How to delete PCF Dev
 
+* On Windows
+
 On your host computer (not cli-tools)
 
 ~~~~
 cf dev destroy
 ~~~~
 
+* To delete cf and p-mysql deployment on Linux
+~~~~
+cd cli-tools
+vagrant ssh
+bosh -d cf delete-deployment 
+bosh -d cf-mysql delete-deployment
+~~~

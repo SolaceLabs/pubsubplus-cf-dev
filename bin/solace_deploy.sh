@@ -135,7 +135,7 @@ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
    exit 1
 fi
 
-cd $SCRIPTPATH/../../cf-solace-messaging-deployment/
+cd $SCRIPTPATH/../cf-solace-messaging-deployment/
 
 echo "bosh -d solace_messaging \
         deploy solace-deployment.yml \
@@ -183,7 +183,7 @@ bosh -d solace_messaging \
         $tcp_file \
         $syslog_file \
         $ldap_file \
-        -l release-vars.yml 
+        -l $SCRIPTPATH/templates/1.4.0/release-vars.yml 
 
 [[ $? -eq 0 ]] && { 
   $SCRIPTPATH/solace_add_service_broker.sh 
