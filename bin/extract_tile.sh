@@ -2,6 +2,9 @@
 
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
+
+source $SCRIPTPATH/common.sh
 
 export CMD_NAME=`basename $0`
 
@@ -87,20 +90,9 @@ fi
 
 ## Derived values
 
-export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
-export TEMPLATE_VERSION=$( echo $TILE_VERSION | awk -F\- '{ print $1 }' )
+export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' )
 
-export TILE_FILE_PATH=$(readlink -f "$TILE_FILE")
-export WORKSPACE=${WORKSPACE-`dirname $TILE_FILE_PATH`}
-
-export TEMPLATE_DIR=$SCRIPTPATH/../templates/$TEMPLATE_VERSION 
-
-if [ ! -d $TEMPLATE_DIR ]; then
-   echo 
-   echo "Required templates seem to be missing for version $TEMPLATE_VERSION"
-   echo "Unable to locate templates , expected in $TEMPLATE_DIR"
-   missing_required=1;
-fi
+export WORKSPACE=${WORKSPACE-`pwd`}
 
 if ((missing_required)); then
    missingRequired
@@ -108,7 +100,6 @@ fi
 
 echo "TILE_FILE         $TILE_FILE"
 echo "TILE_VERSION      $TILE_VERSION"
-echo "TEMPLATE_VERSION  $TEMPLATE_VERSION"
 
 echo "Extracting contents to $WORKSPACE/releases"
 
@@ -117,18 +108,5 @@ if [ -d $WORKSPACE/releases ]; then
  rm -rf $WORKSPACE/releases
 fi
 
-if [ -d $WORKSPACE/metadata ]; then
- echo "Clean up of old metadata"
- rm -rf $WORKSPACE/metadata
-fi
-
-unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz metadata/solace-messaging.yml
-
-( 
-  if [ -f $TEMPLATE_DIR/trusted.crt ]; then
-	 echo "Copy $TEMPLATE_DIR/trusted.crt $WORKSPACE"
-	 cp $TEMPLATE_DIR/trusted.crt $WORKSPACE
-  fi
-  echo "Extracting is completed"
-)
+unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz 
 

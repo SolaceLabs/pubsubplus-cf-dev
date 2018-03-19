@@ -54,7 +54,7 @@ function makeVarsFiles() {
   grep "starting_port:" $CI_CONFIG_FILE >> $VARSPATH
    
   grep 'secret:' $CI_CONFIG_FILE >> $VARSPATH
-  sed -i 's/secret:/vmr_admin_password:/' $VARSPATH
+  sed -i '0,/secret:/! s/secret:/vmr_admin_password:/' $VARSPATH
   
   awk '/instances:/{i++}i==1' $CI_CONFIG_FILE >> $VARSPATH
   #awk '/Shared-VMR:/ {for(i=1; i<6; i++) {if( i == 6 ) {getline; print}}}' $CI_CONFIG_FILE >> $VARSPATH
