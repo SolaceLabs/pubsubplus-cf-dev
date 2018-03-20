@@ -141,7 +141,7 @@ fi
 
 OPS_BASE=" -o operations/set_plan_inventory.yml -o operations/bosh_lite.yml -o operations/enable_global_access_to_plans.yml "
 OPS_FEATURES="$enable_ldap $enable_syslog $enable_management_access_ldap $enable_application_access_ldap $tls_disable_service_broker_cert $set_tls_cert $enable_tcp_routes"
-VARS_FEATURES_="$tls_file $tcp_file $syslog_file $ldap_file "
+VARS_FEATURES="$tls_file $tcp_file $syslog_file $ldap_file "
 VARS_STORE="--vars-store $WORKSPACE/deployment-vars.yml "
 VARS="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=cf "
 RELEASE_VARS=" -l $SCRIPTPATH/../templates/1.4.0/release-vars.yml"
