@@ -1,13 +1,13 @@
 # SOLACE-MESSAGING-CF-DEV
 
-This project provides instructions and tools to support installing and using a Solace Pivotal Tile. In order to install and use a Solace Pivotal Tile the following deployments must be accessible on the local computer: (this guide will assist you with installing and deploying these)
+This project provides instructions and tools to support installing and using a Solace Pivotal Tile. These are the prerequisite deployments for installing the Solace Pivotal Tile, which this guide will provide steps to set up:
 
-* BOSH-lite deployment to host VMRs (and a CF deployment if you are on linux)
+* BOSH-lite deployment to host VMRs 
 * CF Deployment to host the Solace Service Broker and p-mysql
 
 If you are using Windows, there are a few limitations to the deployment. Windows is not yet supported by BUCC so you will have to deploy BOSH-Lite locally. Additionally, cf logging does not work in BOSH-Lite if it is deployed in windows, so you will need to set up a separate PCFDev virtual machine to host the CF deployment and p-mysql. Therefore the steps for deploying on windows and linux differ, and both are outlined in this document.
 
-The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messaging-deployment/](https://github.com/SolaceDev/cf-solace-messaging-deployment/) contains the tools (including operations files) used by this repository to deploy solace messaging with bosh. 
+The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messaging-deployment/](https://github.com/SolaceDev/cf-solace-messaging-deployment/) contains the tools (including operations files) used by this repository to deploy the Solace VMR. 
 
 ## Table of Contents:
 
@@ -65,7 +65,7 @@ This guide will help you install the following VMs:
 
 ## Installation on Windows
 
-The goal of the installation steps is to start the required VMs. Click [here](#installation-on-linux) for the installation steps for linux.
+The goal of the installation steps is to start the required VMs.
 
 ![](resources/installation.png)
 
@@ -195,7 +195,7 @@ exit
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
 another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
 
-### Installation Step 2 - BUCC
+### Installation Step 2 - BOSH-Lite VM
 
 Since you are using linux you can use BUCC, which is a BOSH-Lite wrapper and can be installed by running the script setup_bosh_bucc. This will download BUCC from the bucc repository: [https://github.com/starkandwayne/bucc](https://github.com/starkandwayne/bucc). 
 
@@ -209,7 +209,10 @@ exit
 
 ### Installation Step 3 - Deploy CF and p-mysql 
 
-You can deploy CF and CF-mysql in bosh-lite to host the solace service broker. In order to do this, run [cf_deploy.sh](bin/cf_deploy.sh) and [cf_mysql_deploy.sh](bin/cf_mysql_deploy.sh). This script will deploy cf from this repository: [https://github.com/cloudfoundry/cf-deployment](https://github.com/cloudfoundry/cf-deployment) and deploy cf-mysql from this repository: [https://github.com/cloudfoundry/cf-mysql-deployment](https://github.com/cloudfoundry/cf-mysql-deployment).
+You can deploy CF and CF-mysql in bosh-lite to host the solace service broker. In order to do this, run [cf_deploy.sh](bin/cf_deploy.sh) and [cf_mysql_deploy.sh](bin/cf_mysql_deploy.sh). 
+
+This script will deploy cf from this repository: [https://github.com/cloudfoundry/cf-deployment](https://github.com/cloudfoundry/cf-deployment). 
+It will deploy cf-mysql from this repository: [https://github.com/cloudfoundry/cf-mysql-deployment](https://github.com/cloudfoundry/cf-mysql-deployment).
 
 ~~~~
 cd bin
@@ -322,7 +325,8 @@ cf auth admin admin
 
 On Linux: 
 
-This can be executed in the cli-tools vm, locally it will need to be ran inside solace-messaging-cf-dev/bin.
+This can be executed in the cli-tools vm or locally. 
+If it is ran locally it needs to run inside the solace-messaging-cf-dev/bin directory.
 ~~~
 ./cf_env.sh 
 ~~~
@@ -496,10 +500,10 @@ On your host computer (not cli-tools)
 cf dev destroy
 ~~~~
 
-* To delete cf and p-mysql deployment on Linux
+* On Linux
 ~~~~
 cd cli-tools
 vagrant ssh
 bosh -d cf delete-deployment 
 bosh -d cf-mysql delete-deployment
-~~~
+~~~~
