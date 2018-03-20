@@ -45,7 +45,7 @@ echo "Checking stemcell $STEMCELL_NAME"
   fi
 
 echo "Loading cloud-config iaas-support/bosh-lite/cloud-config.yml"
-bosh update-cloud-config $SCRIPTPATH/../iaas-support/bosh-lite/cloud-config.yml
+bosh update-cloud-config $SCRIPTPATH/../cf-solace-messaging-deployment/iaas-support/bosh-lite/cloud-config.yml
 
 bosh -d cf deploy cf-deployment.yml \
 	-o operations/bosh-lite.yml \
