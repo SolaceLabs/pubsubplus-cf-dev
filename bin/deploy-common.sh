@@ -144,7 +144,7 @@ OPS_FEATURES="$enable_ldap $enable_syslog $enable_management_access_ldap $enable
 VARS_FEATURES_="$tls_file $tcp_file $syslog_file $ldap_file "
 VARS_STORE="--vars-store $WORKSPACE/deployment-vars.yml "
 VARS="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=cf "
-RELEASE_VARS=" -l release-vars.yml"
+RELEASE_VARS=" -l $SCRIPTPATH/../templates/1.4.0/release-vars.yml"
 
 BOSH_PARAMS=" $OPS_BASE $OPS_FEATURES -o operations/is_${VMR_EDITION}.yml $VARS_STORE $VARS -l $VARS_PATH $VARS_FEATURES $RELEASE_VARS "
 
