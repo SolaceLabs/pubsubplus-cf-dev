@@ -447,7 +447,7 @@ Get the list of vms, to find the IP address of the VMR instance you want:
 bosh vms
 ~~~~
 
-******************************************Now ssh to the VMR, the default password is 'admin'.
+Now ssh to the VMR, the default password is 'admin'.
 
 ~~~~
 ssh -p 2222 admin@10.244.0.3
