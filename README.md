@@ -17,7 +17,7 @@ The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messag
 * [Installation on Windows](#installation-on-windows)
 * [Overview of Linux Deployment](#linux-overview)
 * [Installation on Linux](#installation-on-linux)
-* [Solace Messaging Deployment] (#solace-messaging-deployment)
+* [Solace Messaging Deployment](#solace-messaging-deployment)
 * [Other useful commands and tools](#other-useful-commands-and-tools)
 
 ## Hardware Requirements
