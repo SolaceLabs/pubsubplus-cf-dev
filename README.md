@@ -2,12 +2,12 @@
 
 This project provides instructions and tools to support installing and using a Solace Pivotal Tile. These are the prerequisite deployments for installing the Solace Pivotal Tile, which this guide will provide steps to set up:
 
-* BOSH-lite deployment to host VMRs 
-* CF Deployment to host the Solace Service Broker and p-mysql
+* [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) deployment to host VMRs 
+* [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment) (CF) Deployment to host the Solace Service Broker and p-mysql
 
-If you are using Windows, there are a few limitations to the deployment. Windows is not yet supported by BUCC so you will have to deploy BOSH-Lite locally. Additionally, cf logging does not work in BOSH-Lite if it is deployed in windows, so you will need to set up a separate PCFDev virtual machine to host the CF deployment and p-mysql. Therefore the steps for deploying on windows and linux differ, and both are outlined in this document.
+If you are using Windows, there are a few limitations to the deployment. Windows is not yet supported by [bosh create-env](https://github.com/cloudfoundry/bosh/issues/1821) so you will have to deploy BOSH-Lite locally. Additionally, cf logging does not work in BOSH-Lite if it is deployed in windows, so you will need to set up a separate PCFDev virtual machine to host the CF deployment and p-mysql. Therefore the steps for deploying on windows and linux differ, and both are outlined in this document.
 
-The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messaging-deployment/](https://github.com/SolaceDev/cf-solace-messaging-deployment/) contains the tools (including operations files) used by this repository to deploy the Solace VMR. 
+The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messaging-deployment/](https://github.com/SolaceDev/cf-solace-messaging-deployment/) contains the tools (including operations files) used by this repository to deploy the Solace VMR. More information about manually deploying can be found in its README.  
 
 ## Table of Contents:
 
@@ -197,7 +197,7 @@ another clone of this project. The workspace folder visible on your computer is 
 
 ### Installation Step 2 - BOSH-Lite VM
 
-Since you are using linux you can use BUCC, which is a BOSH-Lite wrapper and can be installed by running the script setup_bosh_bucc. This will download BUCC from the bucc repository: [https://github.com/starkandwayne/bucc](https://github.com/starkandwayne/bucc). 
+A quick way to get started with BOSH is to use BUCC, which is a BOSH-Lite wrapper and can be installed by running the script setup_bosh_bucc. This will download BUCC from the bucc repository: [https://github.com/starkandwayne/bucc](https://github.com/starkandwayne/bucc). 
 
 To set up bucc, the script can be found in [bin/setup_bosh_bucc.sh](bin/setup_bosh_bucc). This will download and set up the bucc cli, and create a swap file and enable routing so that your hosting computer can communicate with the VMs and bosh. 
 
@@ -361,6 +361,14 @@ You can also run a script that will fetch a variety of information from the serv
 ~~~~
 getServiceBrokerInfo.sh
 ~~~~
+
+## Set up Solace TCP client 
+
+In the cli-tools vm you can run a script to set up a solace router tcp client and domain. 
+
+~~~
+solace_prepare_cf.sh
+~~~
 
 ## How to suspend and resume VMs
 
