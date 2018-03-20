@@ -1,13 +1,24 @@
 # SOLACE-MESSAGING-CF-DEV
 
-This project provides instructions and tools to support installing and using a Solace Pivotal Tile. These are the prerequisite deployments for installing the Solace Pivotal Tile, which this guide will provide steps to set up:
+This project provides instructions and tools that support local development and testing of Solace Messaging for Cloud Foundry.
 
-* [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) deployment to host VMRs 
-* [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment) (CF) Deployment to host the Solace Service Broker and p-mysql
+A Deployment Solace Messaging for Cloud Foundry has prerequisites for which this guide will provide steps to complete:
 
-If you are using Windows, there are a few limitations to the deployment. Windows is not yet supported by [bosh create-env](https://github.com/cloudfoundry/bosh/issues/1821) so you will have to deploy BOSH-Lite locally. Additionally, cf logging does not work in BOSH-Lite if it is deployed in windows, so you will need to set up a separate PCFDev virtual machine to host the CF deployment and p-mysql. Therefore the steps for deploying on windows and linux differ, and both are outlined in this document.
+- A deployment of [BOSH](https://github.com/cloudfoundry/bosh) or [BOSH-lite](https://github.com/cloudfoundry/bosh-lite): Hosts the VMRs
+- A deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment): Hosts the Solace Service Broker and your Test Applications.
+- A deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Required by the Solace Service Broker
+- A [Solace BOSH Deployment](https://github.com/SolaceDev/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace Messaging for Cloud Foundry
 
-The submodule in this repository: [https://github.com/SolaceDev/cf-solace-messaging-deployment/](https://github.com/SolaceDev/cf-solace-messaging-deployment/) contains the tools (including operations files) used by this repository to deploy the Solace VMR. More information about manually deploying can be found in its README.  
+
+## Windows vs Linux or Mac:
+
+Due to these issues, this guide will provide different steps for deploying on Windows than Linux or Mac.
+
+- Windows is not yet supported by [bosh create-env](https://github.com/cloudfoundry/bosh/issues/1821)
+  - Workaround: use the old [Vagrant based BOSH Lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md). 
+- CF logging features do not work on a deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment) to the [Vagrant based BOSH Lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md)
+  - Workaround: use [PCFDev](https://pivotal.io/pcf-dev) to host the CF deployment and p-mysql. 
+
 
 ## Table of Contents:
 
