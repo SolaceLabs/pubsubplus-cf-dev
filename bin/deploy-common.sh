@@ -3,6 +3,7 @@
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
+export CF_SOLACE_MESSAGING_DEPLOYMENT_HOME=${CF_SOLACE_MESSAGING_DEPLOYMENT_HOME:-"$( cd $SCRIPTPATH/../cf-solace-messaging-deployment && pwd )"}
 
 source $SCRIPTPATH/common.sh
 
@@ -23,8 +24,8 @@ function showUsage() {
     echo "  -s <starting_port>        provide starting port "
     echo "  -p <vmr_admin_password>   provide vmr admin password "
     echo "  -h                        show command options "
-    echo "  -v <vars.yml file path>   provide vars.yml file path "
-    echo "  -t <tls_config.yml file>  provide tls config file path"
+    echo "  -v <vars.yml>             provide vars.yml file path "
+    echo "  -t <tls_config.yml>       provide tls config file path"
     echo "  -e                        is enterprise mode"
     echo "  -a <syslog_config.yml>    provide syslog config file path"
     echo "  -r <tcp_config.yml>       provide tcp routes config file path" 
@@ -60,15 +61,12 @@ while getopts "t:a:nbcr:l:s:p:v:eh" arg; do
             ;; 
         s)
             starting_port="$OPTARG"
-            cd ..
-            grep -q 'starting_port' vars.yml && sed -i "s/starting_port.*/starting_port: $starting_port/" vars.yml || echo "starting_port: $starting_port" >> vars.yml
 	    ;;
         p)
             vmr_admin_password="${OPTARG}"
-            grep -q 'vmr_admin_password' vars.yml && sed -i "s/vmr_admin_password.*/vmr_admin_password: $vmr_admin_password/" vars.yml || echo "vmr_admin_password: $vmr_admin_password" >> vars.yml
             ;;
         v)
-            VARS_PATH="$OPTARG"
+            VARS_FILE="$OPTARG"
             ;; 
         e) 
 	    VMR_EDITION="enterprise"
@@ -87,43 +85,52 @@ while getopts "t:a:nbcr:l:s:p:v:eh" arg; do
     esac
 done
 
-if [ -z "$VARS_PATH" ]; then
-   VARS_PATH=$SCRIPTPATH/../vars.yml
+if [ -z "$VARS_FILE" ]; then
+   if [ ! -f $WORKSPACE/vars.yml ]; then
+     cp $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/vars.yml $WORKSPACE
+   fi
+   VARS_FILE=$WORKSPACE/vars.yml
+fi
+
+if [ -n "$vmr_admin_password" ]; then
+   grep -q 'vmr_admin_password' $VARS_FILE && sed -i "s/vmr_admin_password.*/vmr_admin_password: $vmr_admin_password/" $VARS_FILE || echo "vmr_admin_password: $vmr_admin_password" >> $VARS_FILE
+fi
+
+if [ -n "$starting_port" ]; then
+   grep -q 'starting_port' $VARS_FILE && sed -i "s/starting_port.*/starting_port: $starting_port/" $VARS_FILE || echo "starting_port: $starting_port" >> $VARS_FILE
 fi
 
 if [ -n "$SYSLOG_PATH" ]; then
-   enable_syslog='-o operations/enable_syslog.yml' 
-   syslog_file="-l $SYSLOG_PATH" 
+   ENABLE_SYSLOG_OPS='-o operations/enable_syslog.yml' 
+   SYSLOG_VARS="-l $SYSLOG_PATH" 
 fi
 
 if [ -n "$LDAP_PATH" ]; then 
-   enable_ldap='-o operations/enable_ldap.yml' 
-   ldap_file="-l $LDAP_PATH"
+   ENABLE_LDAP_OPS='-o operations/enable_ldap.yml' 
+   LDAP_VARS="-l $LDAP_PATH"
 fi 
 
 if [[ $mldap == true ]]; then 
-   enable_management_access_ldap='-o operations/set_management_access_ldap.yml'
+   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS='-o operations/set_management_access_ldap.yml'
 fi 
 
 if [[ $disablebrokertls == true ]]; then 
-   tls_disable_service_broker_cert='-o operations/disable_service_broker_certificate_validation.yml'
+   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS='-o operations/disable_service_broker_certificate_validation.yml'
 fi
 
 if [ -n "$TLS_PATH" ]; then 
-   set_tls_cert='-o operations/set_solace_vmr_cert.yml' 
-   tls_file="-l $TLS_PATH" 
+   SET_SOLACE_VMR_CERT_OPS='-o operations/set_solace_vmr_cert.yml' 
+   TLS_VARS="-l $TLS_PATH" 
 fi 
 
 if [[ $aldap == true ]]; then
-   enable_application_access_ldap='-o operations/set_application_access_ldap.yml' 
+   ENABLE_APPLICATION_ACCESS_LDAP_OPS='-o operations/set_application_access_ldap.yml' 
 fi 
 
 if [ -n "$TCP_PATH" ]; then
-    enable_tcp_routes='-o operations/enable_tcp_routes.yml' 
-    tcp_file="-l $TCP_PATH"
+    ENABLE_TCP_ROUTES_OPS='-o operations/enable_tcp_routes.yml' 
+    TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
-
-cd $SCRIPTPATH/..
 
 SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 
@@ -139,12 +146,16 @@ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
    exit 1
 fi
 
-OPS_BASE=" -o operations/set_plan_inventory.yml -o operations/bosh_lite.yml -o operations/enable_global_access_to_plans.yml "
-OPS_FEATURES="$enable_ldap $enable_syslog $enable_management_access_ldap $enable_application_access_ldap $tls_disable_service_broker_cert $set_tls_cert $enable_tcp_routes"
-VARS_FEATURES_="$tls_file $tcp_file $syslog_file $ldap_file "
-VARS_STORE="--vars-store $WORKSPACE/deployment-vars.yml "
-VARS="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=cf "
-RELEASE_VARS=" -l $SCRIPTPATH/../templates/1.4.0/release-vars.yml"
+OPS_BASE=${OPS_BASE:-" -o operations/set_plan_inventory.yml -o operations/bosh_lite.yml -o operations/enable_global_access_to_plans.yml "}
 
-BOSH_PARAMS=" $OPS_BASE $OPS_FEATURES -o operations/is_${VMR_EDITION}.yml $VARS_STORE $VARS -l $VARS_PATH $VARS_FEATURES $RELEASE_VARS "
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS"}
+FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
+
+VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
+
+CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=cf "}
+
+RELEASE_VARS=${RELEASE_VARS:-" -l release-vars.yml"}
+
+BOSH_PARAMS=" $OPS_BASE $FEATURES_OPS -o operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS "
 

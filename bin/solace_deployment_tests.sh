@@ -10,5 +10,5 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
-bosh -d solace_messaging run-errand deploy-all $@
+bosh -d solace_messaging run-errand tests $@
 

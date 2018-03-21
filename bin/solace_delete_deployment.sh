@@ -12,8 +12,6 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
-cd $SCRIPTPATH/..
-
 DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep solace_messaging | wc -l`
 SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
