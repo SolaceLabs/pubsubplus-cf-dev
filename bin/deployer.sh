@@ -1,6 +1,7 @@
 #!/bin/bash
 
-source $SCRIPTPATH/tile-config-common.sh
+cd $SCRIPTPATH
+source tile-config-common.sh
 
 #Make vars files for ldap, tcp, syslog and tls from tile config file
 makeVarsFiles
