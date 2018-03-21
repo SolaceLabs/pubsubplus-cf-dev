@@ -13,11 +13,31 @@ export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
 
 export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
+export TEMP_DIR=$(mktemp -d)
+
+function cleanupWorkTemp() {
+ if [ -d $TEMP_DIR ]; then
+    rm -rf $TEMP_DIR
+ fi
+}
+trap cleanupWorkTemp EXIT INT TERM HUP
+
 if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
 fi
 
 cd $WORKSPACE
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+	echo "Exiting $SCRIPT: You seem to already have an existing BOSH-lite VM [$BOSH_VM]"
+	exit 1
+   fi
+   unset BOSH_VM
+fi
 
 if [ ! -d bucc ]; then
  git clone https://github.com/starkandwayne/bucc.git
@@ -33,7 +53,23 @@ sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKS
 echo "vm_disk_size: $VM_DISK_SIZE" >> $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
 cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
 
+## Capture running VMS before
+vboxmanage list runningvms > $TEMP_DIR/running_vms.before
+
 $WORKSPACE/bucc/bin/bucc up --cpi virtualbox --lite --debug | tee $WORKSPACE/bucc_up.log
+
+## Capture running VMS after
+vboxmanage list runningvms > $TEMP_DIR/running_vms.after
+
+BOSH_VM=$( diff --changed-group-format='%>' --unchanged-group-format='' $TEMP_DIR/running_vms.before $TEMP_DIR/running_vms.after | awk '{ print $1 }' | sed 's/\"//g' )
+
+vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+if [[ $? -eq 0 ]]; then
+   echo $BOSH_VM > $WORKSPACE/.boshvm
+   echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
+fi
+
 $WORKSPACE/bucc/bin/bucc env > $WORKSPACE/bosh_env.sh
 
 source $WORKSPACE/bosh_env.sh
