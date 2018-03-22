@@ -549,10 +549,10 @@ Get the list of vms, to find the IP address of the VMR instance you want:
 bosh vms
 ~~~~
 
-Now ssh to the VMR, the default password is 'admin'.
+Now ssh to the VMR. The admin password is whatever you had set in the vars.yml and the SSH port on this BOSH-lite deployment is set to 3022.
 
 ~~~~
-ssh -p 2222 admin@10.244.0.3
+ssh -p 3022 admin@10.244.0.150
 ~~~~
 
 ## How to cleanup
