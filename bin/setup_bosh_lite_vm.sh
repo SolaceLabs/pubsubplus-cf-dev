@@ -3,6 +3,7 @@
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
+export bucc_project_root=${bucc_project_root:-$WORKSPACE/local-bosh-lite}
 
 source $SCRIPTPATH/common.sh
 
@@ -24,6 +25,10 @@ trap cleanupWorkTemp EXIT INT TERM HUP
 
 if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
+fi
+
+if [ ! -d $bucc_project_root ]; then
+   mkdir -p $bucc_project_root
 fi
 
 cd $WORKSPACE
@@ -53,10 +58,12 @@ sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKS
 echo "vm_disk_size: $VM_DISK_SIZE" >> $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
 cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
 
+source <($WORKSPACE/bucc/bin/bucc env)
+
 ## Capture running VMS before
 vboxmanage list runningvms > $TEMP_DIR/running_vms.before
 
-$WORKSPACE/bucc/bin/bucc up --cpi virtualbox --lite --debug | tee $WORKSPACE/bucc_up.log
+bucc up --cpi virtualbox --lite --debug | tee $WORKSPACE/bucc_up.log
 
 ## Capture running VMS after
 vboxmanage list runningvms > $TEMP_DIR/running_vms.after
@@ -70,19 +77,22 @@ if [[ $? -eq 0 ]]; then
    echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
 fi
 
-$WORKSPACE/bucc/bin/bucc env > $WORKSPACE/bosh_env.sh
+echo "export bucc_project_root=$bucc_project_root" > $WORKSPACE/bosh_env.sh
+bucc env >> $WORKSPACE/bosh_env.sh
 
 source $WORKSPACE/bosh_env.sh
 
 echo
 echo "Adding routes, you may need to enter your credentials to grant sudo permissions"
 echo
-$SCRIPTPATH/setup_bosh_routes.sh
+$SCRIPTPATH/setup_bosh_lite_routes.sh
 echo
 echo "Adding swap of $VM_SWAP. You may need to accept the authenticity of host '192.168.50.6' when requested"
 echo
-$SCRIPTPATH/setup_bosh_swap.sh
+$SCRIPTPATH/setup_bosh_lite_swap.sh
 
 echo
 echo "TIP: To access bosh you should \"source $WORKSPACE/bosh_env.sh\""
+echo
+echo "TIP: To deploy Cloud Foundry on bosh you should run \"$SCRIPTPATH/cf_deploy.sh\""
 echo

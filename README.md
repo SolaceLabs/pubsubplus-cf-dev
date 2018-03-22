@@ -24,7 +24,7 @@ A Deployment Solace Messaging for Cloud Foundry has prerequisites for which this
 
 - A deployment of [BOSH](https://github.com/cloudfoundry/bosh) or [BOSH-lite](https://github.com/cloudfoundry/bosh-lite): Hosting the VMRs
 - A deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment): Hosting the Solace Service Broker and Test Applications.
-- A deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Required by the Solace Service Broker
+- A deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Provides p-mysql service required by the Solace Service Broker
 - A [Solace BOSH Deployment](https://github.com/SolaceDev/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace Messaging for Cloud Foundry
 
 <a name="operating-system"></a>
@@ -41,7 +41,7 @@ The following issues have been noted and addressed in this guide:
 - Windows is not yet supported by [bosh create-env](https://github.com/cloudfoundry/bosh/issues/1821)
   - Workaround: use the old [Vagrant based BOSH-lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md). 
 - CF logging features do not work on a deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment) to the [Vagrant based BOSH-lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md)
-  - Workaround: use [PCF-Dev](https://pivotal.io/pcf-dev) to host the CF deployment and p-mysql. 
+  - Workaround: use [PCF-Dev](https://pivotal.io/pcf-dev) to host the CF deployment and cf-mysql. 
 
 <a name="hardware-requirements"></a>
 # Hardware Requirements
@@ -207,9 +207,9 @@ This guide will help you install and deploy the following:
 * cli-tools to provide a reliable environment to run the scripts of this project.
   - Tested with 512mb of ram, just enough to run some scripts.
   - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
-* BOSH-lite for hosting CF, P-MYSQL, Solace VMRs.
+* BOSH-lite for hosting CF, CF-MYSQL, Solace VMRs.
   - Size as recommended below to fit the VMRs.
-* A Deployment of CF and P-MYSQL to BOSH-lite.
+* A Deployment of CF and CF-MYSQL to BOSH-lite.
 
 The setup was last tested on:
 
@@ -263,7 +263,7 @@ _The cli-tools VM is optional on Linux and Mac if you install the required tools
 
 A quick way to get started with BOSH is to use [BUCC](https://github.com/starkandwayne/bucc), it provides a convenient wrapper around a [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment).
 
-To set BOSH-lite please use [bin/setup_bosh_bucc.sh](bin/setup_bosh_bucc), this script will do the following:
+To set BOSH-lite please use [bin/setup_bosh_lite_vm.sh](bin/setup_bosh_lite_vm), this script will do the following:
 
 * Download and set up the bucc cli
 * Create the BOSH-lite VM
@@ -279,15 +279,15 @@ To set BOSH-lite please use [bin/setup_bosh_bucc.sh](bin/setup_bosh_bucc), this 
 
 ~~~~
 cd bin
-./setup_bosh_bucc.sh 
+./setup_bosh_lite_vm.sh 
 ~~~~
 
-### Installation on Linux - Step 3 - Deploy CF and p-mysql 
+### Installation on Linux - Step 3 - Deploy CF and cf-mysql 
 
-To deploy CF and p-mysql in BOSH-lite to host the Solace service broker and other applications:
+To deploy CF and cf-mysql in BOSH-lite to host the Solace service broker and other applications:
 
 * Run [cf_deploy.sh](bin/cf_deploy.sh). This script will deploy cf from this repository: [cf-deployment](https://github.com/cloudfoundry/cf-deployment). 
-* Run [cf_mysql_deploy.sh](bin/cf_mysql_deploy.sh). This script will deploy p-mysql from this repository: [cf-mysql-deployment](https://github.com/cloudfoundry/cf-mysql-deployment).
+* Run [cf_mysql_deploy.sh](bin/cf_mysql_deploy.sh). This script will deploy cf-mysql from this repository: [cf-mysql-deployment](https://github.com/cloudfoundry/cf-mysql-deployment).
 
 ~~~~
 cd bin
@@ -492,7 +492,12 @@ vagrant suspend
 ~~~~ 
 
 The bosh created VM in virtualbox cannot be successfully restarted.  But they can be preserved by pausing and saving their state in virtualbox. 
-Using the virtualbox GUI you can 'pause' and 'close' > 'save state'. Alternatively you can use vboxmanage cli.
+
+~~~~ 
+suspend_bosh_lite_vm.sh
+~~~~ 
+
+Alternatively you can use the virtualbox GUI to 'pause' and 'close' > 'save state'. 
 
 ### Resuming all VMS
 
@@ -519,8 +524,13 @@ cd cli-tools
 vagrant resume
 ~~~~
 
-The bosh created VM in virtualbox may be resumed if previously paused and saved. Using the virtualbox GUI use the 'start' > 'headless start'. 
-Alternatively you can use vboxmanage cli.
+The bosh created VM in virtualbox may be resumed if previously paused and saved by using [suspend_bosh_lite_vm.sh](bin/suspend_bosh_lite_vm.sh)
+
+~~~~
+resume_bosh_lite_vm.sh
+~~~~
+
+Alternatively you can use the virtualbox GUI to the 'start' > 'headless start'. 
 
 ## Working with VMR in the BOSH deployment
 
@@ -570,7 +580,7 @@ vagrant destroy
 * On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL
 
 ~~~~
-destroy_bosh_bucc.sh 
+destroy_bosh_lite_vm.sh 
 ~~~~
 
 ### How to delete cli-tools VM

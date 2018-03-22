@@ -90,7 +90,9 @@ fi
 
 ## Derived values
 
-export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' )
+export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
+export TEMPLATE_VERSION=$( echo $TILE_VERSION | awk -F\- '{ print $1 }' )
+export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
 export WORKSPACE=${WORKSPACE-`pwd`}
 
@@ -98,8 +100,16 @@ if ((missing_required)); then
    missingRequired
 fi
 
+if [ ! -d $TEMPLATE_DIR ]; then
+   echo "There doesn't seem to be any templates for this version $TILE_VERSION expected in $TEMPLATE_DIR"
+   exit 1
+fi
+
+export TEMPLATE_DIR="$( cd $TEMPLATE_DIR && pwd )"
+
 echo "TILE_FILE         $TILE_FILE"
 echo "TILE_VERSION      $TILE_VERSION"
+echo "TEMPLATE_DIR      $TEMPLATE_DIR"
 
 echo "Extracting contents to $WORKSPACE/releases"
 

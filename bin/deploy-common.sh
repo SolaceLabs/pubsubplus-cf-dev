@@ -5,6 +5,9 @@ export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
 export CF_SOLACE_MESSAGING_DEPLOYMENT_HOME=${CF_SOLACE_MESSAGING_DEPLOYMENT_HOME:-"$( cd $SCRIPTPATH/../cf-solace-messaging-deployment && pwd )"}
 
+export CF_DEPLOYMENT=${CF_DEPLOYMENT:="cf"}
+export CF_MYSQL_DEPLOYMENT=${CF_MYSQL_DEPLOYMENT:="cf-mysql"}
+
 source $SCRIPTPATH/common.sh
 
 export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
@@ -15,6 +18,32 @@ export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
+
+function check_cf_deployment() {
+
+ ## Check CF is deployed
+
+ CF_FOUND=$( bosh deployments --json | jq '.Tables[].Rows[] | .name' | sed 's/\"//g' | grep "^$CF_DEPLOYMENT$" )
+
+ if [ "$CF_FOUND" != "$CF_DEPLOYMENT" ]; then
+    echo "The Cloud Foundry \"$CF_DEPLOYMENT\" deployment is not found, please deploy Cloud Foundry,  run \"$SCRIPTPATH/cf_deploy.sh\" "
+    exit 1
+ fi
+
+}
+
+function check_cf_mysql_deployment() {
+
+ ## Check CF-MYSQL is deployed
+
+ CF_MYSQL_FOUND=$( bosh deployments --json | jq '.Tables[].Rows[] | .name' | sed 's/\"//g' | grep "^$CF_MYSQL_DEPLOYMENT$" )
+
+ if [ "$CF_MYSQL_FOUND" != "$CF_MYSQL_DEPLOYMENT" ]; then
+    echo "The Mysql Cloud Foundry \"$CF_MYSQL_DEPLOYMENT\" deployment is not found, please deploy Mysql for Cloud Foundry,  run \"$SCRIPTPATH/cf_mysql_deploy.sh\" "
+    exit 1
+ fi
+
+}
 
 function showUsage() {
     echo
@@ -132,6 +161,15 @@ if [ -n "$TCP_PATH" ]; then
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
+## Check only when the deployment is on BOSH-Lite by setup_bosh_lite_vm.sh
+if [ -f $WORKSPACE/.boshvm ]; then
+   check_cf_deployment
+   check_cf_mysql_deployment
+fi
+
+## TODO: Check CF Access and CF marketplace for p-mysql
+
+
 SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 
 if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "0" ]; then
@@ -146,6 +184,10 @@ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
    exit 1
 fi
 
+export SOLACE_VMR_RELEASE=$( bosh releases --json | jq '.Tables[].Rows[] | select(.name | contains("solace-vmr")) | .version' | head -1 | sed 's/\"//g')
+export TEMPLATE_VERSION=$( echo $SOLACE_VMR_RELEASE | awk -F\- '{ print $1 }' )
+export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
+
 OPS_BASE=${OPS_BASE:-" -o operations/set_plan_inventory.yml -o operations/bosh_lite.yml -o operations/enable_global_access_to_plans.yml "}
 
 FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS"}
@@ -153,9 +195,15 @@ FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VA
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 
-CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=cf "}
+CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=$CF_DEPLOYMENT "}
 
-RELEASE_VARS=${RELEASE_VARS:-" -l release-vars.yml"}
+## If not defined and found in templates
+if [ -z "$RELEASE_VARS" ] && [ -f $TEMPLATE_DIR/release-vars.yml ]; then
+   RELEASE_VARS=" -l $TEMPLATE_DIR/release-vars.yml"
+fi
+
+# Accept if defined or default to the version from $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME
+RELEASE_VARS=${RELEASE_VARS:-" -l $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml"}
 
 BOSH_PARAMS=" $OPS_BASE $FEATURES_OPS -o operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS "
 

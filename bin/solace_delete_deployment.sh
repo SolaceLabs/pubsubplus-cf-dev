@@ -43,8 +43,8 @@ else
 fi
 
 
-ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment="solace_messaging") | .disk_cid' | sed 's/\"//g' | wc -l )
-ORPHANED_DISKS=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment="solace_messaging") | .disk_cid' | sed 's/\"//g' )
+ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' | wc -l )
+ORPHANED_DISKS=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' )
 
 
 if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then

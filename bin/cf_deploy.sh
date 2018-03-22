@@ -66,3 +66,7 @@ if [ -f $SCRIPTPATH/cf_env.sh ]; then
 	cf m
 }
 fi
+
+echo
+echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""
+echo
