@@ -441,9 +441,15 @@ You can use your browser to examine the deployed service broker dashboard:
   * [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
   * You will need a username and password: solacedemo is the default as set for this deployment.
 
-* On Linux, service broker on CF-Deployment
+* On Linux, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-messaging.bosh-lite.com/)
-  * TODO: How to get the credentials to access the service broker
+  * You will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
+
+~~~~
+solace_broker_user=$(bosh int $WORKSPACE/deployment-vars.yml --path /solace_broker_user)
+solace_broker_password=$(bosh int $WORKSPACE/deployment-vars.yml --path /solace_broker_password)
+echo "solace_broker_user: $solace_broker_user       solace_broker_password: $solace_broker_password"
+~~~~
 
 You can also run a script that will fetch a variety of information from the service broker
 ~~~~
