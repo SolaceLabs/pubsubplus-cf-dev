@@ -31,8 +31,7 @@ fi
 
 source <($WORKSPACE/bucc/bin/bucc env)
 
-set -e
-if [ -d $WORKSPACE/bucc/state ]; then
+if [ -d $WORKSPACE/bucc/state ] && [ -f $WORKSPACE/bucc/vars.yml ]; then
    $WORKSPACE/bucc/bin/bucc down && $WORKSPACE/bucc/bin/bucc clean
 fi
 
