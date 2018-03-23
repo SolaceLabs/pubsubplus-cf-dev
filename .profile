@@ -45,55 +45,55 @@ CF_API_FOUND=$( cf api | grep "api endpoint" | grep http | wc -l )
 
 if [ "$CF_API_FOUND" -eq "0" ]; then
 
-   printf  "PCFDev \t\t\t\t%s\n" "Access attempt (may take some time)"
+   printf  "CF   \t\t\t\t%s\n" "Access attempt (may take some time)"
 
    ping -q -c 5 -w 10 api.$SYSTEM_DOMAIN > /dev/null
    if [ $? -eq "0" ]; then
-    export PCFDEV=0
+    export CF_ACCESS=0
     cf api https://api.$SYSTEM_DOMAIN --skip-ssl-validation > /dev/null
     if [ $? -eq 0 ]; then
        cf auth admin $CF_ADMIN_PASSWORD > /dev/null
        if [ $? -eq 0 ]; then
-          export PCFDEV=1
+          export CF_ACCESS=1
        else
-       export PCFDEV=0
+       export CF_ACCESS=0
        fi
     else
-      export PCFDEV=0
+      export CF_ACCESS=0
     fi
    else
-     export PCFDEV=0
+     export CF_ACCESS=0
    fi
 
-   if [ $PCFDEV -eq "1" ]; then
-    printf  "PCFDev \t\t\t\t%s\n" "OK"
+   if [ $CF_ACCESS -eq "1" ]; then
+    printf  "CF   \t\t\t\t%s\n" "OK"
    else
-    printf  "PCFDev \t\t\t\t%s\n" "WARN: PCFDev is not accessible. Is it installed? running? is routing enabled? Is it running on Windows?"
+    printf  "CF   \t\t\t\t%s\n" "WARN: CF is not accessible. Is it installed? running? is routing enabled?"
    fi
 
 else
   CF_API=$( cf api | grep "api endpoint" | grep http )
-  printf  "PCFDev \t\t\t\t%s\n" "You seem to have CF setup to access ( $CF_API )"
-  export PCFDEV=1
+  printf  "CF   \t\t\t\t%s\n" "You seem to have CF set to access ( $CF_API )"
+  export CF_ACCESS=1
 fi
 
 
-## Test BOSH-Lite access
+## Test BOSH access
 
-export BOSHLITE=0
-printf "BOSH-lite\t\t\t%s\n" "Access attempt (may take some time)"
+export BOSH_ACCESS=0
+printf "BOSH   \t\t\t\t%s\n" "Access attempt (may take some time)"
 
 ping -q -c 5 -w 10 $BOSH_IP > /dev/null
 if [ $? -eq "0" ]; then
   targetBosh
 else
-  export BOSHLITE=0
+  export BOSH_ACCESS=0
 fi
 
-if [ $BOSHLITE -eq "1" ]; then
-    printf "BOSH-lite\t\t\t%s\n" "OK"
+if [ $BOSH_ACCESS -eq "1" ]; then
+    printf "BOSH   \t\t\t\t%s\n" "OK"
 else
-    printf "BOSH-lite\t\t\t%s\n" "WARN: BOSH-lite is not accessible. Is it installed ? running? is routing enabled?"
+    printf "BOSH   \t\t\t\t%s\n" "WARN: BOSH is not accessible. Is it installed ? running? is routing enabled?"
 fi
 
 echo

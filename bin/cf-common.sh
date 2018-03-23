@@ -355,18 +355,18 @@ function restartServiceBroker() {
 }
 
 
-function pcfdev_login() {
- export PCFDEV=0 
+function cf_login() {
+ export CF_ACCESS=0 
  cf api https://api.$SYSTEM_DOMAIN --skip-ssl-validation > /dev/null
  if [ $? -eq 0 ]; then
     cf auth admin $CF_ADMIN_PASSWORD > /dev/null
     if [ $? -eq 0 ]; then
-       export PCFDEV=1 
+       export CF_ACCESS=1 
     else
-       export PCFDEV=0 
+       export CF_ACCESS=0 
     fi
  else
-   export PCFDEV=0 
+   export CF_ACCESS=0 
  fi
 
 }
