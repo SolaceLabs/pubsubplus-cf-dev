@@ -14,7 +14,7 @@ fi
 
 cd $WORKSPACE
 
-source <($WORKSPACE/bucc/bin/bucc env)
+PATH=$PATH:$WORKSPACE/bucc/bin
 
 echo "Adding $VM_SWAP of swap space"
 ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT

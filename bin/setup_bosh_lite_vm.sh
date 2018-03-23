@@ -45,6 +45,8 @@ else
  (cd bucc; git pull)
 fi
 
+PATH=$PATH:$WORKSPACE/bucc/bin
+
 echo "Setting VM MEMORY to $VM_MEMORY, VM_CPUS to $VM_CPUS, VM_EPHEMERAL_DISK_SIZE to $VM_EPHEMERAL_DISK_SIZE"
 sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
 sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
@@ -52,8 +54,6 @@ sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKS
 
 echo "vm_disk_size: $VM_DISK_SIZE" >> $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
 cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
-
-source <($WORKSPACE/bucc/bin/bucc env)
 
 ## Capture running VMS before
 vboxmanage list runningvms > $TEMP_DIR/running_vms.before
@@ -73,6 +73,7 @@ if [[ $? -eq 0 ]]; then
 fi
 
 bucc env > $WORKSPACE/bosh_env.sh
+echo "export PATH=\$PATH:$SCRIPTPATH" >> $WORKSPACE/bosh_env.sh
 
 source $WORKSPACE/bosh_env.sh
 
