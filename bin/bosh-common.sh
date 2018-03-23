@@ -21,14 +21,14 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT=:-"lite"}
-export BOSH_DEPLOYMENT=${BOSH_DEPLOYMENT:-$DEPLOYMENT_NAME}
+# export BOSH_DEPLOYMENT=${BOSH_DEPLOYMENT:-$DEPLOYMENT_NAME}
 
 
 function targetBosh() {
 
   ## Setup to access target bosh-lite
-  
-  if [ ! -f $WORKSPACE/.bosh_env ] && [ "$BOSH_IP" == "192.168.50.4" ]; then
+    
+  if [ ! -f $WORKSPACE/.env ] && [ "$BOSH_IP" == "192.168.50.4" ]; then
      # Old bosh-lite
      if [ ! -d $WORKSPACE/bosh-lite ]; then
        (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
@@ -37,7 +37,7 @@ function targetBosh() {
      # bosh target $BOSH_IP alias as 'lite'
      BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
   else
-     unset BOSH_DEPLOYMENT
+     # unset BOSH_DEPLOYMENT
      # New bosh-lite
      BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
   fi
