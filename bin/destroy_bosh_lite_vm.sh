@@ -3,7 +3,6 @@
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
-export bucc_project_root=${bucc_project_root:-$WORKSPACE/local-bosh-lite}
 
 source $SCRIPTPATH/common.sh
 
@@ -22,10 +21,6 @@ if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
 fi
 
-if [ ! -d $bucc_project_root ]; then
-   mkdir -p $bucc_project_root
-fi
-
 cd $WORKSPACE
 
 if [ ! -d bucc ]; then
@@ -36,9 +31,9 @@ fi
 
 source <($WORKSPACE/bucc/bin/bucc env)
 
-if [ -d $bucc_project_root/state ]; then
-   $WORKSPACE/bucc/bin/bucc down 
-   $WORKSPACE/bucc/bin/bucc clean
+set -e
+if [ -d $WORKSPACE/bucc/state ]; then
+   $WORKSPACE/bucc/bin/bucc down && $WORKSPACE/bucc/bin/bucc clean
 fi
 
 if [ -f $WORKSPACE/bosh_env.sh ]; then
