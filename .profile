@@ -74,6 +74,11 @@ if [ "$CF_API_FOUND" -eq "0" ]; then
 else
   CF_API=$( cf api | grep "api endpoint" | grep http )
   printf  "CF   \t\t\t\t%s\n" "You seem to have CF set to access ( $CF_API )"
+  if [[ $CF_API == "https://api.local.pcfdev.io" ]]; then 
+    export WINDOWS=true
+    printf " Setting SYSTEM_DOMAIN to local.pcfdev.io" 
+    export SYSTEM_DOMAIN='local.pcfdev.io'
+  fi
   export CF_ACCESS=1
 fi
 
