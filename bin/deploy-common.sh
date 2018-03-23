@@ -13,7 +13,7 @@ source $SCRIPTPATH/common.sh
 export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 export VMR_EDITION=${VMR_EDITION:-"evaluation"}
 
-export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"local.pcfdev.io"}
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
 if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
