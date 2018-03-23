@@ -50,22 +50,23 @@ function showUsage() {
     echo "Usage: $CMD_NAME [OPTIONS]"
     echo
     echo "OPTIONS"
+    echo "  -h                        show command options "
+    echo "  -e                        is enterprise mode"
     echo "  -s <starting_port>        provide starting port "
     echo "  -p <vmr_admin_password>   provide vmr admin password "
-    echo "  -h                        show command options "
     echo "  -v <vars.yml>             provide vars.yml file path "
     echo "  -t <tls_config.yml>       provide tls config file path"
-    echo "  -e                        is enterprise mode"
+    echo "  -n                        disable service broker tls cert validation"
     echo "  -a <syslog_config.yml>    provide syslog config file path"
     echo "  -r <tcp_config.yml>       provide tcp routes config file path" 
     echo "  -l <ldap_config.yml>      provide ldap config file path"   
     echo "  -b                        enable ldap management authorization access" 
     echo "  -c                        enable ldap application authorization access" 
-    echo "  -n                        disable service broker tls cert validation"
+    echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:eh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:x:eh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH="$OPTARG"
@@ -100,6 +101,9 @@ while getopts "t:a:nbcr:l:s:p:v:eh" arg; do
         e) 
 	    VMR_EDITION="enterprise"
             ;;
+        x)
+            EXTRA_BOSH_PARAMS="$OPTARG"
+            ;; 
         h)
             showUsage
             exit 0
@@ -130,34 +134,34 @@ if [ -n "$starting_port" ]; then
 fi
 
 if [ -n "$SYSLOG_PATH" ]; then
-   ENABLE_SYSLOG_OPS='-o operations/enable_syslog.yml' 
+   ENABLE_SYSLOG_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_syslog.yml' 
    SYSLOG_VARS="-l $SYSLOG_PATH" 
 fi
 
 if [ -n "$LDAP_PATH" ]; then 
-   ENABLE_LDAP_OPS='-o operations/enable_ldap.yml' 
+   ENABLE_LDAP_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_ldap.yml' 
    LDAP_VARS="-l $LDAP_PATH"
 fi 
 
 if [[ $mldap == true ]]; then 
-   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS='-o operations/set_management_access_ldap.yml'
+   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_management_access_ldap.yml'
 fi 
 
 if [[ $disablebrokertls == true ]]; then 
-   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS='-o operations/disable_service_broker_certificate_validation.yml'
+   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_service_broker_certificate_validation.yml'
 fi
 
 if [ -n "$TLS_PATH" ]; then 
-   SET_SOLACE_VMR_CERT_OPS='-o operations/set_solace_vmr_cert.yml' 
+   SET_SOLACE_VMR_CERT_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_solace_vmr_cert.yml' 
    TLS_VARS="-l $TLS_PATH" 
 fi 
 
 if [[ $aldap == true ]]; then
-   ENABLE_APPLICATION_ACCESS_LDAP_OPS='-o operations/set_application_access_ldap.yml' 
+   ENABLE_APPLICATION_ACCESS_LDAP_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml' 
 fi 
 
 if [ -n "$TCP_PATH" ]; then
-    ENABLE_TCP_ROUTES_OPS='-o operations/enable_tcp_routes.yml' 
+    ENABLE_TCP_ROUTES_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_tcp_routes.yml' 
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
@@ -188,7 +192,7 @@ export SOLACE_VMR_RELEASE=$( bosh releases --json | jq '.Tables[].Rows[] | selec
 export TEMPLATE_VERSION=$( echo $SOLACE_VMR_RELEASE | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
-OPS_BASE=${OPS_BASE:-" -o operations/set_plan_inventory.yml -o operations/bosh_lite.yml -o operations/enable_global_access_to_plans.yml "}
+OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml "}
 
 FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS"}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
@@ -205,5 +209,5 @@ fi
 # Accept if defined or default to the version from $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME
 RELEASE_VARS=${RELEASE_VARS:-" -l $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml"}
 
-BOSH_PARAMS=" $OPS_BASE $FEATURES_OPS -o operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS "
+BOSH_PARAMS=" $OPS_BASE $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $EXTRA_BOSH_PARAMS"
 
