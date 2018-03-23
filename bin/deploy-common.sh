@@ -62,11 +62,12 @@ function showUsage() {
     echo "  -l <ldap_config.yml>      provide ldap config file path"   
     echo "  -b                        enable ldap management authorization access" 
     echo "  -c                        enable ldap application authorization access" 
+    echo "  -w                        make windows deployment" 
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:eh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:x:ewh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH="$OPTARG"
@@ -104,6 +105,8 @@ while getopts "t:a:nbcr:l:s:p:v:x:eh" arg; do
         x)
             EXTRA_BOSH_PARAMS="$OPTARG"
             ;; 
+        w)  WINDOWS=true
+            ;;
         h)
             showUsage
             exit 0
@@ -136,6 +139,10 @@ fi
 if [ -n "$SYSLOG_PATH" ]; then
    ENABLE_SYSLOG_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_syslog.yml' 
    SYSLOG_VARS="-l $SYSLOG_PATH" 
+fi
+
+if [[ $WINDOWS == true ]]; then
+   MAKE_WINDOWS_DEPLOYMENT="-o $SCRIPTPATH/../operations/make_windows_deployment.yml" 
 fi
 
 if [ -n "$LDAP_PATH" ]; then 
@@ -194,7 +201,7 @@ export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml "}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS"}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS $MAKE_WINDOWS_DEPLOYMENT"}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
