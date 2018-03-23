@@ -18,8 +18,7 @@ trap cleanupTemp EXIT INT TERM HUP
 
 source $SCRIPTPATH/cf-common.sh
 
-pcfdev_login
-
+cf_login
 
 function addBuildPack() {
 
