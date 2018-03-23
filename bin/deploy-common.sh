@@ -13,7 +13,7 @@ source $SCRIPTPATH/common.sh
 export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 export VMR_EDITION=${VMR_EDITION:-"evaluation"}
 
-export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"local.pcfdev.io"}
 
 if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
@@ -62,10 +62,11 @@ function showUsage() {
     echo "  -b                        enable ldap management authorization access" 
     echo "  -c                        enable ldap application authorization access" 
     echo "  -n                        disable service broker tls cert validation"
+    echo "  -w                        make windows deployment" 
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:eh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:ewh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH="$OPTARG"
@@ -100,6 +101,8 @@ while getopts "t:a:nbcr:l:s:p:v:eh" arg; do
         e) 
 	    VMR_EDITION="enterprise"
             ;;
+        w)  WINDOWS=true
+            ;;
         h)
             showUsage
             exit 0
@@ -132,6 +135,10 @@ fi
 if [ -n "$SYSLOG_PATH" ]; then
    ENABLE_SYSLOG_OPS='-o operations/enable_syslog.yml' 
    SYSLOG_VARS="-l $SYSLOG_PATH" 
+fi
+
+if [[ $WINDOWS == true ]]; then
+   MAKE_WINDOWS_DEPLOYMENT="-o $SCRIPTPATH/../operations/make_windows_deployment.yml" 
 fi
 
 if [ -n "$LDAP_PATH" ]; then 
@@ -190,7 +197,7 @@ export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
 OPS_BASE=${OPS_BASE:-" -o operations/set_plan_inventory.yml -o operations/bosh_lite.yml -o operations/enable_global_access_to_plans.yml "}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS"}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS $MAKE_WINDOWS_DEPLOYMENT"}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
