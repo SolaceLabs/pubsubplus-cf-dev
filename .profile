@@ -11,6 +11,19 @@ export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
 
+if [ -f $WORKSPACE/bucc/bin/bucc ]; then
+   $WORKSPACE/bucc/bin/bucc env > $WORKSPACE/.env
+fi
+
+if [ -f $WORKSPACE/.env ]; then
+   source $WORKSPACE/.env
+   export BOSH_IP=$BOSH_ENVIRONMENT
+fi
+
+if [ -f $WORKSPACE/deployment-vars.yml ]; then
+   export CF_ADMIN_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) 
+fi
+
 source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh
 
 if [ -z $SEEN_BANNER ]; then
