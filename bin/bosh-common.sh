@@ -21,39 +21,6 @@ export BOSH_DEPLOYMENT=${BOSH_DEPLOYMENT:-$DEPLOYMENT_NAME}
 
 
 function targetBosh() {
-<<<<<<< HEAD:bin/old/bosh-common.sh
-
-  ## Setup to access target bosh-lite
-  
-  if [ ! -f $WORKSPACE/.bosh_env ] && [ "$BOSH_IP" == "192.168.50.4" ]; then
-     # Old bosh-lite
-     if [ ! -d $WORKSPACE/bosh-lite ]; then
-       (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
-     fi 
-
-     # bosh target $BOSH_IP alias as 'lite'
-     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
-  else
-     unset BOSH_DEPLOYMENT
-     # New bosh-lite
-     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
-  fi
-
-  if [ $? -eq 0 ]; then
-     # Login will rely on BOSH_* env vars..
-     BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD log-in )
-     if [ $? -eq 0 ]; then
-        export BOSH_ACCESS=1
-     else
-        export BOSH_ACCESS=0
-        echo $BOSH_LOGIN_LOG
-     fi
-  else
-     export BOSH_ACCESS=0
-     echo $BOSH_TARGET_LOG
-  fi
-=======
->>>>>>> 3080d31ddcf05d31ccbe5d0e49f128bfdbfebf03:bin/bosh-common.sh
 
   ## Setup to access target bosh-lite
     
