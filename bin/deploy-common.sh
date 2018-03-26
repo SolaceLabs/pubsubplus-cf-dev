@@ -137,7 +137,7 @@ if [ -n "$starting_port" ]; then
 fi
 
 if [ -n "$SYSLOG_PATH" ]; then
-   ENABLE_SYSLOG_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_syslog.yml' 
+   ENABLE_SYSLOG_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_syslog.yml"
    SYSLOG_VARS="-l $SYSLOG_PATH" 
 fi
 
@@ -146,29 +146,29 @@ if [[ $WINDOWS == true ]]; then
 fi
 
 if [ -n "$LDAP_PATH" ]; then 
-   ENABLE_LDAP_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_ldap.yml' 
+   ENABLE_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_ldap.yml" 
    LDAP_VARS="-l $LDAP_PATH"
 fi 
 
 if [[ $mldap == true ]]; then 
-   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_management_access_ldap.yml'
+   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_management_access_ldap.yml"
 fi 
 
 if [[ $disablebrokertls == true ]]; then 
-   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_service_broker_certificate_validation.yml'
+   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_service_broker_certificate_validation.yml"
 fi
 
 if [ -n "$TLS_PATH" ]; then 
-   SET_SOLACE_VMR_CERT_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_solace_vmr_cert.yml' 
+   SET_SOLACE_VMR_CERT_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_solace_vmr_cert.yml"
    TLS_VARS="-l $TLS_PATH" 
 fi 
 
 if [[ $aldap == true ]]; then
-   ENABLE_APPLICATION_ACCESS_LDAP_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml' 
+   ENABLE_APPLICATION_ACCESS_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml" 
 fi 
 
 if [ -n "$TCP_PATH" ]; then
-    ENABLE_TCP_ROUTES_OPS='-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_tcp_routes.yml' 
+    ENABLE_TCP_ROUTES_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_tcp_routes.yml"
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
