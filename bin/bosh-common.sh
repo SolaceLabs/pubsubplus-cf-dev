@@ -7,10 +7,6 @@ export PYTHONPATH=$MY_BIN_HOME
 export DEPLOYMENT_NAME="solace_messaging"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
-export STEMCELL_VERSION="3468"
-export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
-export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
-
 export USE_ERRANDS=${USE_ERRANDS:-"1"}
 
 ######################################
@@ -58,37 +54,6 @@ function targetBosh() {
 
 }
 
-
-function prepareBosh() {
-  echo "In function prepareBosh"
-
-  targetBosh
-  $BOSH_CMD releases
-
-  SOLACE_DOCKER_BOSH_VERSION=$( cd $WORKSPACE/releases && ls docker* | sed 's/docker-//g' | sed 's/.tgz//g')
-  SOLACE_DOCKER_BOSH="$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"
-  FOUND_DOCKER_RELEASE=`$BOSH_CMD releases | grep "docker" | grep $SOLACE_DOCKER_BOSH_VERSION | wc -l`
-  if [ "$FOUND_DOCKER_RELEASE" -eq "0" ]; then
-     echo "Uploading docker bosh $SOLACE_DOCKER_BOSH version $SOLACE_DOCKER_BOSH_VERSION"
-     $BOSH_CMD upload-release $SOLACE_DOCKER_BOSH
-  else
-     echo "$SOLACE_DOCKER_BOSH_VERSION was found"
-  fi
-
-  FOUND_STEMCELL=`$BOSH_CMD stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
-  if [ "$FOUND_STEMCELL" -eq "0" ]; then
-    if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
-        wget -O $WORKSPACE/$STEMCELL_NAME $STEMCELL_URL
-    fi
-    echo "Uploading stemcell"
-    $BOSH_CMD upload-stemcell $WORKSPACE/$STEMCELL_NAME
-  else
-     echo "$STEMCELL_NAME was found $FOUND_STEMCELL"
-  fi
-
-  $BOSH_CMD releases
-
-}
 
 function deleteOrphanedDisks() {
 
