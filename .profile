@@ -47,6 +47,13 @@ if [ "$CF_API_FOUND" -eq "0" ]; then
 
    printf  "CF   \t\t\t\t%s\n" "Access attempt (may take some time)"
 
+   $CF_API=$( cf api | grep "api endpoint" ) 
+   if [[ $CF_API == *"local.pcfdev.io"* ]]; then 
+      echo 'setting SYSTEM_DOMAIN to local.pcfdev.io'
+      export SYSTEM_DOMAIN='local.pcfdev.io' 
+      export WINDOWS='true' 
+   fi
+
    ping -q -c 5 -w 10 api.$SYSTEM_DOMAIN > /dev/null
    if [ $? -eq "0" ]; then
     export CF_ACCESS=0
@@ -75,7 +82,7 @@ else
   CF_API=$( cf api | grep "api endpoint" | grep http )
   printf  "CF   \t\t\t\t%s\n" "You seem to have CF set to access ( $CF_API )"
   if [[ $CF_API == "https://api.local.pcfdev.io" ]]; then 
-    export WINDOWS=true
+    export WINDOWS='true'
     printf " Setting SYSTEM_DOMAIN to local.pcfdev.io" 
     export SYSTEM_DOMAIN='local.pcfdev.io'
   fi
