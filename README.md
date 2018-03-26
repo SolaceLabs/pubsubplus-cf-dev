@@ -359,6 +359,7 @@ This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the So
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
+**TODO: FIX THESE SAMPLES**
  - On Linux: 
 
 **Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate and evaluation vmr edition.
@@ -366,12 +367,12 @@ _If not sure what to pick just use the default with no parameters. Otherwise, pl
 ./solace_deploy.sh
 ~~~~
 
-The deployment property file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
+The deployment variables file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
 
 **Example:** Use a customized deployment property file from which a new bosh-manifest will be generated. 
 ~~~~
 cd solace-messaging-cf-dev/bin
-./deployer.sh -c custom_properties.yml
+./solace_deploy.sh -v my_vars.yml
 ~~~~
 
  - On Windows: 
