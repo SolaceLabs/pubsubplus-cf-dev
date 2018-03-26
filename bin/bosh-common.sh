@@ -7,10 +7,6 @@ export PYTHONPATH=$MY_BIN_HOME
 export DEPLOYMENT_NAME="solace_messaging"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
-export STEMCELL_VERSION="3468"
-export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
-export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
-
 export USE_ERRANDS=${USE_ERRANDS:-"1"}
 
 ######################################
@@ -20,11 +16,12 @@ export BOSH_CMD="/usr/local/bin/bosh"
 export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
-export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT=:-"lite"}
+export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
 export BOSH_DEPLOYMENT=${BOSH_DEPLOYMENT:-$DEPLOYMENT_NAME}
 
 
 function targetBosh() {
+<<<<<<< HEAD:bin/old/bosh-common.sh
 
   ## Setup to access target bosh-lite
   
@@ -55,40 +52,41 @@ function targetBosh() {
      export BOSH_ACCESS=0
      echo $BOSH_TARGET_LOG
   fi
+=======
+>>>>>>> 3080d31ddcf05d31ccbe5d0e49f128bfdbfebf03:bin/bosh-common.sh
+
+  ## Setup to access target bosh-lite
+    
+  if [ ! -f $WORKSPACE/.env ] && [ "$BOSH_IP" == "192.168.50.4" ]; then
+     # Old bosh-lite
+     if [ ! -d $WORKSPACE/bosh-lite ]; then
+       (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
+     fi 
+
+     # bosh target $BOSH_IP alias as 'lite'
+     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
+  else
+     # unset BOSH_DEPLOYMENT
+     # New bosh-lite
+     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
+  fi
+
+  if [ $? -eq 0 ]; then
+     # Login will rely on BOSH_* env vars..
+     BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD log-in )
+     if [ $? -eq 0 ]; then
+        export BOSH_ACCESS=1
+     else
+        export BOSH_ACCESS=0
+        echo $BOSH_LOGIN_LOG
+     fi
+  else
+     export BOSH_ACCESS=0
+     echo $BOSH_TARGET_LOG
+  fi
 
 }
 
-
-function prepareBosh() {
-  echo "In function prepareBosh"
-
-  targetBosh
-  $BOSH_CMD releases
-
-  SOLACE_DOCKER_BOSH_VERSION=$( cd $WORKSPACE/releases && ls docker* | sed 's/docker-//g' | sed 's/.tgz//g')
-  SOLACE_DOCKER_BOSH="$WORKSPACE/releases/docker-${SOLACE_DOCKER_BOSH_VERSION}.tgz"
-  FOUND_DOCKER_RELEASE=`$BOSH_CMD releases | grep "docker" | grep $SOLACE_DOCKER_BOSH_VERSION | wc -l`
-  if [ "$FOUND_DOCKER_RELEASE" -eq "0" ]; then
-     echo "Uploading docker bosh $SOLACE_DOCKER_BOSH version $SOLACE_DOCKER_BOSH_VERSION"
-     $BOSH_CMD upload-release $SOLACE_DOCKER_BOSH
-  else
-     echo "$SOLACE_DOCKER_BOSH_VERSION was found"
-  fi
-
-  FOUND_STEMCELL=`$BOSH_CMD stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
-  if [ "$FOUND_STEMCELL" -eq "0" ]; then
-    if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
-        wget -O $WORKSPACE/$STEMCELL_NAME $STEMCELL_URL
-    fi
-    echo "Uploading stemcell"
-    $BOSH_CMD upload-stemcell $WORKSPACE/$STEMCELL_NAME
-  else
-     echo "$STEMCELL_NAME was found $FOUND_STEMCELL"
-  fi
-
-  $BOSH_CMD releases
-
-}
 
 function deleteOrphanedDisks() {
 

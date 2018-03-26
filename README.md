@@ -359,6 +359,7 @@ This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the So
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
+**TODO: FIX THESE SAMPLES**
  - On Linux: 
 
 **Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate and evaluation vmr edition.
@@ -366,12 +367,12 @@ _If not sure what to pick just use the default with no parameters. Otherwise, pl
 ./solace_deploy.sh
 ~~~~
 
-The deployment property file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
+The deployment variables file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
 
 **Example:** Use a customized deployment property file from which a new bosh-manifest will be generated. 
 ~~~~
 cd solace-messaging-cf-dev/bin
-./deployer.sh -c custom_properties.yml
+./solace_deploy.sh -v my_vars.yml
 ~~~~
 
  - On Windows: 
@@ -439,11 +440,17 @@ You can use your browser to examine the deployed service broker dashboard:
 
 * On Windows, having PCF-Dev deployed service broker
   * [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
-  * You will need a username and password: solacedemo is the default as set for this deployment.
 
-* On Linux, service broker on CF-Deployment
+* On Linux, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-messaging.bosh-lite.com/)
-  * TODO: How to get the credentials to access the service broker
+
+* For Linux and Windows, you will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
+
+~~~~
+solace_broker_user=$(bosh int $WORKSPACE/deployment-vars.yml --path /solace_broker_user)
+solace_broker_password=$(bosh int $WORKSPACE/deployment-vars.yml --path /solace_broker_password)
+echo "solace_broker_user: $solace_broker_user       solace_broker_password: $solace_broker_password"
+~~~~
 
 You can also run a script that will fetch a variety of information from the service broker
 ~~~~
@@ -549,10 +556,10 @@ Get the list of vms, to find the IP address of the VMR instance you want:
 bosh vms
 ~~~~
 
-Now ssh to the VMR, the default password is 'admin'.
+Now ssh to the VMR. The admin password is whatever you had set in the vars.yml and the SSH port on this BOSH-lite deployment is set to 3022.
 
 ~~~~
-ssh -p 2222 admin@10.244.0.3
+ssh -p 3022 admin@10.244.0.150
 ~~~~
 
 ## How to cleanup
