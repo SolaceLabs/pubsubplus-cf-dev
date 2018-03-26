@@ -53,7 +53,6 @@ function targetBosh() {
      export BOSH_ACCESS=0
      echo $BOSH_TARGET_LOG
   fi
-
 }
 
 
