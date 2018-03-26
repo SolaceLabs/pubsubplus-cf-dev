@@ -439,11 +439,11 @@ You can use your browser to examine the deployed service broker dashboard:
 
 * On Windows, having PCF-Dev deployed service broker
   * [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
-  * You will need a username and password: solacedemo is the default as set for this deployment.
 
 * On Linux, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-messaging.bosh-lite.com/)
-  * You will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
+
+* For Linux and Windows, you will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
 
 ~~~~
 solace_broker_user=$(bosh int $WORKSPACE/deployment-vars.yml --path /solace_broker_user)
