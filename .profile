@@ -21,12 +21,13 @@ if [ -f $WORKSPACE/.env ]; then
 fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then
-   CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) > /dev/null 
+   bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password 2>/dev/null
    if [ $? -eq '1' ]; then
       echo 'Detected Windows Deployment, PCFDev is running separately from BOSH-Lite'
       export SYSTEM_DOMAIN='local.pcfdev.io'
       export WINDOWS='true'
    else
+      CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password)
       export CF_ADMIN_PASSWORD=$CF_PASSWORD
    fi
 fi
