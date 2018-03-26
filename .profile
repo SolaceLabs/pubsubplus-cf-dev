@@ -21,7 +21,10 @@ if [ -f $WORKSPACE/.env ]; then
 fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then
-   export CF_ADMIN_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) 
+   CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) 
+   if [ -f $CF_PASSWORD ]; then 
+      export CF_ADMIN_PASSWORD=$CF_PASSWORD
+   fi
 fi
 
 source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh
