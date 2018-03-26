@@ -21,7 +21,7 @@ if [ -f $WORKSPACE/.env ]; then
 fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then
-   CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) 
+   CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) > /dev/null 
    if [ $? -eq '1' ]; then
       echo 'Detected Windows Deployment, PCFDev is running separately from BOSH-Lite'
    else
@@ -54,7 +54,6 @@ if [ "$CF_API_FOUND" -eq "0" ]; then
 
    $CF_API=$( cf api | grep "api endpoint" ) 
    if [[ $CF_API == *"local.pcfdev.io"* ]]; then 
-      echo 'setting SYSTEM_DOMAIN to local.pcfdev.io'
       export SYSTEM_DOMAIN='local.pcfdev.io' 
       export WINDOWS='true' 
    fi
@@ -86,9 +85,8 @@ if [ "$CF_API_FOUND" -eq "0" ]; then
 else
   CF_API=$( cf api | grep "api endpoint" | grep http )
   printf  "CF   \t\t\t\t%s\n" "You seem to have CF set to access ( $CF_API )"
-  if [[ $CF_API == "https://api.local.pcfdev.io" ]]; then 
+  if [[ $CF_API == *"local.pcfdev.io"* ]]; then
     export WINDOWS='true'
-    printf " Setting SYSTEM_DOMAIN to local.pcfdev.io" 
     export SYSTEM_DOMAIN='local.pcfdev.io'
   fi
   export CF_ACCESS=1
