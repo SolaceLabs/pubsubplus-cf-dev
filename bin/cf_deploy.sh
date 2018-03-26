@@ -10,9 +10,7 @@ export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
 export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v1.19.0"}
 
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"3541.9"}
-export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
-export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+source $SCRIPTPATH/bosh-common.sh
 
 if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
@@ -32,17 +30,7 @@ fi
 
 cd $WORKSPACE/cf-deployment
 
-echo "Checking stemcell $STEMCELL_NAME"
-
-  FOUND_STEMCELL=`bosh stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
-  if [ "$FOUND_STEMCELL" -eq "0" ]; then
-     if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
-        wget -O $WORKSPACE/$STEMCELL_NAME $STEMCELL_URL
-     fi
-     bosh upload-stemcell $WORKSPACE/$STEMCELL_NAME
-  else
-     echo "$STEMCELL_NAME was found $FOUND_STEMCELL"
-  fi
+prepareBosh
 
 echo "Loading cloud-config iaas-support/bosh-lite/cloud-config.yml"
 bosh update-cloud-config $SCRIPTPATH/../cf-solace-messaging-deployment/iaas-support/bosh-lite/cloud-config.yml

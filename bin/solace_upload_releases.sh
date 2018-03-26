@@ -10,6 +10,9 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
+source $SCRIPTPATH/bosh-common.sh
+prepareBosh
+
 for RELEASE_FILE in `ls $WORKSPACE/releases/*.tgz`; do
   RELEASE=$(basename $RELEASE_FILE)
   echo "Uploading release $RELEASE"
