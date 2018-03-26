@@ -21,10 +21,13 @@ if [ -f $WORKSPACE/.env ]; then
 fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then
-   CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) > /dev/null 
+   bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password 2>/dev/null
    if [ $? -eq '1' ]; then
       echo 'Detected Windows Deployment, PCFDev is running separately from BOSH-Lite'
+      export SYSTEM_DOMAIN='local.pcfdev.io'
+      export WINDOWS='true'
    else
+      CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password)
       export CF_ADMIN_PASSWORD=$CF_PASSWORD
    fi
 fi
@@ -51,12 +54,6 @@ CF_API_FOUND=$( cf api | grep "api endpoint" | grep http | wc -l )
 if [ "$CF_API_FOUND" -eq "0" ]; then
 
    printf  "CF   \t\t\t\t%s\n" "Access attempt (may take some time)"
-
-   $CF_API=$( cf api | grep "api endpoint" ) 
-   if [[ $CF_API == *"local.pcfdev.io"* ]]; then 
-      export SYSTEM_DOMAIN='local.pcfdev.io' 
-      export WINDOWS='true' 
-   fi
 
    ping -q -c 5 -w 10 api.$SYSTEM_DOMAIN > /dev/null
    if [ $? -eq "0" ]; then
