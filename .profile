@@ -22,7 +22,9 @@ fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then
    CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password) 
-   if [ -f $CF_PASSWORD ]; then 
+   if [ $? -eq '1' ]; then
+      echo 'Detected Windows Deployment, PCFDev is running separately from BOSH-Lite'
+   else
       export CF_ADMIN_PASSWORD=$CF_PASSWORD
    fi
 fi
