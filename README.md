@@ -359,9 +359,6 @@ This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the So
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
 
-**TODO: FIX THESE SAMPLES**
- - On Linux: 
-
 **Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate and evaluation vmr edition.
 ~~~~
 ./solace_deploy.sh
@@ -373,12 +370,6 @@ The deployment variables file used as default can be found under [templates](tem
 ~~~~
 solace_deploy.sh -s 6000 -p solace1 -t ~/solace-messaging-cf-dev/cf-solace-messaging-deployment/operations/example-vars-files/certs.yml -n
 ~~~~
-
- - On Windows: 
-
-TODO: FIX THIS, no manual steps..
-
-To deploy on windows you will need to modify the deploy script (solace_deploy.sh) in bin/dev in the bosh command to use the windows operations file, and change the domains to local.pcfdev.io. More details on this in the [operations](operations) directory. Once this script has been modified, you can use it to deploy on windows with a separate PCF-Dev VM, or just run the bosh deploy command directly. 
 
 _The current deployment can be updated by simply rerunning the deployment script._
 
