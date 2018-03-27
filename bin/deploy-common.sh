@@ -19,6 +19,8 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
+source $SCRIPTPATH/bosh-common.sh
+
 function check_cf_deployment() {
 
  ## Check CF is deployed
@@ -32,6 +34,13 @@ function check_cf_deployment() {
 
 }
 
+function update_cloud_config() { 
+
+ ## Upload Cloud Config to BOSH if windows deployment
+ bosh update-cloud-config $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/iaas-support/bosh-lite/cloud-config.yml
+
+}
+
 function check_cf_mysql_deployment() {
 
  ## Check CF-MYSQL is deployed
@@ -42,6 +51,17 @@ function check_cf_mysql_deployment() {
     echo "The Mysql Cloud Foundry \"$CF_MYSQL_DEPLOYMENT\" deployment is not found, please deploy Mysql for Cloud Foundry,  run \"$SCRIPTPATH/cf_mysql_deploy.sh\" "
     exit 1
  fi
+
+}
+
+function check_cf_marketplace_access() {
+
+ ## Check that mysql deployment is present in CF Marketplace
+
+ CF_MARKETPLACE_MYSQL_FOUND=$( cf m | grep p-mysql | wc -l )
+ if [[ $CF_MARKETPLACE_MYSQL_FOUND -eq "0" ]]; then 
+   echo "P-MYSQL deployment was not found in CF Marketplace, please check CF Marketplace and make sure MySQL deployment was successful."
+ fi 
 
 }
 
@@ -176,10 +196,16 @@ fi
 if [ -f $WORKSPACE/.boshvm ]; then
    check_cf_deployment
    check_cf_mysql_deployment
+else 
+   update_cloud_config
 fi
 
-## TODO: Check CF Access and CF marketplace for p-mysql
+## Check CF Access and CF marketplace for p-mysql
 
+check_cf_marketplace_access
+
+## Check BOSH Stemcell is uploaded
+prepareBosh
 
 SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 
