@@ -90,10 +90,22 @@ function showUsage() {
 while getopts "t:a:nbcr:l:s:p:v:x:ewh" arg; do
     case "${arg}" in
         t) 
-            TLS_PATH="$OPTARG"
+            TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $TLS_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
             ;;
         a)
-            SYSLOG_PATH="$OPTARG"
+            SYSLOG_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $SYSLOG_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
             ;;
         n) 
             disablebrokertls=true
@@ -105,10 +117,22 @@ while getopts "t:a:nbcr:l:s:p:v:x:ewh" arg; do
             aldap=true
             ;;
         r) 
-	    TCP_PATH="$OPTARG" 
+            TCP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $TCP_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
             ;;
         l) 
-	    LDAP_PATH="$OPTARG"
+            LDAP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $LDAP_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
             ;; 
         s)
             starting_port="$OPTARG"
@@ -117,7 +141,13 @@ while getopts "t:a:nbcr:l:s:p:v:x:ewh" arg; do
             vmr_admin_password="${OPTARG}"
             ;;
         v)
-            VARS_FILE="$OPTARG"
+            VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $VARS_FILE ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
             ;; 
         e) 
 	    VMR_EDITION="enterprise"
@@ -211,6 +241,8 @@ SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
 
 if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "0" ]; then
    echo "solace-vmr release seem to be missing from bosh, please upload-release to bosh"
+   echo 
+   echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
    exit 1
 fi
 
@@ -218,6 +250,8 @@ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc
 
 if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
    echo "solace-messaging release seem to be missing from bosh, please upload-release to bosh"
+   echo 
+   echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
    exit 1
 fi
 
