@@ -28,6 +28,8 @@ export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
 export UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET:-"admin-client-secret"}
 
+export JAVA_BUILD_PACK_VERSION=${JAVA_BUILD_PACK_VERSION:-"3.13"}
+
 ####################################### FUNCTIONS ###########################################
 
 function log() {
@@ -370,4 +372,35 @@ function cf_login() {
  fi
 
 }
+
+
+
+
+function addBuildPack() {
+
+   cf target -o system
+   FOUND_BUILDPACK=$( cf buildpacks | grep java_buildpack_offline | grep java-buildpack-offline-v${BUILD_PACK_VERSION}.zip | wc -l )
+   if [ "$FOUND_BUILDPACK" -eq "0" ]; then
+      echo "Will make a new buildpack and add to pcfdev"
+      ( 
+        cd $WORKSPACE
+        wget -O java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz https://github.com/cloudfoundry/java-buildpack/archive/v${JAVA_BUILD_PACK_VERSION}.tar.gz
+	tar -xzf java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz
+	cd java-buildpack-${JAVA_BUILD_PACK_VERSION}
+	if [ -f $WORKSPACE/trusted.crt ]; then
+		echo "Will add a CA trusted certificate to the JVM"
+		mkdir -p resources/open_jdk_jre/lib/security
+		keytool -keystore resources/open_jdk_jre/lib/security/cacerts -storepass changeit --importcert -noprompt -alias SolaceDevTrustedCert -file $WORKSPACE/trusted.crt
+	fi
+	bundle install
+	bundle exec rake clean package OFFLINE=true PINNED=true
+	cf create-buildpack  java_buildpack_offline build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 0 --enable
+      )
+   else
+	echo "Found java build pack there already :"
+   	cf buildpacks | grep java_buildpack_offline | grep java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 
+   fi
+
+}
+
 

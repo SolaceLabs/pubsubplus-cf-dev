@@ -453,9 +453,8 @@ TCP Routing feature is available only on the Linux deployment.
 
 In the cli-tools vm you can run this script to set up the solace router uaa client and the tcp domain. 
 
-TODO: Rename this script? - move it to be part of deployment steps.
 ~~~
-solace_prepare_cf.sh
+setup_tcp_routing.sh
 ~~~
 
 ## How to suspend and resume VMs
