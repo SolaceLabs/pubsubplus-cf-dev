@@ -101,10 +101,10 @@ The goal of the installation steps is to start the required VMs on Windows.
 ![](resources/installation.png)
 
 _The setup was last tested on Windows host with 32GB of RAM, using:_
-- git version 2.8.2.windows.1
-- cf version 6.21.1+6fd3c9f-2016-08-10
-- Vagrant 1.9.1
-- VirtualBox Version 5.1.10 r112026 (Qt5.6.2)
+- git version 2.16.2.windows.1
+- cf version 6.35.2+88a03e995.2018-03-15
+- Vagrant 2.0.3
+- VirtualBox Version 5.2.8r121009
 
 ### Installation on Windows - Step 1 - Clone this project and start up its cli-tools vm
 
