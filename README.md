@@ -369,10 +369,9 @@ _If not sure what to pick just use the default with no parameters. Otherwise, pl
 
 The deployment variables file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
 
-**Example:** Use a customized deployment property file from which a new bosh-manifest will be generated. 
+**Example:** Setting admin password to 'solace1' and setting a test server certificate and disabling the service broker's certificate validation.
 ~~~~
-cd solace-messaging-cf-dev/bin
-./solace_deploy.sh -v my_vars.yml
+solace_deploy.sh -s 6000 -p solace1 -t ~/solace-messaging-cf-dev/cf-solace-messaging-deployment/operations/example-vars-files/certs.yml -n
 ~~~~
 
  - On Windows: 
