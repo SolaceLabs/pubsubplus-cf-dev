@@ -83,11 +83,12 @@ function showUsage() {
     echo "  -b                        enable ldap management authorization access" 
     echo "  -c                        enable ldap application authorization access" 
     echo "  -w                        make windows deployment" 
+    echo "  -k                        Keep Errand(s) Alive" 
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ewh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:x:ewkh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -157,6 +158,8 @@ while getopts "t:a:nbcr:l:s:p:v:x:ewh" arg; do
             ;; 
         w)  WINDOWS=true
             ;;
+        k)  KEEP_ERRAND_ALIVE=true
+            ;;
         h)
             showUsage
             exit 0
@@ -193,6 +196,10 @@ fi
 
 if [[ $WINDOWS == true ]]; then
    MAKE_WINDOWS_DEPLOYMENT="-o $SCRIPTPATH/../operations/make_windows_deployment.yml" 
+fi
+
+if [[ $KEEP_ERRAND_ALIVE == true ]]; then
+   export ERRAND_PARAMS=" --keep-alive"
 fi
 
 if [ -n "$LDAP_PATH" ]; then 

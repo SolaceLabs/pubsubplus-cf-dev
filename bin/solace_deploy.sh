@@ -14,9 +14,9 @@ echo
 ( cd $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME; $BOSH_CMD )
 
 [[ $? -eq 0 ]] && { 
-  $SCRIPTPATH/solace_add_service_broker.sh 
+  $SCRIPTPATH/solace_add_service_broker.sh $ERRAND_PARAMS
   [[ $? -eq 0 ]] && { 
-    $SCRIPTPATH/solace_deployment_tests.sh
+    $SCRIPTPATH/solace_deployment_tests.sh $ERRAND_PARAMS
   }
 }
 
