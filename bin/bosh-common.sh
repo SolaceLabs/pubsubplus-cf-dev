@@ -1,13 +1,7 @@
 #!/bin/bash
 
-export MY_BIN_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-export PYTHONPATH=$MY_BIN_HOME
-
 export DEPLOYMENT_NAME="solace_messaging"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
-
-export USE_ERRANDS=${USE_ERRANDS:-"1"}
 
 ######################################
 
@@ -71,17 +65,23 @@ echo "Checking stemcell $STEMCELL_NAME"
 
 function deleteOrphanedDisks() {
 
-$BOSH_CMD disks --orphaned
+ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' | wc -l )
+ORPHANED_DISKS=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' )
 
-ORPHANED_DISKS=$( $BOSH_CMD disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment="solace_messaging") | .disk_cid' | sed 's/\"//g' )
 
-for DISK_ID in $ORPHANED_DISKS; do
-	echo "Will delete $DISK_ID"
-	$BOSH_CMD -n delete-disk $DISK_ID
-	echo
-	echo "Orphaned Disk $DISK_ID was deleted"
-	echo
-done
+if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
+
+ for DISK_ID in $ORPHANED_DISKS; do
+        echo "Will delete $DISK_ID"
+        bosh -n delete-disk $DISK_ID
+        echo
+        echo "Orphaned Disk $DISK_ID was deleted"
+        echo
+ done
+
+else
+   echo "No orphaned disks found: $ORPHANED_DISKS_COUNT"
+fi
 
 }
 
@@ -114,63 +114,6 @@ function shutdownVMRJobs() {
    done
  else
   echo "Did not find running job $VM_JOB"
- fi
-
-}
-
-function shutdownAllVMRJobs() {
-    local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
-    $BOSH_CMD -n manifest > $DEPLOYED_MANIFEST
-    echo "Shutting down all VMR jobs..."
-    VMR_JOBS=$(bosh vms --json | jq '.Tables[].Rows[] | select(.process_state=="running") | .instance' | sed 's/\"//g' )
-    for VMR_JOB_NAME in ${VMR_JOBS[@]}; do
-        echo "Shutting down $VMR_JOB_NAME"
-        shutdownVMRJobs $VMR_JOB_NAME | tee $LOG_FILE
-    done
-    rm $DEPLOYED_MANIFEST
-}
-
-function deleteDeploymentAndRelease() {
-
- DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
- SOLACE_VMR_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-messaging | wc -l`
-
- local DEPLOYED_MANIFEST="$WORKSPACE/deployed-manifest.yml"
-
- if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
-    $BOSH_CMD -n manifest > $DEPLOYED_MANIFEST
-
-    if [ "$USE_ERRANDS" -eq "1" ]; then
-      echo "Calling bosh run-errand delete-all"
-      $BOSH_CMD run-errand delete-all
-    fi
-
-    # Delete the deployment 
-    echo "Deleting deployment $DEPLOYMENT_NAME"
-    $BOSH_CMD -n delete-deployment 
- else
-   echo "No deployment found."
- fi
-
- if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -ge "1" ]; then
-    # solace-vmr
-    echo "Deleting release solace-vmr"
-    $BOSH_CMD -n delete-release solace-vmr
- else
-    echo "No solace-vmr release found"
- fi
-
- if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -ge "1" ]; then
-    # solace-messaging
-    echo "Deleting release solace-messaging"
-    $BOSH_CMD -n delete-release solace-messaging
- else
-    echo "No solace-messaging release found"
- fi
- 
- if [ -f $DEPLOYED_MANIFEST ]; then
-    rm $DEPLOYED_MANIFEST
  fi
 
 }
@@ -213,9 +156,9 @@ function getReleaseNameAndVersion() {
 
 }
 
-function uploadAndDeployRelease() {
+function uploadReleases() {
 
-echo "in function uploadAndDeployRelease. SOLACE_MESSAGING_BOSH_RELEASE_FILE: $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
+echo "in function uploadReleases. SOLACE_MESSAGING_BOSH_RELEASE_FILE: $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
 
 SOLACE_MESSAGING_BOSH_RELEASE_FILE=${SOLACE_MESSAGING_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-messaging-*.tgz | tail -1`}
 SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-messaging | wc -l`
@@ -245,7 +188,7 @@ fi
 SOLACE_VMR_BOSH_RELEASE_FILE=${SOLACE_VMR_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`}
 RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
 
-echo "in function uploadAndDeployRelease. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
+echo "in function uploadReleases. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
 
 if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
 
@@ -266,56 +209,6 @@ if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
   echo "A solace-vmr release with version greater than or equal to $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
- echo "Calling bosh deployment"
- echo "MANIFEST_FILE=$MANIFEST_FILE"
-
-# $BOSH_CMD deployment $MANIFEST_FILE | tee -a $LOG_FILE 
-
- VMR_JOBS=$(py "getManifestJobNames" $MANIFEST_FILE)
- for VMR_JOB_NAME in ${VMR_JOBS[@]}; do
-    JOB=$(py "getManifestJobByName" $MANIFEST_FILE $VMR_JOB_NAME)
-    if [ "$(echo -n $JOB | wc -c)" -eq "0" ]; then
-        continue
-    fi
-
-    POOL_NAME="$(echo -n $JOB | shyaml get-value properties.pool_name)"
-    SOLACE_DOCKER_IMAGE_NAME="$(py 'getSolaceDockerImageName' $POOL_NAME)"
-    echo "Will deploy VMR with name $VMR_JOB_NAME, having POOL_NAME: $POOL_NAME, and using $SOLACE_DOCKER_IMAGE_NAME" | tee -a $LOG_FILE
- done
-
- $BOSH_CMD -n deploy $MANIFEST_FILE | tee -a $LOG_FILE
- BOSH_DEPLOY_RETURN_CODE=${PIPESTATUS[0]}
-
- if [ "$BOSH_DEPLOY_RETURN_CODE" -ne "0" ]; then
-   >&2 echo "bosh deploy returned a non-zero code - deployment failed"
-   >&2 echo "Aborting"
-   exit 1
- fi
-
- $BOSH_CMD vms
- DEPLOYMENT_FOUND_COUNT=`2>&1 $BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
- if [ "$DEPLOYMENT_FOUND_COUNT" -eq "0" ]; then
-   >&2 echo "bosh did not find any deployments - deployment likely failed"
-   exit 1
- fi
-
- POOL_NAMES=$(py "getPoolNames")
- FAILED_VMS_COUNT=`2>&1 $BOSH_CMD vms | grep -E "($(echo ${POOL_NAMES[*]} | tr ' ' '|'))/[0-9]+" | grep -v running | wc -l`
- if [ "$FAILED_VMS_COUNT" -gt "0" ]; then
-   >&2 echo "Found non-running VMs - deployment likely failed"
-   exit 1
- fi
-
- if [ "$USE_ERRANDS" -eq "1" ]; then
-   echo "Calling $BOSH_CMD run-errand deploy-all"
-   $BOSH_CMD run-errand deploy-all
- fi
-
- if [ "$USE_ERRANDS" -eq "1" ]; then
-   echo "Calling $BOSH_CMD run-errand tests"
-   $BOSH_CMD run-errand tests
- fi
-
 else
  >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
  exit 1
@@ -323,39 +216,40 @@ fi
 
 }
 
-function py() {
-  local OP=$1 PARAMS=() CURRENT_DIR=`pwd`
-  shift
+function deleteSolaceDeployment() {
 
-  cd $MY_BIN_HOME
+ SOLACE_DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep solace_messaging | wc -l`
+ if [ "$SOLACE_DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
 
-  while (( "$#" )); do
-    if [ -n "$1" ] && (echo "$1" | grep -qE "[^0-9]"); then
-      PARAMS+=("\"$1\"")
-    else
-      PARAMS+=($1)
-    fi
-    shift
-  done
+  bosh -d solace_messaging run-errand delete-all
 
-  python3 -c "import commonUtils; commonUtils.$OP($(IFS=$','; echo "${PARAMS[*]}"))"
+  bosh -d solace_messaging delete-deployment
 
-  cd $CURRENT_DIR
+ else
+     echo "No solace messaging deployment found: $SOLACE_DEPLOYMENT_FOUND_COUNT"
+ fi
+
 }
 
+function deleteSolaceReleases() {
 
-function runDeleteAllErrand() {
-   targetBosh
-   $BOSH_CMD run-errand delete-all
-}
+ SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
+ if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -gt "0" ]; then
+     # solace-vmr
+     echo "Deleting release solace-vmr"
+     bosh -n delete-release solace-vmr
+ else
+     echo "No solace-vmr release found: $SOLACE_VMR_RELEASE_FOUND_COUNT"
+ fi
 
-function runTestsErrand() {
-   targetBosh
-   $BOSH_CMD run-errand tests
-}
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
+     # solace-messaging
+     echo "Deleting release solace-messaging"
+     bosh -n delete-release solace-messaging
+ else
+     echo "No solace-messaging release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
+ fi
 
-function runDeployAllErrand() {
-  targetBosh
-  $BOSH_CMD run-errand deploy-all
 }
 
