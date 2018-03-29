@@ -19,12 +19,17 @@ source $SCRIPTPATH/cf_env.sh
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
 function check_uaac() {
-	echo "Looking for CloudFoundry UAA Command Line  ( uaac )"
-	which uaac
-	if [ $? -eq 1 ]; then
-	   echo "Installing CloudFoundry UAA Command Line  ( uaac )"
-	   sudo gem install cf-uaac
-	fi
+        echo "Looking for CloudFoundry UAA Command Line  ( uaac )"
+        which uaac >/dev/null 2>&1
+        if [ $? -eq 1 ]; then
+           echo "Installing CloudFoundry UAA Command Line  ( uaac )"
+           sudo gem install cf-uaac
+           which uaac >/dev/null 2>&1
+           if [ $? -eq 1 ]; then
+               RUBY_PATH=$( gem env | grep 'EXECUTABLE DIRECTORY:' | sort | tail -l | awk '{print $4}' )
+               export PATH=$PATH:$RUBY_PATH
+           fi
+        fi
 }
 
 function enableTcpRoutingForSolaceRouter() {
