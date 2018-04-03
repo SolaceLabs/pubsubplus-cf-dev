@@ -58,7 +58,7 @@ function check_cf_marketplace_access() {
 
  ## Check that mysql deployment is present in CF Marketplace
 
- CF_MARKETPLACE_MYSQL_FOUND=$( cf target -o test > /dev/null; cf m | grep "p-mysql"  | wc -l )
+ CF_MARKETPLACE_MYSQL_FOUND=$( cf target -o system > /dev/null; cf m | grep "p-mysql"  | wc -l )
  if [[ $CF_MARKETPLACE_MYSQL_FOUND -eq "0" ]]; then 
    echo "p-mysql service was not found in CF Marketplace, please check CF Marketplace and make sure MySQL deployment was successful."
    exit 1
