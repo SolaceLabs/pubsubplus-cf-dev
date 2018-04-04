@@ -55,6 +55,11 @@ if [ -f $SCRIPTPATH/cf_env.sh ]; then
 }
 fi
 
+## This is for development. Open up security groups to support easy deployment and testing.
+if [ -f $SCRIPTPATH/apply_open_security_groups.sh ]; then
+  $SCRIPTPATH/apply_open_security_groups.sh
+fi
+
 echo
 echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""
 echo

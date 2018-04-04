@@ -57,13 +57,53 @@ function check_cf_mysql_deployment() {
 function check_cf_marketplace_access() {
 
  ## Check that mysql deployment is present in CF Marketplace
- cf target -o system
 
- CF_MARKETPLACE_MYSQL_FOUND=$( cf m | grep p-mysql | wc -l )
+ CF_MARKETPLACE_MYSQL_FOUND=$( cf target -o system > /dev/null; cf m | grep "p-mysql"  | wc -l )
  if [[ $CF_MARKETPLACE_MYSQL_FOUND -eq "0" ]]; then 
-   echo "P-MYSQL deployment was not found in CF Marketplace, please check CF Marketplace and make sure MySQL deployment was successful."
+   echo "p-mysql service was not found in CF Marketplace, please check CF Marketplace and make sure MySQL deployment was successful."
    exit 1
  fi 
+
+}
+
+function checkDeploymentRequirements() {
+
+ ## Check only when the deployment is on BOSH-Lite by setup_bosh_lite_vm.sh
+ if [ -f $WORKSPACE/.boshvm ]; then
+    check_cf_deployment
+    check_cf_mysql_deployment
+ else 
+    update_cloud_config
+ fi
+
+ ## Check CF Access and CF marketplace for p-mysql
+
+ check_cf_marketplace_access
+
+ ## Check BOSH Stemcell is uploaded
+ prepareBosh
+
+}
+
+function checkSolaceReleases() {
+
+ SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
+
+ if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "0" ]; then
+   echo "solace-vmr release seem to be missing from bosh, please upload-release to bosh"
+   echo 
+   echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
+   exit 1
+ fi
+
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+
+ if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
+   echo "solace-messaging release seem to be missing from bosh, please upload-release to bosh"
+   echo 
+   echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
+   exit 1
+ fi
 
 }
 
@@ -231,38 +271,7 @@ if [ -n "$TCP_PATH" ]; then
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
-## Check only when the deployment is on BOSH-Lite by setup_bosh_lite_vm.sh
-if [ -f $WORKSPACE/.boshvm ]; then
-   check_cf_deployment
-   check_cf_mysql_deployment
-else 
-   update_cloud_config
-fi
-
-## Check CF Access and CF marketplace for p-mysql
-
-check_cf_marketplace_access
-
-## Check BOSH Stemcell is uploaded
-prepareBosh
-
-SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
-
-if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -eq "0" ]; then
-   echo "solace-vmr release seem to be missing from bosh, please upload-release to bosh"
-   echo 
-   echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
-   exit 1
-fi
-
-SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
-
-if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
-   echo "solace-messaging release seem to be missing from bosh, please upload-release to bosh"
-   echo 
-   echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
-   exit 1
-fi
+checkSolaceReleases
 
 export SOLACE_VMR_RELEASE=$( bosh releases --json | jq '.Tables[].Rows[] | select(.name | contains("solace-vmr")) | .version' | sed 's/\"//g' | sort -r | head -1 )
 export TEMPLATE_VERSION=$( echo $SOLACE_VMR_RELEASE | awk -F\- '{ print $1 }' )
@@ -270,7 +279,7 @@ export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml "}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $SET_SOLACE_VMR_CERT_OPS $ENABLE_TCP_ROUTES_OPS $MAKE_WINDOWS_DEPLOYMENT"}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $MAKE_WINDOWS_DEPLOYMENT"}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
