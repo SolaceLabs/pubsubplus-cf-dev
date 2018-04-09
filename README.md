@@ -257,8 +257,6 @@ exit
 _The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
 another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
 
-_The cli-tools VM is optional on Linux and Mac if you install the required tools: TODO_
-
 ### Installation on Linux - Step 2 - BOSH-lite VM
 
 A quick way to get started with BOSH is to use [BUCC](https://github.com/starkandwayne/bucc), it provides a convenient wrapper around a [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment).
