@@ -11,12 +11,16 @@
    alias sed="$(which gsed)"
 }
 
-REQUIRED_TOOLS="jq curl cf git gem sort head tail wc basename dirname grep which mktemp unzip tar ruby bundle"
+REQUIRED_TOOLS=${REQUIRED_TOOLS:-"jq curl cf git gem sort head tail wc basename dirname grep which mktemp unzip tar ruby bundle"}
 
-for REQUIRED_TOOL in $REQUIRED_TOOLS; do
- which $REQUIRED_TOOL > /dev/null || {
+function checkRequiredTools() {
+ for REQUIRED_TOOL in $REQUIRED_TOOLS; do
+  which $REQUIRED_TOOL > /dev/null || {
 	echo "ERROR: '$REQUIRED_TOOL' was not found. Please install it."
-	exit 1
- }
-done
+ 	exit 1
+  }
+ done
+}
+
+checkRequiredTools
 
