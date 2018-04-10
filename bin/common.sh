@@ -11,3 +11,12 @@
    alias sed="$(which gsed)"
 }
 
+REQUIRED_TOOLS="jq curl cf vboxmanage git gem sort head tail basename dirname grep which mktemp unzip tar"
+
+for REQUIRED_TOOL in $REQUIRED_TOOLS; do
+ which $REQUIRED_TOOL > /dev/null || {
+	echo "ERROR: '$REQUIRED_TOOL' was not found. Please install it."
+	exit 1
+ }
+done
+
