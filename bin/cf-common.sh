@@ -384,7 +384,13 @@ function addBuildPack() {
       echo "Will make a new buildpack and add to pcfdev"
       ( 
         cd $WORKSPACE
-        wget -O java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz https://github.com/cloudfoundry/java-buildpack/archive/v${JAVA_BUILD_PACK_VERSION}.tar.gz
+	if [ ! -f java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz  ]; then
+           echo "Downloading java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz"
+           curl -L -X GET https://github.com/cloudfoundry/java-buildpack/archive/v${JAVA_BUILD_PACK_VERSION}.tar.gz -o java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz -s
+        fi
+	if [ -d java-buildpack-${JAVA_BUILD_PACK_VERSION} ]; then
+		rm -rf java-buildpack-${JAVA_BUILD_PACK_VERSION}
+        fi
 	tar -xzf java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz
 	cd java-buildpack-${JAVA_BUILD_PACK_VERSION}
 	if [ -f $WORKSPACE/trusted.crt ]; then
@@ -394,7 +400,12 @@ function addBuildPack() {
 	fi
 	bundle install
 	bundle exec rake clean package OFFLINE=true PINNED=true
-	cf create-buildpack  java_buildpack_offline build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 0 --enable
+	if [ -f build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip ]; then
+	   cf create-buildpack  java_buildpack_offline build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 0 --enable
+	else
+	   echo "Did not find expected build pack file build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip"
+	   exit 1
+	fi
       )
    else
 	echo "Found java build pack there already :"
