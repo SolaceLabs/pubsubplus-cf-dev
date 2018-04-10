@@ -11,7 +11,7 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"3541.9"}
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"3541.10"}
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
@@ -53,9 +53,14 @@ function prepareBosh() {
   FOUND_STEMCELL=`bosh stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
-        wget -O $WORKSPACE/$STEMCELL_NAME $STEMCELL_URL
+	echo "Downloading required stemcell $STEMCELL_NAME"
+        curl $STEMCELL_URL -o $WORKSPACE/$STEMCELL_NAME -s
      fi
      bosh upload-stemcell $WORKSPACE/$STEMCELL_NAME
+     if [ $? -ne 0 ]; then
+	echo "Failed to upload required stemcell $STEMCELL_NAME to bosh"
+	exit 1
+     fi
   fi
 
 }
