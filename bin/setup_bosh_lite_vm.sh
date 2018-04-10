@@ -5,6 +5,7 @@ export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
 
 source $SCRIPTPATH/common.sh
+checkRequiredTools vboxmanage
 
 export VM_MEMORY=${VM_MEMORY:-8192}
 export VM_CPUS=${VM_CPUS:-4}
