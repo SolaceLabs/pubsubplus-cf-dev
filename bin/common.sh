@@ -14,7 +14,7 @@
 REQUIRED_TOOLS=${REQUIRED_TOOLS:-"jq curl cf git gem sort head tail wc basename dirname grep which mktemp unzip tar ruby bundle"}
 
 function checkRequiredTools() {
- for REQUIRED_TOOL in $REQUIRED_TOOLS; do
+ for REQUIRED_TOOL in $@; do
   which $REQUIRED_TOOL > /dev/null || {
 	echo "ERROR: '$REQUIRED_TOOL' was not found. Please install it."
  	exit 1
@@ -22,5 +22,5 @@ function checkRequiredTools() {
  done
 }
 
-checkRequiredTools
+checkRequiredTools $REQUIRED_TOOLS
 
