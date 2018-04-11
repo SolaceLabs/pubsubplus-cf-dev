@@ -276,6 +276,8 @@ function deleteSolaceReleases() {
 
 function resume_bosh_lite_vm() {
 
+checkRequiredTools vboxmanage
+
 if [ -f $WORKSPACE/.boshvm ]; then
    export BOSH_VM=$( cat $WORKSPACE/.boshvm )
    vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
@@ -295,6 +297,8 @@ fi
 }
 
 function savestate_bosh_lite_vm() {
+
+checkRequiredTools vboxmanage
 
 if [ -f $WORKSPACE/.boshvm ]; then
    export BOSH_VM=$( cat $WORKSPACE/.boshvm )
