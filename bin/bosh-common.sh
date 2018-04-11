@@ -15,6 +15,25 @@ export STEMCELL_VERSION=${STEMCELL_VERSION:-"3541.10"}
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
+export VM_MEMORY=${VM_MEMORY:-8192}
+export VM_CPUS=${VM_CPUS:-4}
+export VM_DISK_SIZE=${VM_DISK_SIZE:-"65_536"}
+export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
+export VM_SWAP=${VM_SWAP:-8192}
+
+export TEMP_DIR=$(mktemp -d)
+
+if [ ! -d $WORKSPACE ]; then
+  mkdir -p $WORKSPACE
+fi
+
+function cleanupWorkTemp() {
+ if [ -d $TEMP_DIR ]; then
+    rm -rf $TEMP_DIR
+ fi
+}
+trap cleanupWorkTemp EXIT INT TERM HUP
+
 function targetBosh() {
 
   ## Setup to access target bosh-lite
@@ -252,6 +271,202 @@ function deleteSolaceReleases() {
  else
      echo "No solace-messaging release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
  fi
+
+}
+
+function resume_bosh_lite_vm() {
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Starting [$BOSH_VM]"
+        vboxmanage startvm $BOSH_VM --type headless
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function savestate_bosh_lite_vm() {
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Saving the state of [$BOSH_VM]"
+        vboxmanage controlvm $BOSH_VM savestate
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function check_bucc() {
+
+(
+ cd $WORKSPACE
+ if [ ! -d bucc ]; then
+  git clone https://github.com/starkandwayne/bucc.git
+ else
+  (cd bucc; git pull)
+ fi
+)
+
+export PATH=$PATH:$WORKSPACE/bucc/bin
+
+}
+
+function create_bosh_lite_vm() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+	echo "Exiting $SCRIPT: You seem to already have an existing BOSH-lite VM [$BOSH_VM]"
+	exit 1
+   fi
+   unset BOSH_VM
+fi
+
+check_bucc
+
+echo "Setting VM MEMORY to $VM_MEMORY, VM_CPUS to $VM_CPUS, VM_EPHEMERAL_DISK_SIZE to $VM_EPHEMERAL_DISK_SIZE"
+sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
+
+echo "vm_disk_size: $VM_DISK_SIZE" >> $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
+cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
+
+## Capture running VMS before
+vboxmanage list runningvms > $TEMP_DIR/running_vms.before
+
+bucc up --cpi virtualbox --lite --debug | tee $WORKSPACE/bucc_up.log
+
+## Capture running VMS after
+vboxmanage list runningvms > $TEMP_DIR/running_vms.after
+
+BOSH_VM=$( diff --changed-group-format='%>' --unchanged-group-format='' $TEMP_DIR/running_vms.before $TEMP_DIR/running_vms.after | awk '{ print $1 }' | sed 's/\"//g' )
+
+vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+if [[ $? -eq 0 ]]; then
+   echo $BOSH_VM > $WORKSPACE/.boshvm
+   echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
+fi
+
+bucc env > $WORKSPACE/bosh_env.sh
+echo "export PATH=\$PATH:$SCRIPTPATH" >> $WORKSPACE/bosh_env.sh
+
+}
+
+function bosh_lite_vm_additions() {
+
+source $WORKSPACE/bosh_env.sh
+setup_bosh_lite_routes
+setup_bosh_lite_swap
+
+}
+
+function destroy_bosh_lite_vm() {
+
+checkRequiredTools vboxmanage
+
+check_bucc
+
+source <($WORKSPACE/bucc/bin/bucc env)
+
+if [ -d $WORKSPACE/bucc/state ] && [ -f $WORKSPACE/bucc/vars.yml ]; then
+   $WORKSPACE/bucc/bin/bucc down && $WORKSPACE/bucc/bin/bucc clean
+fi
+
+if [ -f $WORKSPACE/bosh_env.sh ]; then
+   rm -f $WORKSPACE/bosh_env.sh
+fi
+
+if [ -f $WORKSPACE/.bosh_env ]; then
+   rm -f $WORKSPACE/.bosh_env
+fi
+
+if [ -f $WORKSPACE/deployment-vars.yml ]; then
+   rm -f $WORKSPACE/deployment-vars.yml
+fi
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Exiting $SCRIPT: The BOSH-lite VM [$BOSH_VM] is still running?"
+        exit 1
+   fi
+   rm -f $WORKSPACE/.boshvm
+   unset BOSH_VM
+fi
+
+}
+
+function platform() {
+    if [ "$(uname)" == "Darwin" ]; then
+        echo "darwin"
+    elif [ "$(expr substr $(uname -s) 1 5)" == "Linux" ]; then
+        echo "linux"
+    fi
+}
+
+function setup_bosh_lite_routes() {
+
+ echo
+ echo "Adding routes, you may need to enter your credentials to grant sudo permissions"
+ echo
+
+    case $(platform) in
+        darwin)
+            sudo route delete -net 10.244.0.0/16    $BOSH_GW_HOST
+            sudo route add -net 10.244.0.0/16    $BOSH_GW_HOST
+            ;;
+        linux)
+            sudo route del -net 10.244.0.0/16 gw $BOSH_GW_HOST
+            sudo route add -net 10.244.0.0/16 gw $BOSH_GW_HOST
+            ;;
+    esac
+
+}
+
+function setup_bosh_lite_swap() {
+
+ checkRequiredTools ssh-keygen ssh-keyscan
+
+ check_bucc
+
+ echo
+ echo "Adding swap of $VM_SWAP. You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
+ echo
+
+ echo "Adding $VM_SWAP of swap space"
+ ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
+ ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
+ bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
+ bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
+ bucc ssh "sudo mkswap /var/vcap/store/swapfile"
+ bucc ssh "sudo swapon /var/vcap/store/swapfile"
+ bucc ssh "sudo swapon -s"
 
 }
 

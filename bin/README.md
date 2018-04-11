@@ -65,7 +65,7 @@ This script will use [BUCC](https://github.com/starkandwayne/bucc) on a Linux or
 This script will prompt you for administrator password in order to add routes. It will setup additional swap space in the BOSH-Lite VM.
 
 ~~~
-setup_bosh_lite_vm.sh
+bosh_lite_vm.sh -c
 ~~~~
 
 Once done the script will create workspace/bosh_env.sh to support getting access to BOSH and workspace/.boshvm to track the created VM.
@@ -189,6 +189,6 @@ This is usefull to delete everything, or reset in order to start over.
 To delete the full setup of the BOSH,  removing all its contents, allocated disks, and delete the VM.
 
 ~~~~
-destroy_bosh_lite_vm.sh
+bosh_lite_vm.sh -d
 ~~~~
 

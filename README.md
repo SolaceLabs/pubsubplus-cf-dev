@@ -261,7 +261,7 @@ another clone of this project. The workspace folder visible on your computer is 
 
 A quick way to get started with BOSH is to use [BUCC](https://github.com/starkandwayne/bucc), it provides a convenient wrapper around a [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment).
 
-To set BOSH-lite please use [bin/setup_bosh_lite_vm.sh](bin/setup_bosh_lite_vm), this script will do the following:
+To set BOSH-lite please use [bin/bosh_lite_vm.sh -c](bin/bosh_lite_vm.sh), the '-c' create option will do the following:
 
 * Download and set up the bucc cli
 * Create the BOSH-lite VM
@@ -277,7 +277,7 @@ To set BOSH-lite please use [bin/setup_bosh_lite_vm.sh](bin/setup_bosh_lite_vm),
 
 ~~~~
 cd bin
-./setup_bosh_lite_vm.sh 
+./bosh_lite_vm.sh -c
 ~~~~
 
 ### Installation on Linux - Step 3 - Deploy CF and cf-mysql 
@@ -488,7 +488,7 @@ vagrant suspend
 The bosh created VM in virtualbox cannot be successfully restarted.  But they can be preserved by pausing and saving their state in virtualbox. 
 
 ~~~~ 
-suspend_bosh_lite_vm.sh
+bosh_lite_vm.sh -s
 ~~~~ 
 
 Alternatively you can use the virtualbox GUI to 'pause' and 'close' > 'save state'. 
@@ -518,10 +518,10 @@ cd cli-tools
 vagrant resume
 ~~~~
 
-The bosh created VM in virtualbox may be resumed if previously paused and saved by using [suspend_bosh_lite_vm.sh](bin/suspend_bosh_lite_vm.sh)
+The bosh created VM in virtualbox may be resumed if previously paused and saved by using [bosh_lite_vm.sh -s](bin/bosh_lite_vm.sh)
 
 ~~~~
-resume_bosh_lite_vm.sh
+bosh_lite_vm.sh -r
 ~~~~
 
 Alternatively you can use the virtualbox GUI to the 'start' > 'headless start'. 
@@ -574,7 +574,7 @@ vagrant destroy
 * On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL
 
 ~~~~
-destroy_bosh_lite_vm.sh 
+bosh_lite_vm.sh -d
 ~~~~
 
 ### How to delete cli-tools VM
