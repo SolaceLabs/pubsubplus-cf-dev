@@ -26,7 +26,7 @@ function showUsage() {
     echo "  -r                   Restarts the BOSH-lite VM assuming a previously saved state."
 }
 
-while getopts "hcdsr" arg; do
+while getopts "hcdsrn" arg; do
     case "${arg}" in
         c)
 	    ## Create the VM and do additional tasks
@@ -48,6 +48,9 @@ while getopts "hcdsr" arg; do
         r)
             resume_bosh_lite_vm
 	    ;;
+        n)
+            setup_bosh_lite_routes           
+            ;;
         h)
             showUsage
             exit 0
