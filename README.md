@@ -113,6 +113,8 @@ On your computer, clone this project and start up the cli-tools vm. We will come
 ~~~~
 git clone https://github.com/SolaceLabs/solace-messaging-cf-dev.git
 cd solace-messaging-cf-dev
+git submodule init
+git submodule update
 cd cli-tools
 vagrant up
 ~~~~
@@ -235,6 +237,8 @@ On your computer, clone this project and start up the cli-tools vm. We will come
 ~~~~
 git clone https://github.com/SolaceLabs/solace-messaging-cf-dev.git
 cd solace-messaging-cf-dev
+git submodule init
+git submodule update
 ~~~~
 
 Startup the cli-tools vm. 
