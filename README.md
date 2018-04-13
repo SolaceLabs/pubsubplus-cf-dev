@@ -341,7 +341,7 @@ The pivotal file is a zip file. We need to extract the relevant bosh releases ne
 Do the following to extract the tile contents:
 
 ~~~~
-extract_tile.sh -t solace-messaging-1.4.0.pivotal
+extract_tile.sh -t ~/workspace/solace-messaging-1.4.0.pivotal
 ~~~~
 
 You will find the relevant contents extracted to ~/workspace/releases
@@ -359,11 +359,13 @@ solace_upload_releases.sh
 
 This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-messaging as a service in Cloud Foundry.
 
-_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy_
+_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy._
+
+If deploying on **Windows**, you must also provide a `-w` option to the `solace_deploy.sh` script.
 
 **Example:** Deploy the default which is a single instance of a Shared-VMR using a self-signed server certificate and evaluation vmr edition.
 ~~~~
-./solace_deploy.sh
+solace_deploy.sh
 ~~~~
 
 The deployment variables file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
