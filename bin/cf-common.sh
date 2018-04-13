@@ -24,6 +24,12 @@ export SB_SPACE=${SB_SPACE:-"solace-messaging"}
 export TEST_ORG=${TEST_ORG:-"solace-test"}
 export TEST_SPACE=${TEST_SPACE:-"test"}
 
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
+export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
+export UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET:-"admin-client-secret"}
+
+export JAVA_BUILD_PACK_VERSION=${JAVA_BUILD_PACK_VERSION:-"3.13"}
+
 ####################################### FUNCTIONS ###########################################
 
 function log() {
@@ -351,19 +357,61 @@ function restartServiceBroker() {
 }
 
 
-function pcfdev_login() {
- export PCFDEV=0 
- cf api https://api.local.pcfdev.io --skip-ssl-validation > /dev/null
+function cf_login() {
+ export CF_ACCESS=0 
+ cf api https://api.$SYSTEM_DOMAIN --skip-ssl-validation > /dev/null
  if [ $? -eq 0 ]; then
-    cf auth admin admin > /dev/null
+    cf auth admin $CF_ADMIN_PASSWORD > /dev/null
     if [ $? -eq 0 ]; then
-       export PCFDEV=1 
+       export CF_ACCESS=1 
     else
-       export PCFDEV=0 
+       export CF_ACCESS=0 
     fi
  else
-   export PCFDEV=0 
+   export CF_ACCESS=0 
  fi
 
 }
+
+
+
+
+function addBuildPack() {
+
+   cf target -o system
+   FOUND_BUILDPACK=$( cf buildpacks | grep java_buildpack_offline | grep java-buildpack-offline-v${BUILD_PACK_VERSION}.zip | wc -l )
+   if [ "$FOUND_BUILDPACK" -eq "0" ]; then
+      echo "Will make a new buildpack and add to pcfdev"
+      ( 
+        cd $WORKSPACE
+	if [ ! -f java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz  ]; then
+           echo "Downloading java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz"
+           curl -L -X GET https://github.com/cloudfoundry/java-buildpack/archive/v${JAVA_BUILD_PACK_VERSION}.tar.gz -o java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz -s
+        fi
+	if [ -d java-buildpack-${JAVA_BUILD_PACK_VERSION} ]; then
+		rm -rf java-buildpack-${JAVA_BUILD_PACK_VERSION}
+        fi
+	tar -xzf java-buildpack-${JAVA_BUILD_PACK_VERSION}.tgz
+	cd java-buildpack-${JAVA_BUILD_PACK_VERSION}
+	if [ -f $WORKSPACE/trusted.crt ]; then
+		echo "Will add a CA trusted certificate to the JVM"
+		mkdir -p resources/open_jdk_jre/lib/security
+		keytool -keystore resources/open_jdk_jre/lib/security/cacerts -storepass changeit --importcert -noprompt -alias SolaceDevTrustedCert -file $WORKSPACE/trusted.crt
+	fi
+	bundle install
+	bundle exec rake clean package OFFLINE=true PINNED=true
+	if [ -f build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip ]; then
+	   cf create-buildpack  java_buildpack_offline build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 0 --enable
+	else
+	   echo "Did not find expected build pack file build/java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip"
+	   exit 1
+	fi
+      )
+   else
+	echo "Found java build pack there already :"
+   	cf buildpacks | grep java_buildpack_offline | grep java-buildpack-offline-v${JAVA_BUILD_PACK_VERSION}.zip 
+   fi
+
+}
+
 

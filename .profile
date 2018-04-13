@@ -1,22 +1,48 @@
 ##
 
-export SOLACE_MESSAGING_CF_DEV=$HOME/solace-messaging-cf-dev
+export MY_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
+export SOLACE_MESSAGING_CF_DEV=${SOLACE_MESSAGING_CF_DEV:-$MY_HOME}
 
 export PATH=$SOLACE_MESSAGING_CF_DEV/bin:$PATH
 
-## Just in case
-chmod +x $SOLACE_MESSAGING_CF_DEV/bin/*.sh
+export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 
-echo
-echo
-cat $SOLACE_MESSAGING_CF_DEV/.banner
-echo
-echo
+export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
+export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
+
+if [ -f $WORKSPACE/bucc/bin/bucc ]; then
+   $WORKSPACE/bucc/bin/bucc env > $WORKSPACE/.env
+fi
+
+if [ -f $WORKSPACE/.env ]; then
+   source $WORKSPACE/.env
+   export BOSH_IP=$BOSH_ENVIRONMENT
+fi
+
+if [ -f $WORKSPACE/deployment-vars.yml ]; then
+   CF_PASSWORD=$(bosh int $WORKSPACE/deployment-vars.yml --path /cf_admin_password 2>/dev/null)
+   if [ $? -eq '1' ]; then
+      echo 'Detected Windows Deployment, PCFDev is running separately from BOSH-Lite'
+      export SYSTEM_DOMAIN='local.pcfdev.io'
+      export WINDOWS='true'
+   else
+      export CF_ADMIN_PASSWORD=$CF_PASSWORD
+   fi
+fi
+
+source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh
+
+if [ -z $SEEN_BANNER ]; then
+ echo
+ echo
+ cat $SOLACE_MESSAGING_CF_DEV/.banner
+ echo
+ echo
+ export SEEN_BANNER=1
+fi
 
 printf "SOLACE_MESSAGING_CF_DEV\t\t%s\n" "$SOLACE_MESSAGING_CF_DEV"
-
-# Used by most scripts
-export WORKSPACE=$HOME/workspace
 
 printf "WORKSPACE\t\t\t%s\n" "$WORKSPACE"
 
@@ -26,84 +52,59 @@ CF_API_FOUND=$( cf api | grep "api endpoint" | grep http | wc -l )
 
 if [ "$CF_API_FOUND" -eq "0" ]; then
 
-   printf  "PCFDev \t\t\t\t%s\n" "Access attempt (may take some time)"
+   printf  "CF   \t\t\t\t%s\n" "Access attempt (may take some time)"
 
-   ping -q -c 5 -w 10 api.local.pcfdev.io > /dev/null
+   ping -q -c 5 -w 10 api.$SYSTEM_DOMAIN > /dev/null
    if [ $? -eq "0" ]; then
-    export PCFDEV=0
-    cf api https://api.local.pcfdev.io --skip-ssl-validation > /dev/null
+    export CF_ACCESS=0
+    cf api https://api.$SYSTEM_DOMAIN --skip-ssl-validation > /dev/null
     if [ $? -eq 0 ]; then
-       cf auth admin admin > /dev/null
+       cf auth admin $CF_ADMIN_PASSWORD > /dev/null
        if [ $? -eq 0 ]; then
-          export PCFDEV=1
+          export CF_ACCESS=1
        else
-       export PCFDEV=0
+       export CF_ACCESS=0
        fi
     else
-      export PCFDEV=0
+      export CF_ACCESS=0
     fi
    else
-     export PCFDEV=0
+     export CF_ACCESS=0
    fi
 
-   if [ $PCFDEV -eq "1" ]; then
-    printf  "PCFDev \t\t\t\t%s\n" "OK"
+   if [ $CF_ACCESS -eq "1" ]; then
+    printf  "CF   \t\t\t\t%s\n" "OK"
    else
-    printf  "PCFDev \t\t\t\t%s\n" "WARN: PCFDev is not accessible. Is it installed? running? is routing enabled?"
+    printf  "CF   \t\t\t\t%s\n" "WARN: CF is not accessible. Is it installed? running? is routing enabled?"
    fi
 
 else
   CF_API=$( cf api | grep "api endpoint" | grep http )
-  printf  "PCFDev \t\t\t\t%s\n" "You seem to have CF setup to access ( $CF_API )"
-  export PCFDEV=1
+  printf  "CF   \t\t\t\t%s\n" "You seem to have CF set to access ( $CF_API )"
+  if [[ $CF_API == *"local.pcfdev.io"* ]]; then
+    export WINDOWS='true'
+    export SYSTEM_DOMAIN='local.pcfdev.io'
+  fi
+  export CF_ACCESS=1
 fi
 
 
+## Test BOSH access
 
+export BOSH_ACCESS=0
+printf "BOSH   \t\t\t\t%s\n" "Access attempt (may take some time)"
 
-## Test BOSH-Lite access
-
-export BOSH_CMD="/usr/local/bin/bosh"
-export BOSH_CLIENT=${BOSH_CLIENT:-admin}
-export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
-
-function targetBosh() {
-  
-  if [ ! -d $HOME/bosh-lite ]; then
-     (cd $HOME; git clone https://github.com/cloudfoundry/bosh-lite.git)
-  fi
-
- # bosh target 192.168.50.4 alias as 'lite'
- BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e 192.168.50.4 --ca-cert=~/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
-  if [ $? -eq 0 ]; then
-    BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD -e lite log-in )
-    if [ $? -eq 0 ]; then
-       export BOSHLITE=1
-    else
-       export BOSHLITE=0
-       echo $BOSH_LOGIN_LOG
-    fi
-  else
-     export BOSHLITE=0
-     echo $BOSH_TARGET_LOG
-  fi
-
-}
-
-export BOSHLITE=0
-printf "BOSH-lite\t\t\t%s\n" "Access attempt (may take some time)"
-
-ping -q -c 5 -w 10 192.168.50.4 > /dev/null
+ping -q -c 5 -w 10 $BOSH_IP > /dev/null
 if [ $? -eq "0" ]; then
   targetBosh
 else
-  export BOSHLITE=0
+  export BOSH_ACCESS=0
 fi
 
-if [ $BOSHLITE -eq "1" ]; then
-    printf "BOSH-lite\t\t\t%s\n" "OK"
+if [ $BOSH_ACCESS -eq "1" ]; then
+    printf "BOSH   \t\t\t\t%s\n" "OK"
 else
-    printf "BOSH-lite\t\t\t%s\n" "WARN: BOSH-lite is not accessible. Is it installed ? running? is routing enabled?"
+    printf "BOSH   \t\t\t\t%s\n" "WARN: BOSH is not accessible. Is it installed ? running? is routing enabled?"
 fi
 
 echo

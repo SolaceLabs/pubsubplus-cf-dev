@@ -18,99 +18,15 @@ then
 fi
 SETHOSTS
 
-$install_and_config_workstation=<<INSTALL_AND_CONFIGURE
-echo "Adding Ruby"
-sudo apt-get -y install ruby
-
-sudo gem install colorize
-sudo locale-gen en_CA.UTF-8
-apt-get update
-sudo apt-get -y install zsh
-sudo chsh -s $(which zsh)
-sudo apt-get -y install subversion
-sudo apt-get -y install rake
-sudo apt-get -y install git
-
-echo "Installing bosh cli"
-wget -q --directory-prefix=/tmp https://s3.amazonaws.com/bosh-cli-artifacts/bosh-cli-2.0.40-linux-amd64
-sudo mv /tmp/bosh-cli-2.0.40-linux-amd64 /usr/local/bin/bosh
-sudo chmod +x /usr/local/bin/bosh
-echo "Installed bosh: "`bosh -v`
-
-
-echo "Adding cf"
-sudo curl -s -L "https://cli.run.pivotal.io/stable?release=linux64-binary&source=github" | tar -zx && mv cf /usr/bin/cf
-which cf
-
-echo "Adding jq"
-sudo apt-get -y install jq
-which jq
-
-echo "Adding Python tools"
-sudo apt-get -y install python-virtualenv
-sudo apt-get -y install python-pip python3-pip python3.6
-sudo pip install shyaml
-sudo pip3 install pyyaml
-
-echo "Adding Java"
-sudo add-apt-repository ppa:openjdk-r/ppa -y
-sudo apt-get update   
-sudo apt-get -y install openjdk-8-jdk 
-sudo apt-get -y install openjdk-8-jre
-sudo apt-get -y install ant
-
-sudo apt-get -y install watch
-
-echo "Adding supporting perl modules used by rs-* scripts"
-sudo apt-get -y install libexpect-perl
-sudo apt-get -y install libterm-readkey-perl
-
-echo "Adding spiff"
-wget -q "https://github.com/cloudfoundry-incubator/spiff/releases/download/v1.0.8/spiff_linux_amd64.zip" -O /tmp/spiff_linux_amd64.zip
-( cd /tmp; unzip spiff_linux_amd64.zip )
-sudo mv /tmp/spiff /usr/bin/spiff
-rm -f /tmp/spiff_linux_amd64.zip
-which spiff
-
-echo "Installing ruby"
-sudo apt-get -y install ruby ruby-dev
-
-sudo gem install bundle
-
-echo "Installing Cloud Foundry uaac"
-sudo gem install cf-uaac
-
-
-
-echo '' >> .profile
-if [ -n "$SOLACE_MESSAGING_CF_DEV_REPO" ]; then
-    echo "export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO}" >> .profile
-else
-    echo 'export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO:-"https://github.com/SolaceLabs/solace-messaging-cf-dev.git"}' >> .profile
-fi
-echo 'echo "Will use solace-messaging-cf-dev from git repo $SOLACE_MESSAGING_CF_DEV_REPO"' >> .profile
-
-echo 'if [ ! -d ~/solace-messaging-cf-dev ]; then' >> .profile
-echo ' echo "Fetching solace-messaging-cf-dev inside cli-tools"' >> .profile 
-echo ' git clone $SOLACE_MESSAGING_CF_DEV_REPO' >> .profile
-echo 'fi' >> .profile
-
-echo '' >> .profile
-echo '# Using solace-messaging-cf-dev/.profile' >> .profile
-echo '[[ -e ~/solace-messaging-cf-dev/.profile ]] && source ~/solace-messaging-cf-dev/.profile || echo "~/solace-messaging-cf-dev/.profile was not found"' >> .profile
-echo '' >> .profile
-
-INSTALL_AND_CONFIGURE
-
 Vagrant.configure(2) do |config|
 
-  config.vm.synced_folder "../workspace", "/home/ubuntu/workspace",type: "nfs"
+  config.vm.synced_folder "../workspace", "/home/vagrant/workspace",type: "nfs"
   # provider configuration: vmware
   config.vm.provider "vmware_fusion" do |v|
     v.vmx["memsize"]  = conf['vm.ram'] || 1024
   end
 
-  config.vm.box = conf['box_name'] || 'ubuntu/trusty-cloud-init'
+  config.vm.box = conf['box_name'] || 'vagrant/trusty-cloud-init'
   config.vm.box_url = conf['box_url'] if conf['box_url']
   config.vm.hostname = conf["host_name"] || "vagranthost"
 
@@ -180,7 +96,7 @@ Vagrant.configure(2) do |config|
   end
 
   #Install and configure the workstation
-  config.vm.provision :shell, :inline => $install_and_config_workstation, env: {"SOLACE_MESSAGING_CF_DEV_REPO" => ENV["SOLACE_MESSAGING_CF_DEV_REPO"] }
+  config.vm.provision :shell, path: "configure_workstation.sh", env: {"SOLACE_MESSAGING_CF_DEV_REPO" => ENV["SOLACE_MESSAGING_CF_DEV_REPO"], "BRANCH" => ENV["BRANCH"], "CF_SOLACE_MESSAGING_DEPLOYMENT_REPO" => ENV["CF_SOLACE_MESSAGING_DEPLOYMENT_REPO"] }
   # config.vm.provision :shell, :inline => $run_always, run: 'always'
   config.vm.provision :shell, path: "on_startup.sh", run: 'always'
 

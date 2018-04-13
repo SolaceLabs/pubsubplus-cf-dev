@@ -1,7 +1,7 @@
 #!/bin/bash
 
-SCRIPT=$(readlink -f "$0")
-SCRIPTPATH=$(dirname "$SCRIPT")
+export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 source $SCRIPTPATH/cf-common.sh
 

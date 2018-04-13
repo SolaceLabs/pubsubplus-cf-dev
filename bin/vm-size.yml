@@ -1,0 +1,10 @@
+- type: replace
+  path: /resource_pools/name=vms/cloud_properties?
+  value:
+    cpus: ((vm_cpus))
+    memory: ((vm_memory))
+    ephemeral_disk: ((vm_ephemeral_disk))
+
+- type: replace
+  path: /disk_pools/name=disks/disk_size?
+  value: ((vm_disk_size))
