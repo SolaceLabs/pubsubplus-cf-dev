@@ -238,6 +238,7 @@ fi
 
 if [[ $WINDOWS == true ]]; then
    MAKE_WINDOWS_DEPLOYMENT="-o $SCRIPTPATH/../operations/make_windows_deployment.yml" 
+   export SYSTEM_DOMAIN="local.pcfdev.io"
 fi
 
 if [[ $KEEP_ERRAND_ALIVE == true ]]; then
