@@ -24,6 +24,7 @@ function showUsage() {
     echo "  -d                   Destroys the BOSH-lite VM"
     echo "  -s                   Saves the state of the BOSH-lite VM"
     echo "  -r                   Restarts the BOSH-lite VM assuming a previously saved state."
+    echo "  -n                   Recreates routes to support communications between host and BOSH-lite VM"
 }
 
 while getopts "hcdsrn" arg; do
