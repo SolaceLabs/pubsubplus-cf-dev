@@ -34,3 +34,19 @@ function checkRequiredTools() {
 
 checkRequiredTools $REQUIRED_TOOLS
 
+function checkRequiredVariables() {
+ local found_missing=0
+ local missing_list
+ for V in $@; do
+    if [ -z "${!V}" ]; then
+        found_missing=1
+        missing_list="$missing_list $V"
+    fi
+ done
+ if [ "$found_missing" -eq "1" ]; then
+    echo "Required variable(s) where missing [ $missing_list ]"
+    exit 1
+ fi
+}
+
+
