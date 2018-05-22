@@ -361,7 +361,7 @@ cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
 ## Capture running VMS before
 vboxmanage list runningvms > $TEMP_DIR/running_vms.before
 
-bucc up --cpi virtualbox --lite --debug | tee $WORKSPACE/bucc_up.log
+bucc up --cpi virtualbox --lite --debug 
 
 ## Capture running VMS after
 vboxmanage list runningvms > $TEMP_DIR/running_vms.after
