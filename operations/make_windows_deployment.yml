@@ -1,8 +1,4 @@
 - type: remove
-  path: /instance_groups/name=Community-VMR/jobs/5
-- type: remove
-  path: /instance_groups/name=Community-VMR/jobs/4
-- type: remove
   path: /instance_groups/name=Shared-VMR/jobs/5
 - type: remove
   path: /instance_groups/name=Shared-VMR/jobs/4 
