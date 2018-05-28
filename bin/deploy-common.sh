@@ -43,8 +43,7 @@ function update_cloud_config() {
 
 function check_cf_mysql_deployment() {
 
- # if MYSQL_OPS is unset it means we default to mysql_for_pcf so it needs to be deployed
- if [ -z "$MYSQL_OPS" ]; then 
+ if [ -n "$USE_MYSQL_FOR_PCF" ]; then 
    ## Check CF-MYSQL is deployed
 
    CF_MYSQL_FOUND=$( bosh deployments --json | jq '.Tables[].Rows[] | .name' | sed 's/\"//g' | grep "^$CF_MYSQL_DEPLOYMENT$" )
@@ -58,7 +57,7 @@ function check_cf_mysql_deployment() {
 
 function check_cf_marketplace_access() {
 
- if [ -z "$MYSQL_OPS" ]; then
+ if [ -n "$USE_MYSQL_FOR_PCF" ]; then
    ## Check that mysql deployment is present in CF Marketplace
 
    CF_MARKETPLACE_MYSQL_FOUND=$( cf target -o system > /dev/null; cf m | grep "p-mysql"  | wc -l )
@@ -130,7 +129,7 @@ function showUsage() {
     echo "  -c                        Enable LDAP Application Authorization access" 
     echo "  -w                        Make Windows deployment" 
     echo "  -k                        Keep Errand(s) Alive" 
-    echo "  -m                        Deploy internal mysql database"
+    echo "  -m                        Use MySQL For PCF"
     echo "  -y                        Deploy highly available internal mysql database"
     echo "  -z                        Use external mysql database"
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
@@ -209,7 +208,7 @@ while getopts "t:a:nbcr:l:s:p:v:x:ewkmyzh" arg; do
             ;;
         k)  KEEP_ERRAND_ALIVE=true
             ;;
-        m)  DEPLOY_INTERNAL_MYSQL=true
+        m)  USE_MYSQL_FOR_PCF=true
             ;;
         y)  DEPLOY_HA_INTERNAL_MYSQL=true
             ;;
@@ -285,10 +284,11 @@ if [ -n "$TCP_PATH" ]; then
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
+# Solace deployment defaults to internal MySQL (non ha) if no MySQL option is specified
 if [[ "$DEPLOY_HA_INTERNAL_MYSQL" == true ]]; then
-    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
-elif [[ "$DEPLOY_INTERNAL_MYSQL" == true ]]; then
-    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql.yml"
+    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
+elif [[ "$USE_MYSQL_FOR_PCF" == true ]]; then
+    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/mysql_for_pcf.yml"
 elif [[ "$USE_EXTERNAL_MYSQL" == true ]]; then
     MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/external_mysql.yml "
 fi
