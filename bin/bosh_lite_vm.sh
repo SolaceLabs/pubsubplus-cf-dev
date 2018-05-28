@@ -22,12 +22,15 @@ function showUsage() {
     echo "  -h                   Show Command options "
     echo "  -c                   Creates the BOSH-lite VM"
     echo "  -d                   Destroys the BOSH-lite VM"
-    echo "  -s                   Saves the state of the BOSH-lite VM"
-    echo "  -r                   Restarts the BOSH-lite VM assuming a previously saved state."
+    echo "  -s                   Saves the state and suspends the BOSH-lite VM"
+    echo "  -r                   Resumes running the BOSH-lite VM assuming a previously saved state."
     echo "  -n                   Recreates routes to support communications between host and BOSH-lite VM"
+    echo "  -t <NAME>            Takes a snapshot of the BOSH-lite VM with the given NAME"
+    echo "  -g <NAME>            Restores a snapshot of the BOSH-lite VM with the given NAME, the VM should be already Saved (-s)"
+    echo "  -l                   Lists available snapshot names of the BOSH-lite VM"
 }
 
-while getopts "hcdsrn" arg; do
+while getopts "hcdsrnt:g:l" arg; do
     case "${arg}" in
         c)
 	    ## Create the VM and do additional tasks
@@ -51,6 +54,17 @@ while getopts "hcdsrn" arg; do
 	    ;;
         n)
             setup_bosh_lite_routes           
+            ;;
+        t)
+            export SNAPSHOT_NAME=${OPTARG:-"INITIAL"}
+	    take_bosh_lite_vm_snapshot $SNAPSHOT_NAME
+            ;;
+        g)
+            export SNAPSHOT_NAME=${OPTARG:-"INITIAL"}
+	    restore_bosh_lite_vm_snapshot $SNAPSHOT_NAME
+            ;;
+        l)
+	    list_bosh_lite_vm_snapshot
             ;;
         h)
             showUsage

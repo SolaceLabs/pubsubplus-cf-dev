@@ -86,8 +86,10 @@ function prepareBosh() {
 
 function deleteOrphanedDisks() {
 
-ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' | wc -l )
-ORPHANED_DISKS=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' )
+SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+
+ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | select(.deployment | contains(\"$SELECTED_DEPLOYMENT\")) | .disk_cid" | sed 's/\"//g' | wc -l )
+ORPHANED_DISKS=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | select(.deployment | contains(\"$SELECTED_DEPLOYMENT\")) | .disk_cid" | sed 's/\"//g' )
 
 
 if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
@@ -101,7 +103,7 @@ if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
  done
 
 else
-   echo "No orphaned disks found: $ORPHANED_DISKS_COUNT"
+   echo "Deployment [$SELECTED_DEPLOYMENT] - no orphaned disks found: $ORPHANED_DISKS_COUNT"
 fi
 
 }
@@ -117,7 +119,7 @@ function shutdownVMRJobs() {
  echo "Looking for VM job $VM_JOB" 
  VM_FOUND_COUNT=`$BOSH_CMD vms | grep $VM_JOB | wc -l`
  VM_RUNNING_FOUND_COUNT=`$BOSH_CMD vms --json | jq '.Tables[].Rows[] | select(.process_state=="running") | .instance' | grep $VM_JOB |  wc -l`
- DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
+ DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$DEPLOYMENT_NAME\$" | wc -l )
  RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
 
  if [ "$VM_RUNNING_FOUND_COUNT" -eq "1" ]; then
@@ -237,17 +239,44 @@ fi
 
 }
 
-function deleteSolaceDeployment() {
+function runErrand() {
 
- SOLACE_DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep solace_messaging | wc -l`
- if [ "$SOLACE_DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
+ SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+ ERRAND_NAME=$2
+ DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
+ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ] && [ ! -z $ERRAND_NAME ]; then
 
-  bosh -d solace_messaging run-errand delete-all
-
-  bosh -d solace_messaging delete-deployment
+  FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | .name " | grep "$ERRAND_NAME" | wc -l )
+  if [ $FOUND_ERRAND -eq "1" ]; then
+     bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME
+  else
+     echo "Errand [$ERRAND_NAME] not found for deployment $SELECTED_DEPLOYMENT]"
+  fi
 
  else
-     echo "No solace messaging deployment found: $SOLACE_DEPLOYMENT_FOUND_COUNT"
+     echo "Deployment [$SELECTED_DEPLOYMENT] not found: $DEPLOYMENT_FOUND_COUNT, or missing required errand name [$ERRAND_NAME]"
+ fi
+
+}
+
+function deleteSolaceDeployment() {
+  SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+  runErrand $SELECTED_DEPLOYMENT delete-all
+  deleteDeployment $SELECTED_DEPLOYMENT
+  deleteOrphanedDisks $SELECTED_DEPLOYMENT
+}
+
+function deleteDeployment() {
+
+ SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+
+ DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
+ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
+
+  bosh -d $SELECTED_DEPLOYMENT delete-deployment
+
+ else
+     echo "Deployment [$SELECTED_DEPLOYMENT] not found: $DEPLOYMENT_FOUND_COUNT"
  fi
 
 }
@@ -307,6 +336,72 @@ if [ -f $WORKSPACE/.boshvm ]; then
    if [[ $? -eq 0 ]]; then
         echo "Saving the state of [$BOSH_VM]"
         vboxmanage controlvm $BOSH_VM savestate
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function take_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Taking snapshot of [$BOSH_VM] as $1"
+        vboxmanage snapshot $BOSH_VM take $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function restore_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Restoring snapshot of [$BOSH_VM] as $1"
+        vboxmanage snapshot $BOSH_VM restore $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function list_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Listing snapshot of [$BOSH_VM]"
+        vboxmanage snapshot $BOSH_VM list
    else
         echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
         exit 1

@@ -6,8 +6,6 @@ SHARED_PLAN="af308299-102f-47a3-acb0-7de72be192bf"
 SHARED_POOL_NAME="Shared-VMR"
 LARGE_PLAN="9bd51219-9cee-4570-99ab-ebe80d82c854"
 LARGE_POOL_NAME="Large-VMR"
-COMMUNITY_PLAN="c1589346-ca21-4d64-8c31-330d5fb07a58"
-COMMUNITY_POOL_NAME="Community-VMR"
 MEDIUM_HA_PLAN="9f57fa1c-7bb1-4a48-a651-d0c560fb5730"
 MEDIUM_HA_POOL_NAME="Medium-HA-VMR"
 LARGE_HA_PLAN="6a833e3f-3a24-419d-94d9-4bb38dc51f04"
@@ -94,7 +92,6 @@ function lookupServiceBrokerDetails() {
     lookupServiceBrokerVMRs
     log "Servicebroker LARGE_VMR_LIST: ${LARGE_VMR_LIST} "
     log "Servicebroker SHARED_VMR_LIST: ${SHARED_VMR_LIST} "
-    log "Servicebroker COMMUNITY_VMR_LIST: ${COMMUNITY_VMR_LIST} "
     log "Servicebroker LARGE_HA_VMR_LIST: ${LARGE_HA_VMR_LIST} "
     log "Servicebroker LARGE_HA_VMR_PAIRS_LIST: ${LARGE_HA_VMR_PAIRS_LIST} "
     log "Servicebroker LARGE_HA_VMR_PRIMARY_LIST: ${LARGE_HA_VMR_PRIMARY_LIST} "
@@ -133,7 +130,6 @@ function lookupServiceBrokerVMRs() {
  export ALL_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
  export SHARED_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "Shared-VMR"))'    | jq -c '.[] | .sshLink'))
  export LARGE_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "Large-VMR"))'     | jq -c '.[] | .sshLink'))
- export COMMUNITY_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Community-VMR"))' | jq -c '.[] | .sshLink'))
  
  export MEDIUM_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR"))' | jq -c '.[] | .sshLink'))
  export MEDIUM_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
@@ -154,7 +150,6 @@ function deprecated_lookupServiceBrokerVMRs() {
  export ALL_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links`
  export SHARED_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$SHARED_PLAN`
  export LARGE_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_PLAN`
- export COMMUNITY_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$COMMUNITY_PLAN`
  export MEDIUM_HA_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN`
  export MEDIUM_HA_VMR_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PAIRS_PARAM`
  export MEDIUM_HA_VMR_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PRIMARY_PARAM`
@@ -179,7 +174,6 @@ function showServiceBrokerVMRs() {
  echo "ALL_VMR_LIST=${ALL_VMR_LIST}"
  echo "SHARED_VMR_LIST=${SHARED_VMR_LIST}"
  echo "LARGE_VMR_LIST=${LARGE_VMR_LIST}"
- echo "COMMUNITY_VMR_LIST=${COMMUNITY_VMR_LIST}"
  echo "MEDIUM_HA_VMR_LIST=${MEDIUM_HA_VMR_LIST}"
  echo "MEDIUM_HA_VMR_PAIRS_LIST=${MEDIUM_HA_VMR_PAIRS_LIST}"
  echo "MEDIUM_HA_VMR_PRIMARY_LIST=${MEDIUM_HA_VMR_PRIMARY_LIST}"
@@ -211,8 +205,6 @@ function checkServiceBrokerServicePlanStats() {
  curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$SHARED_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: large plan stats"
  curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$LARGE_PLAN -H "Content-Type: application/json;charset=UTF-8"
- log "ServiceBroker: community plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$COMMUNITY_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: medium-ha plan stats"
  curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$MEDIUM_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: large-ha plan stats"
@@ -327,8 +319,6 @@ function enableAndShowInMarketPlace() {
  cf m | grep shared 
  log "Checking marketplace for solace service plan: large"
  cf m | grep large
- log "Checking marketplace for solace service plan: community"
- cf m | grep community
  log "Checking marketplace for solace service plan: medium-ha"
  cf m | grep medium-ha
  log "Checking marketplace for solace service plan: large-ha"
@@ -338,8 +328,6 @@ function enableAndShowInMarketPlace() {
  cf m -s solace-messaging | grep shared | grep free
  log "Checking marketplace for solace service plan: large, free"
  cf m -s solace-messaging | grep -v large-ha | grep large | grep free
- log "Checking marketplace for solace service plan: community, free"
- cf m -s solace-messaging | grep community | grep free
  log "Checking marketplace for solace service plan: medium-ha, free"
  cf m -s solace-messaging | grep medium-ha | grep free
  log "Checking marketplace for solace service plan: large-ha, free"
