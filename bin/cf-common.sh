@@ -3,13 +3,13 @@
 ####################################### GLOBALS ###########################################
 
 SHARED_PLAN="af308299-102f-47a3-acb0-7de72be192bf"
-SHARED_POOL_NAME="Shared-VMR"
+SHARED_POOL_NAME="Shared"
 LARGE_PLAN="9bd51219-9cee-4570-99ab-ebe80d82c854"
-LARGE_POOL_NAME="Large-VMR"
+LARGE_POOL_NAME="Large"
 MEDIUM_HA_PLAN="9f57fa1c-7bb1-4a48-a651-d0c560fb5730"
-MEDIUM_HA_POOL_NAME="Medium-HA-VMR"
+MEDIUM_HA_POOL_NAME="Medium-HA"
 LARGE_HA_PLAN="6a833e3f-3a24-419d-94d9-4bb38dc51f04"
-LARGE_HA_POOL_NAME="Large-HA-VMR"
+LARGE_HA_POOL_NAME="Large-HA"
 
 export PAIRS_PARAM="includeMonitor=false"
 export MONITOR_PARAM="includeBackup=false&includePrimary=false"
@@ -128,20 +128,20 @@ function lookupServiceBrokerVMRs() {
  ROUTERS_DATA=`echo $INFO_DATA | jq -c ".messageRouters"`
   
  export ALL_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
- export SHARED_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "Shared-VMR"))'    | jq -c '.[] | .sshLink'))
- export LARGE_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "Large-VMR"))'     | jq -c '.[] | .sshLink'))
+ export SHARED_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "Shared"))'    | jq -c '.[] | .sshLink'))
+ export LARGE_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "Large"))'     | jq -c '.[] | .sshLink'))
  
- export MEDIUM_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA-VMR" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Medium-HA" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Medium-HA" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
  
- export LARGE_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "Large-HA-VMR"))'                        | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA-VMR" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "Large-HA"))'                        | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Large-HA" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Large-HA" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export LARGE_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
 }
 
 #Deprecated 1.1.0

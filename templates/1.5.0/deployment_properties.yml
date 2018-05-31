@@ -145,25 +145,25 @@ tcp_routes_config.disabled.tcp_route_enabled: 'not_allowed'
 
 # job-specific configuration, supported in PCF 1.8+.
 jobs:
-  Shared-VMR:
+  Shared:
     resource_config:
       persistent_disk:
         size_mb: automatic
       instances: 1
       internet_connected: false
-  Large-VMR:
+  Large:
     resource_config:
       persistent_disk:
         size_mb: automatic
       instances: 0
       internet_connected: false
-  Medium-HA-VMR:
+  Medium-HA:
     resource_config:
       persistent_disk:
         size_mb: automatic
       instances: 0
       internet_connected: false
-  Large-HA-VMR:
+  Large-HA:
     resource_config:
       persistent_disk:
         size_mb: automatic
