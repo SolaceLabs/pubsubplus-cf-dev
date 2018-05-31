@@ -23,5 +23,3 @@ shared_plan_instances: 1
 large_plan_instances: 0 
 medium_ha_plan_instances: 0
 large_ha_plan_instances: 0 
-# This variable has no effect when the community plan is not available, such as when using the enterprise vmr edition.
-community_plan_instances: 0

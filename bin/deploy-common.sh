@@ -43,25 +43,28 @@ function update_cloud_config() {
 
 function check_cf_mysql_deployment() {
 
- ## Check CF-MYSQL is deployed
+ if [ -n "$USE_MYSQL_FOR_PCF" ]; then 
+   ## Check CF-MYSQL is deployed
 
- CF_MYSQL_FOUND=$( bosh deployments --json | jq '.Tables[].Rows[] | .name' | sed 's/\"//g' | grep "^$CF_MYSQL_DEPLOYMENT$" )
+   CF_MYSQL_FOUND=$( bosh deployments --json | jq '.Tables[].Rows[] | .name' | sed 's/\"//g' | grep "^$CF_MYSQL_DEPLOYMENT$" )
 
- if [ "$CF_MYSQL_FOUND" != "$CF_MYSQL_DEPLOYMENT" ]; then
-    echo "The Mysql Cloud Foundry \"$CF_MYSQL_DEPLOYMENT\" deployment is not found, please deploy Mysql for Cloud Foundry,  run \"$SCRIPTPATH/cf_mysql_deploy.sh\" "
-    exit 1
+   if [ "$CF_MYSQL_FOUND" != "$CF_MYSQL_DEPLOYMENT" ]; then
+      echo "The Mysql Cloud Foundry \"$CF_MYSQL_DEPLOYMENT\" deployment is not found, please deploy Mysql for Cloud Foundry,  run \"$SCRIPTPATH/cf_mysql_deploy.sh\" "
+      exit 1
+   fi
  fi
-
 }
 
 function check_cf_marketplace_access() {
 
- ## Check that mysql deployment is present in CF Marketplace
+ if [ -n "$USE_MYSQL_FOR_PCF" ]; then
+   ## Check that mysql deployment is present in CF Marketplace
 
- CF_MARKETPLACE_MYSQL_FOUND=$( cf target -o system > /dev/null; cf m | grep "p-mysql"  | wc -l )
- if [[ $CF_MARKETPLACE_MYSQL_FOUND -eq "0" ]]; then 
-   echo "p-mysql service was not found in CF Marketplace, please check CF Marketplace and make sure MySQL deployment was successful."
-   exit 1
+   CF_MARKETPLACE_MYSQL_FOUND=$( cf target -o system > /dev/null; cf m | grep "p-mysql"  | wc -l )
+   if [[ $CF_MARKETPLACE_MYSQL_FOUND -eq "0" ]]; then 
+     echo "p-mysql service was not found in CF Marketplace, please check CF Marketplace and make sure MySQL deployment was successful."
+     exit 1
+   fi
  fi 
 
 }
@@ -126,11 +129,14 @@ function showUsage() {
     echo "  -c                        Enable LDAP Application Authorization access" 
     echo "  -w                        Make Windows deployment" 
     echo "  -k                        Keep Errand(s) Alive" 
+    echo "  -m                        Use MySQL For PCF"
+    echo "  -y                        Deploy highly available internal mysql database"
+    echo "  -z                        Use external mysql database"
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ewkh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:x:ewkmyzh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -202,6 +208,12 @@ while getopts "t:a:nbcr:l:s:p:v:x:ewkh" arg; do
             ;;
         k)  KEEP_ERRAND_ALIVE=true
             ;;
+        m)  USE_MYSQL_FOR_PCF=true
+            ;;
+        y)  DEPLOY_HA_INTERNAL_MYSQL=true
+            ;;
+        z)  USE_EXTERNAL_MYSQL=true
+            ;;
         h)
             showUsage
             exit 0
@@ -272,13 +284,22 @@ if [ -n "$TCP_PATH" ]; then
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
+# Solace deployment defaults to internal MySQL (non ha) if no MySQL option is specified
+if [[ "$DEPLOY_HA_INTERNAL_MYSQL" == true ]]; then
+    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
+elif [[ "$USE_MYSQL_FOR_PCF" == true ]]; then
+    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/mysql_for_pcf.yml"
+elif [[ "$USE_EXTERNAL_MYSQL" == true ]]; then
+    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/external_mysql.yml "
+fi
+
 checkSolaceReleases
 
 export SOLACE_VMR_RELEASE=$( bosh releases --json | jq '.Tables[].Rows[] | select(.name | contains("solace-vmr")) | .version' | sed 's/\"//g' | sort -r | head -1 )
 export TEMPLATE_VERSION=$( echo $SOLACE_VMR_RELEASE | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
-OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml "}
+OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
 FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $MAKE_WINDOWS_DEPLOYMENT"}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
@@ -295,5 +316,5 @@ fi
 # Accept if defined or default to the version from $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME
 RELEASE_VARS=${RELEASE_VARS:-" -l $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml"}
 
-BOSH_PARAMS=" $OPS_BASE $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $EXTRA_BOSH_PARAMS"
+BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $EXTRA_BOSH_PARAMS"
 
