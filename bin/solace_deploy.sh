@@ -14,7 +14,7 @@ trap cleanupAfterDeploy EXIT INT TERM HUP
 
 checkDeploymentRequirements
 
-BOSH_CMD="bosh -d solace_messaging deploy solace-deployment.yml $BOSH_PARAMS"
+BOSH_CMD="bosh -d solace_pubsub deploy solace-deployment.yml $BOSH_PARAMS"
 
 echo
 echo $BOSH_CMD

@@ -99,10 +99,10 @@ function checkSolaceReleases() {
    exit 1
  fi
 
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub-broker | wc -l`
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
-   echo "solace-messaging release seem to be missing from bosh, please upload-release to bosh"
+   echo "solace-pubsub-broker release seem to be missing from bosh, please upload-release to bosh"
    echo 
    echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
    exit 1

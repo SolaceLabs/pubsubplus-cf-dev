@@ -17,7 +17,7 @@ export PRIMARY_PARAM="includeMonitor=false&includeBackup=false"
 export BACKUP_PARAM="includeMonitor=false&includePrimary=false"
 
 export SB_ORG=${SB_ORG:-"solace"}
-export SB_SPACE=${SB_SPACE:-"solace-messaging"}
+export SB_SPACE=${SB_SPACE:-"solace-broker"}
 
 export TEST_ORG=${TEST_ORG:-"solace-test"}
 export TEST_SPACE=${TEST_SPACE:-"test"}
@@ -41,28 +41,28 @@ function confirmServiceBrokerRunning() {
     getServiceBrokerDetails
 
     ## Lookup again to confirm and use for message
-    SB_RUNNING=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | grep started | wc -l`
+    SB_RUNNING=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | grep started | wc -l`
     if [ "$SB_RUNNING" -eq "1" ]; then
       log "confirmServiceBrokerRunning : Service Broker is running"
     else
       log "confirmServiceBrokerRunning : Service Broker is NOT running"
     fi
     ## Will cause an exit in testing ( set -e )
-    cf apps | grep -v Getting | grep solace-messaging | sort | tail -1 | grep started
-    export SB_APP=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1 | grep started | awk '{ print $1}'`
+    cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1 | grep started
+    export SB_APP=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1 | grep started | awk '{ print $1}'`
 }
 
 function getServiceBrokerDetails() {
  
  switchToServiceBrokerTarget
 
- SB_FOUND=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1 | wc -l`
- SB_RUNNING=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | grep started | wc -l`
+ SB_FOUND=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1 | wc -l`
+ SB_RUNNING=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | grep started | wc -l`
 
  if [ "$SB_FOUND" -eq "1" ]; then
   ## Capture a few details from the service broker
-   export SB_APP=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | awk '{ print $1}'`
-   export SB_URL=`cf apps | grep -v Getting | grep solace-messaging | sort | tail -1  | grep $SB_APP | awk '{ print $6}'`
+   export SB_APP=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | awk '{ print $1}'`
+   export SB_URL=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | grep $SB_APP | awk '{ print $6}'`
    export SECURITY_USER_NAME=`cf env $SB_APP | grep SECURITY_USER_NAME | awk '{ print $2}'`
    export SECURITY_USER_PASSWORD=`cf env $SB_APP | grep SECURITY_USER_PASSWORD | awk '{ print $2}'`
    export VMR_SUPPORT_PASSWORD=`cf env $SB_APP | grep VMR_SUPPORT_PASSWORD | awk '{ print $2}'`
@@ -110,7 +110,7 @@ function lookupServiceBrokerDetails() {
  fi
 
  else
-   log "Could not find solace-messaging in the current cloud-foundry environment"
+   log "Could not find solace-pubsub-broker in the current cloud-foundry environment"
  fi
 
 }

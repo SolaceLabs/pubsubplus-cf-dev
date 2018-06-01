@@ -1,6 +1,6 @@
 #!/bin/bash
 
-export DEPLOYMENT_NAME="solace_messaging"
+export DEPLOYMENT_NAME="solace_pubsub"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
 ######################################
@@ -160,19 +160,19 @@ function getReleaseNameAndVersion() {
     echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_DEV $SOLACE_VMR_BOSH_RELEASE_VERSION_DEV"
 
 
-    SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-messaging-*.tgz"
+    SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-pubsub-broker-*.tgz"
     for f in $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER; do
       if ! [ -e "$f" ]; then
-        echo "Could not find solace-messaging bosh release file: $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER"
+        echo "Could not find solace-pubsub-broker bosh release file: $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER"
         exit 1
       fi
 
       export SOLACE_MESSAGING_BOSH_RELEASE_FILE="$f"
       break
     done
-    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' )
-    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-pubsub-broker-//g' | sed 's/.tgz//g' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-pubsub-broker-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-pubsub-broker-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
     echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL"
     echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION $SOLACE_MESSAGING_BOSH_RELEASE_VERSION"
     echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV"
@@ -183,18 +183,18 @@ function uploadReleases() {
 
 echo "in function uploadReleases. SOLACE_MESSAGING_BOSH_RELEASE_FILE: $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
 
-SOLACE_MESSAGING_BOSH_RELEASE_FILE=${SOLACE_MESSAGING_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-messaging-*.tgz | tail -1`}
-SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-messaging | wc -l`
+SOLACE_MESSAGING_BOSH_RELEASE_FILE=${SOLACE_MESSAGING_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-pubsub-broker-*.tgz | tail -1`}
+SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-pubsub-broker | wc -l`
 
 if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
-  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-messaging | awk '{ print $4 }'`
+  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-pubsub-broker | awk '{ print $4 }'`
   # remove trailing '*'
   UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
-  echo "Determined solace-messaging uploaded version $UPLOADED_RELEASE_VERSION"
+  echo "Determined solace-pubsub-broker uploaded version $UPLOADED_RELEASE_VERSION"
  fi
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ] || \
@@ -203,7 +203,7 @@ if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
 
   $BOSH_CMD upload-release $SOLACE_MESSAGING_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "A solace-messaging release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
+  echo "A solace-pubsub-broker release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
 fi
@@ -292,13 +292,13 @@ function deleteSolaceReleases() {
      echo "No solace-vmr release found: $SOLACE_VMR_RELEASE_FOUND_COUNT"
  fi
 
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub-broker | wc -l`
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
-     # solace-messaging
-     echo "Deleting release solace-messaging"
-     bosh -n delete-release solace-messaging
+     # solace-pubsub-broker
+     echo "Deleting release solace-pubsub-broker"
+     bosh -n delete-release solace-pubsub-broker
  else
-     echo "No solace-messaging release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
+     echo "No solace-pubsub-broker release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
  fi
 
 }
