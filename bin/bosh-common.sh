@@ -120,7 +120,7 @@ function shutdownVMRJobs() {
  VM_FOUND_COUNT=`$BOSH_CMD vms | grep $VM_JOB | wc -l`
  VM_RUNNING_FOUND_COUNT=`$BOSH_CMD vms --json | jq '.Tables[].Rows[] | select(.process_state=="running") | .instance' | grep $VM_JOB |  wc -l`
  DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$DEPLOYMENT_NAME\$" | wc -l )
- RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
+ RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-pubsub | wc -l`
 
  if [ "$VM_RUNNING_FOUND_COUNT" -eq "1" ]; then
 
@@ -142,22 +142,22 @@ function shutdownVMRJobs() {
 }
 
 function getReleaseNameAndVersion() {
-    SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-vmr-*.tgz"
-    for f in $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER; do
+    SOLACE_PUBSUB_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-pubsub-*.tgz"
+    for f in $SOLACE_PUBSUB_BOSH_RELEASE_FILE_MATCHER; do
       if ! [ -e "$f" ]; then
-        echo "Could not find solace-vmr bosh release file: $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER"
+        echo "Could not find solace-pubsub bosh release file: $SOLACE_PUBSUB_BOSH_RELEASE_FILE_MATCHER"
         exit 1
       fi
 
-      export SOLACE_VMR_BOSH_RELEASE_FILE="$f"
+      export SOLACE_PUBSUB_BOSH_RELEASE_FILE="$f"
       break
     done
-    export SOLACE_VMR_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' )
-    export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-    export SOLACE_VMR_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
-    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_FULL $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL"
-    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION $SOLACE_VMR_BOSH_RELEASE_VERSION"
-    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_DEV $SOLACE_VMR_BOSH_RELEASE_VERSION_DEV"
+    export SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_PUBSUB_BOSH_RELEASE_FILE | sed 's/solace-pubsub-//g' | sed 's/.tgz//g' )
+    export SOLACE_PUBSUB_BOSH_RELEASE_VERSION=$(basename $SOLACE_PUBSUB_BOSH_RELEASE_FILE | sed 's/solace-pubsub-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    export SOLACE_PUBSUB_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_PUBSUB_BOSH_RELEASE_FILE | sed 's/solace-pubsub-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
+    echo "Determined SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL $SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL"
+    echo "Determined SOLACE_PUBSUB_BOSH_RELEASE_VERSION $SOLACE_PUBSUB_BOSH_RELEASE_VERSION"
+    echo "Determined SOLACE_PUBSUB_BOSH_RELEASE_VERSION_DEV $SOLACE_PUBSUB_BOSH_RELEASE_VERSION_DEV"
 
 
     SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-messaging-*.tgz"
@@ -208,32 +208,32 @@ if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
 
 fi
 
-SOLACE_VMR_BOSH_RELEASE_FILE=${SOLACE_VMR_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`}
-RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
+SOLACE_PUBSUB_BOSH_RELEASE_FILE=${SOLACE_PUBSUB_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-pubsub-*.tgz | tail -1`}
+RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-pubsub | wc -l`
 
-echo "in function uploadReleases. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
+echo "in function uploadReleases. SOLACE_PUBSUB_BOSH_RELEASE_FILE: $SOLACE_PUBSUB_BOSH_RELEASE_FILE"
 
-if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
+if [ -f $SOLACE_PUBSUB_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
  if [ "$RELEASE_FOUND_COUNT" -gt "0" ]; then
-  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-vmr | awk '{ print $4 }'`
+  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-pubsub | awk '{ print $4 }'`
   # remove trailing '*'
   UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
  fi
 
  if [ "$RELEASE_FOUND_COUNT" -eq "0" ] || \
-    [ "$SOLACE_VMR_BOSH_RELEASE_VERSION_FULL" '>' "$UPLOADED_RELEASE_VERSION" ]; then
-  echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
+    [ "$SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL" '>' "$UPLOADED_RELEASE_VERSION" ]; then
+  echo "Will upload release $SOLACE_PUBSUB_BOSH_RELEASE_FILE"
 
-  $BOSH_CMD upload-release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
+  $BOSH_CMD upload-release $SOLACE_PUBSUB_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "A solace-vmr release with version greater than or equal to $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
+  echo "A solace-pubsub release with version greater than or equal to $SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
 else
- >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
+ >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-pubsub-*.tgz"
  exit 1
 fi
 
@@ -283,13 +283,13 @@ function deleteDeployment() {
 
 function deleteSolaceReleases() {
 
- SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
- if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -gt "0" ]; then
-     # solace-vmr
-     echo "Deleting release solace-vmr"
-     bosh -n delete-release solace-vmr
+ SOLACE_PUBSUB_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub | wc -l`
+ if [ "$SOLACE_PUBSUB_RELEASE_FOUND_COUNT" -gt "0" ]; then
+     # solace-pubsub
+     echo "Deleting release solace-pubsub"
+     bosh -n delete-release solace-pubsub
  else
-     echo "No solace-vmr release found: $SOLACE_VMR_RELEASE_FOUND_COUNT"
+     echo "No solace-pubsub release found: $SOLACE_PUBSUB_RELEASE_FOUND_COUNT"
  fi
 
  SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
