@@ -1,9 +1,5 @@
 - type: remove
-  path: /instance_groups/name=Shared/jobs/6
-- type: remove
   path: /instance_groups/name=Shared/jobs/5
-- type: remove
-  path: /instance_groups/name=Large/jobs/6
 - type: remove
   path: /instance_groups/name=Large/jobs/5
 - type: remove
