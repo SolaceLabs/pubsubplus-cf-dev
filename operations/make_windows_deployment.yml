@@ -1,24 +1,24 @@
 - type: remove
-  path: /instance_groups/name=Shared/jobs/5
+  path: /instance_groups/name=Shared/jobs/4
 - type: remove
-  path: /instance_groups/name=Large/jobs/5
-- type: remove
-  path: /instance_groups/name=Medium-HA/jobs/6
+  path: /instance_groups/name=Large/jobs/4
 - type: remove
   path: /instance_groups/name=Medium-HA/jobs/5
 - type: remove
-  path: /instance_groups/name=Large-HA/jobs/6
+  path: /instance_groups/name=Medium-HA/jobs/4
 - type: remove
   path: /instance_groups/name=Large-HA/jobs/5
+- type: remove
+  path: /instance_groups/name=Large-HA/jobs/4
 - type: replace
   path: /instance_groups/name=deploy-all/properties/solace_messaging?/auto_services?/name=p-mysql/plan
-  value: 512mb
+  value: 412mb
 - type: replace
   path: /instance_groups/name=tests/properties/solace_messaging?/auto_services?/name=p-mysql/plan
-  value: 512mb
+  value: 412mb
 - type: replace
   path: /instance_groups/name=delete-all/properties/solace_messaging?/auto_services?/name=p-mysql/plan
-  value: 512mb
+  value: 412mb
 - type: replace
   path: /instance_groups/name=deploy-all/properties/cf/admin_password?
   value: admin
