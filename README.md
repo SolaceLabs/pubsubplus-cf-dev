@@ -139,9 +139,9 @@ PCF-Dev provides a local installation of cloud foundry in a box to help test app
 
 Using PCF-Dev you can install and test applications, bind to services that are available in PCF-Dev.
 
-You can also add services to PCF-Dev, such as solace-messaging and use solace-messaging with your applications.
+You can also add services to PCF-Dev, such as solace-pubsub and use solace-pubsub with your applications.
 
-Our goal is to to add solace-messaging as a service in PCF-Dev.
+Our goal is to to add solace-pubsub as a service in PCF-Dev.
 
 You need to install [PCF-Dev](https://pivotal.io/pcf-dev). Please follow these instructions:
 
@@ -311,7 +311,7 @@ The goal of the deployment steps is to install Solace Messaging into the running
 #### The Solace Pivotal Tile
 
 * The Solace Pivotal Tile is available for download from [PivNet](https://network.pivotal.io/products/solace-messaging/).
-* [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-messaging/)
+* [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-pubsub/)
   - _You may use Solace Tiles for which we have matching [templates](./templates), 
    Installation will not work without templates to match the tile version_
 
@@ -341,7 +341,7 @@ The pivotal file is a zip file. We need to extract the relevant bosh releases ne
 Do the following to extract the tile contents:
 
 ~~~~
-extract_tile.sh -t ~/workspace/solace-messaging-1.4.0.pivotal
+extract_tile.sh -t ~/workspace/solace-pubsub-1.4.0.pivotal
 ~~~~
 
 You will find the relevant contents extracted to ~/workspace/releases
@@ -357,7 +357,7 @@ solace_upload_releases.sh
 
 ### Deployment Step 3 - Deploy 
 
-This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-messaging as a service in Cloud Foundry.
+This will deploy the VMR(s) to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of VMRs that you want to deploy._
 
@@ -379,7 +379,7 @@ _The current deployment can be updated by simply rerunning the deployment script
 
 ## Using the Deployment
 
-At this stage, solace-messaging is a service in the CF Deployment, and the BOSH-lite VMR deployment will auto register with the service broker
+At this stage, solace-pubsub is a service in the CF Deployment, and the BOSH-lite VMR deployment will auto register with the service broker
 and become available for use in CF.
 
 _You can use 'cf' from cli-tools, or directly from your host computer, they both access the same CF instance_
@@ -388,7 +388,7 @@ For example if you deployed the default Shared VMR, a "shared" service plan will
 
 ~~~~
 cf m
-cf create-service solace-messaging shared solace-messaging-demo-instance
+cf create-service solace-pubsub shared solace-pubsub-demo-instance
 cf services
 ~~~~
 
@@ -433,10 +433,10 @@ cf m
 You can use your browser to examine the deployed service broker dashboard: 
 
 * On Windows, having PCF-Dev deployed service broker
-  * [ service broker dashboard ](http://solace-messaging.local.pcfdev.io/)
+  * [ service broker dashboard ](http://solace-pubsub-broker.local.pcfdev.io/)
 
 * On Linux, having service broker deployed on CF-Deployment
-  * [ service broker dashboard ](http://solace-messaging.bosh-lite.com/)
+  * [ service broker dashboard ](http://solace-pubsub-broker.bosh-lite.com/)
 
 * For Linux and Windows, you will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
 
