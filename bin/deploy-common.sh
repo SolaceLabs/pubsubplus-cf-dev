@@ -90,7 +90,7 @@ function checkDeploymentRequirements() {
 
 function checkSolaceReleases() {
 
- SOLACE_PUBSUB_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub | wc -l`
+ SOLACE_PUBSUB_RELEASE_FOUND_COUNT=`bosh releases | grep -v solace-pubsub-broker | grep solace-pubsub | wc -l`
 
  if [ "$SOLACE_PUBSUB_RELEASE_FOUND_COUNT" -eq "0" ]; then
    echo "solace-pubsub release seem to be missing from bosh, please upload-release to bosh"
@@ -99,10 +99,10 @@ function checkSolaceReleases() {
    exit 1
  fi
 
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub-broker | wc -l`
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
-   echo "solace-messaging release seem to be missing from bosh, please upload-release to bosh"
+   echo "solace-pubsub-broker release seem to be missing from bosh, please upload-release to bosh"
    echo 
    echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
    exit 1
@@ -295,7 +295,7 @@ fi
 
 checkSolaceReleases
 
-export SOLACE_PUBSUB_RELEASE=$( bosh releases --json | jq '.Tables[].Rows[] | select(.name | contains("solace-pubsub")) | .version' | sed 's/\"//g' | sort -r | head -1 )
+export SOLACE_PUBSUB_RELEASE=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("solace-pubsub")) and (.name | contains("solace-pubsub-broker") | not)) | .version' )
 export TEMPLATE_VERSION=$( echo $SOLACE_PUBSUB_RELEASE | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 

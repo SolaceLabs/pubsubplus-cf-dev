@@ -11,15 +11,6 @@
 - type: remove
   path: /instance_groups/name=Large-HA/jobs/4
 - type: replace
-  path: /instance_groups/name=deploy-all/properties/solace_messaging?/auto_services?/name=p-mysql/plan
-  value: 412mb
-- type: replace
-  path: /instance_groups/name=tests/properties/solace_messaging?/auto_services?/name=p-mysql/plan
-  value: 412mb
-- type: replace
-  path: /instance_groups/name=delete-all/properties/solace_messaging?/auto_services?/name=p-mysql/plan
-  value: 412mb
-- type: replace
   path: /instance_groups/name=deploy-all/properties/cf/admin_password?
   value: admin
 - type: replace
