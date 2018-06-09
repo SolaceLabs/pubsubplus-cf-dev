@@ -11,6 +11,8 @@ MEDIUM_HA_POOL_NAME="Medium-HA"
 LARGE_HA_PLAN="6a833e3f-3a24-419d-94d9-4bb38dc51f04"
 LARGE_HA_POOL_NAME="Large-HA"
 
+export SOLACE_SERVICE_NAME="solace-pubsub"
+
 export PAIRS_PARAM="includeMonitor=false"
 export MONITOR_PARAM="includeBackup=false&includePrimary=false"
 export PRIMARY_PARAM="includeMonitor=false&includeBackup=false"
@@ -202,13 +204,13 @@ function checkServiceBrokerServicePlanStats() {
  log "ServiceBroker: service plan stats $1"
  curl -sX GET $SB_BASE/solace/status -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: shared plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$SHARED_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$SHARED_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: large plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$LARGE_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$LARGE_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: medium-ha plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$MEDIUM_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$MEDIUM_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: large-ha plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$LARGE_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$LARGE_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
 
  getServiceBrokerMessageRoutersSummary $1
 
@@ -304,8 +306,8 @@ function switchToTestOrgAndSpace() {
 function enableAndShowInMarketPlace() {
 
  ## Checking Marketplace
- log "Enabling access to the Solace Service Broker provided service: solace-messaging"
- cf enable-service-access solace-messaging
+ log "Enabling access to the Solace Service Broker provided service: $SOLACE_SERVICE_NAME"
+ cf enable-service-access $SOLACE_SERVICE_NAME
 
  log "Marketplace:"
  cf m
@@ -313,8 +315,8 @@ function enableAndShowInMarketPlace() {
  #todo: Need to install tile for this check to work (enable_global_access_to_plans)
  # Rely on grep's non-0 exit code to fail script
 
- log "Checking marketplace for solace service: solace-messaging"
- cf m | grep solace-messaging
+ log "Checking marketplace for solace service: $SOLACE_SERVICE_NAME"
+ cf m | grep $SOLACE_SERVICE_NAME
  log "Checking marketplace for solace service plan: shared"
  cf m | grep shared 
  log "Checking marketplace for solace service plan: large"
@@ -325,13 +327,13 @@ function enableAndShowInMarketPlace() {
  cf m | grep large-ha
 
  log "Checking marketplace for solace service plan: shared, free"
- cf m -s solace-messaging | grep shared | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep shared | grep free
  log "Checking marketplace for solace service plan: large, free"
- cf m -s solace-messaging | grep -v large-ha | grep large | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep -v large-ha | grep large | grep free
  log "Checking marketplace for solace service plan: medium-ha, free"
- cf m -s solace-messaging | grep medium-ha | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep medium-ha | grep free
  log "Checking marketplace for solace service plan: large-ha, free"
- cf m -s solace-messaging | grep large-ha | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep large-ha | grep free
 
 }
 
