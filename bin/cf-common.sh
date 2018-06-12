@@ -92,19 +92,19 @@ function lookupServiceBrokerDetails() {
 
  if [ "$SB_RUNNING" -eq "1" ]; then
     lookupServiceBrokerVMRs
-    log "Servicebroker LARGE_VMR_LIST: ${LARGE_VMR_LIST} "
-    log "Servicebroker SHARED_VMR_LIST: ${SHARED_VMR_LIST} "
-    log "Servicebroker LARGE_HA_VMR_LIST: ${LARGE_HA_VMR_LIST} "
-    log "Servicebroker LARGE_HA_VMR_PAIRS_LIST: ${LARGE_HA_VMR_PAIRS_LIST} "
-    log "Servicebroker LARGE_HA_VMR_PRIMARY_LIST: ${LARGE_HA_VMR_PRIMARY_LIST} "
-    log "Servicebroker LARGE_HA_VMR_BACKUP_LIST: ${LARGE_HA_VMR_BACKUP_LIST} "
-    log "Servicebroker LARGE_HA_VMR_MONITOR_LIST: ${LARGE_HA_VMR_MONITOR_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_LIST: ${MEDIUM_HA_VMR_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_PAIRS_LIST: ${MEDIUM_HA_VMR_PAIRS_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_PRIMARY_LIST: ${MEDIUM_HA_VMR_PRIMARY_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_BACKUP_LIST: ${MEDIUM_HA_VMR_BACKUP_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_MONITOR_LIST: ${MEDIUM_HA_VMR_MONITOR_LIST} "
-    log "Servicebroker ALL_VMR_LIST: ${ALL_VMR_LIST} "
+    log "Servicebroker LARGE_LIST: ${LARGE_LIST} "
+    log "Servicebroker SHARED_LIST: ${SHARED_LIST} "
+    log "Servicebroker LARGE_HA_LIST: ${LARGE_HA_LIST} "
+    log "Servicebroker LARGE_HA_PAIRS_LIST: ${LARGE_HA_PAIRS_LIST} "
+    log "Servicebroker LARGE_HA_PRIMARY_LIST: ${LARGE_HA_PRIMARY_LIST} "
+    log "Servicebroker LARGE_HA_BACKUP_LIST: ${LARGE_HA_BACKUP_LIST} "
+    log "Servicebroker LARGE_HA_MONITOR_LIST: ${LARGE_HA_MONITOR_LIST} "
+    log "Servicebroker MEDIUM_HA_LIST: ${MEDIUM_HA_LIST} "
+    log "Servicebroker MEDIUM_HA_PAIRS_LIST: ${MEDIUM_HA_PAIRS_LIST} "
+    log "Servicebroker MEDIUM_HA_PRIMARY_LIST: ${MEDIUM_HA_PRIMARY_LIST} "
+    log "Servicebroker MEDIUM_HA_BACKUP_LIST: ${MEDIUM_HA_BACKUP_LIST} "
+    log "Servicebroker MEDIUM_HA_MONITOR_LIST: ${MEDIUM_HA_MONITOR_LIST} "
+    log "Servicebroker ALL_LIST: ${ALL_LIST} "
     getServiceBrokerRouterInventory
     log "Servicebroker AvailabilityZones ${AVAILABILITY_ZONE_COUNT} : ${AVAILABILITY_ZONES} "
  else
@@ -129,39 +129,39 @@ function lookupServiceBrokerVMRs() {
 
  ROUTERS_DATA=`echo $INFO_DATA | jq -c ".messageRouters"`
   
- export ALL_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
- export SHARED_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "Shared"))'    | jq -c '.[] | .sshLink'))
- export LARGE_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "Large"))'     | jq -c '.[] | .sshLink'))
+ export ALL_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
+ export SHARED_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "Shared"))'    | jq -c '.[] | .sshLink'))
+ export LARGE_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "Large"))'     | jq -c '.[] | .sshLink'))
  
- export MEDIUM_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Medium-HA" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Medium-HA" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Medium-HA" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Medium-HA" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Medium-HA" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
  
- export LARGE_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "Large-HA"))'                        | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Large-HA" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Large-HA" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "Large-HA"))'                        | jq -c '.[] | .sshLink'))
+ export LARGE_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "Large-HA" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "Large-HA" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export LARGE_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "Large-HA" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
 }
 
 #Deprecated 1.1.0
 function deprecated_lookupServiceBrokerVMRs() {
 
- export ALL_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links`
- export SHARED_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$SHARED_PLAN`
- export LARGE_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_PLAN`
- export MEDIUM_HA_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN`
- export MEDIUM_HA_VMR_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PAIRS_PARAM`
- export MEDIUM_HA_VMR_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PRIMARY_PARAM`
- export MEDIUM_HA_VMR_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$BACKUP_PARAM`
- export MEDIUM_HA_VMR_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$MONITOR_PARAM`
- export LARGE_HA_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN`
- export LARGE_HA_VMR_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PAIRS_PARAM`
- export LARGE_HA_VMR_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PRIMARY_PARAM`
- export LARGE_HA_VMR_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$BACKUP_PARAM`
- export LARGE_HA_VMR_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$MONITOR_PARAM`
+ export ALL_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links`
+ export SHARED_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$SHARED_PLAN`
+ export LARGE_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_PLAN`
+ export MEDIUM_HA_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN`
+ export MEDIUM_HA_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PAIRS_PARAM`
+ export MEDIUM_HA_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PRIMARY_PARAM`
+ export MEDIUM_HA_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$BACKUP_PARAM`
+ export MEDIUM_HA_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$MONITOR_PARAM`
+ export LARGE_HA_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN`
+ export LARGE_HA_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PAIRS_PARAM`
+ export LARGE_HA_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PRIMARY_PARAM`
+ export LARGE_HA_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$BACKUP_PARAM`
+ export LARGE_HA_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$MONITOR_PARAM`
 
 }
 
@@ -173,19 +173,19 @@ function formatVMRList() {
 function showServiceBrokerVMRs() {
 
  log "ServiceBroker: VMR Lists "
- echo "ALL_VMR_LIST=${ALL_VMR_LIST}"
- echo "SHARED_VMR_LIST=${SHARED_VMR_LIST}"
- echo "LARGE_VMR_LIST=${LARGE_VMR_LIST}"
- echo "MEDIUM_HA_VMR_LIST=${MEDIUM_HA_VMR_LIST}"
- echo "MEDIUM_HA_VMR_PAIRS_LIST=${MEDIUM_HA_VMR_PAIRS_LIST}"
- echo "MEDIUM_HA_VMR_PRIMARY_LIST=${MEDIUM_HA_VMR_PRIMARY_LIST}"
- echo "MEDIUM_HA_VMR_BACKUP_LIST=${MEDIUM_HA_VMR_BACKUP_LIST}"
- echo "MEDIUM_HA_VMR_MONITOR_LIST=${MEDIUM_HA_VMR_MONITOR_LIST}"
- echo "LARGE_HA_VMR_LIST=${LARGE_HA_VMR_LIST}"
- echo "LARGE_HA_VMR_PAIRS_LIST=${LARGE_HA_VMR_PAIRS_LIST}"
- echo "LARGE_HA_VMR_PRIMARY_LIST=${LARGE_HA_VMR_PRIMARY_LIST}"
- echo "LARGE_HA_VMR_BACKUP_LIST=${LARGE_HA_VMR_BACKUP_LIST}"
- echo "LARGE_HA_VMR_MONITOR_LIST=${LARGE_HA_VMR_MONITOR_LIST}"
+ echo "ALL_LIST=${ALL_LIST}"
+ echo "SHARED_LIST=${SHARED_LIST}"
+ echo "LARGE_LIST=${LARGE_LIST}"
+ echo "MEDIUM_HA_LIST=${MEDIUM_HA_LIST}"
+ echo "MEDIUM_HA_PAIRS_LIST=${MEDIUM_HA_PAIRS_LIST}"
+ echo "MEDIUM_HA_PRIMARY_LIST=${MEDIUM_HA_PRIMARY_LIST}"
+ echo "MEDIUM_HA_BACKUP_LIST=${MEDIUM_HA_BACKUP_LIST}"
+ echo "MEDIUM_HA_MONITOR_LIST=${MEDIUM_HA_MONITOR_LIST}"
+ echo "LARGE_HA_LIST=${LARGE_HA_LIST}"
+ echo "LARGE_HA_PAIRS_LIST=${LARGE_HA_PAIRS_LIST}"
+ echo "LARGE_HA_PRIMARY_LIST=${LARGE_HA_PRIMARY_LIST}"
+ echo "LARGE_HA_BACKUP_LIST=${LARGE_HA_BACKUP_LIST}"
+ echo "LARGE_HA_MONITOR_LIST=${LARGE_HA_MONITOR_LIST}"
 
 }
 
