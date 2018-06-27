@@ -1,15 +1,15 @@
 - type: remove
-  path: /instance_groups/name=Shared/jobs/4
+  path: /instance_groups/name=enterprise-shared/jobs/4
 - type: remove
-  path: /instance_groups/name=Large/jobs/4
+  path: /instance_groups/name=enterprise-large/jobs/4
 - type: remove
-  path: /instance_groups/name=Medium-HA/jobs/5
+  path: /instance_groups/name=enterprise-medium-ha/jobs/5
 - type: remove
-  path: /instance_groups/name=Medium-HA/jobs/4
+  path: /instance_groups/name=enterprise-medium-ha/jobs/4
 - type: remove
-  path: /instance_groups/name=Large-HA/jobs/5
+  path: /instance_groups/name=enterprise-large-ha/jobs/5
 - type: remove
-  path: /instance_groups/name=Large-HA/jobs/4
+  path: /instance_groups/name=enterprise-large-ha/jobs/4
 - type: replace
   path: /instance_groups/name=deploy-all/properties/cf/admin_password?
   value: admin
