@@ -363,7 +363,7 @@ _If not sure what to pick just use the default with no parameters. Otherwise, pl
 
 If deploying on **Windows**, you must also provide a `-w` option to the `solace_deploy.sh` script.
 
-**Example:** Deploy the default which is a single instance of a Shared VMR using a self-signed server certificate and evaluation vmr edition.
+**Example:** Deploy the default which is a single instance of a enterprise-shared VMR using a self-signed server certificate and evaluation vmr edition.
 ~~~~
 solace_deploy.sh
 ~~~~
@@ -384,7 +384,7 @@ and become available for use in CF.
 
 _You can use 'cf' from cli-tools, or directly from your host computer, they both access the same CF instance_
 
-For example if you deployed the default Shared VMR, a "shared" service plan will be available and you can do this:
+For example if you deployed the default enterprise-shared VMR, a "shared" service plan will be available and you can do this:
 
 ~~~~
 cf m
