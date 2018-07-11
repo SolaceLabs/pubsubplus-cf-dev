@@ -1,9 +1,5 @@
 - type: remove
-  path: /instance_groups/name=enterprise-shared/jobs/5
-- type: remove
-  path: /instance_groups/name=enterprise-shared/jobs/5/jobs/4 
-- type: remove
-  path: /instance_groups/name=enterprise-large/jobs/5
+  path: /instance_groups/name=enterprise-shared/jobs/4 
 - type: remove
   path: /instance_groups/name=enterprise-large/jobs/4
 - type: remove
