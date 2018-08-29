@@ -1,4 +1,4 @@
 solace_load_version: soltr_8.12.0.1007
 bosh_stemcell: "ubuntu-trusty"
-bosh_stemcell_version: "3541.10"
+bosh_stemcell_version: "3586.26"
 solace_service_broker_jar: solace-service-broker-0.0.1089.jar

@@ -141,6 +141,10 @@ tcp_routes_config.disabled.tcp_route_enabled: 'not_allowed'
 #tcp_routes_config.enabled.rest_tcp_route_enabled: enabled_by_default
 #tcp_routes_config.enabled.rest_tls_tcp_route_enabled: enabled_by_default
 
+# -----------------------------------
+# Secure Service Instance Credentials
+# ------------------------------------
+secure_service_credentials: false
 
 
 # job-specific configuration, supported in PCF 1.8+.
