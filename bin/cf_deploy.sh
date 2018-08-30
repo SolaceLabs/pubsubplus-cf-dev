@@ -67,6 +67,9 @@ if [ -f $SCRIPTPATH/apply_open_security_groups.sh ]; then
   $SCRIPTPATH/apply_open_security_groups.sh
 fi
 
+echo "Setup environment for TCP Routes" 
+$SCRIPTPATH/setup_tcp_routing.sh
+
 echo
 echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""
 echo
