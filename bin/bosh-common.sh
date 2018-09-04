@@ -301,6 +301,15 @@ function deleteSolaceReleases() {
      echo "No solace-pubsub-broker release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
  fi
 
+SOLACE_SERVICE_ADAPTER_FOUND_COUNT=`bosh releases | grep solace-service-adapter | wc -l`
+if [ "$SOLACE_SERVICE_ADAPTER_FOUND_COUNT" -gt "0" ]; then
+    # solace-service-adapter
+    echo "Deleting release solace-service-adapter"
+    bosh -n delete-release solace-service-adapter
+else
+    echo "No solace-service-adapter release found: $SOLACE_SERVICE_ADAPTER_FOUND_COUNT"
+fi
+
 }
 
 function resume_bosh_lite_vm() {
