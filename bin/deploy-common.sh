@@ -251,6 +251,11 @@ fi
 if [[ $WINDOWS == true ]]; then
    MAKE_WINDOWS_DEPLOYMENT="-o $SCRIPTPATH/../operations/make_windows_deployment.yml" 
    export SYSTEM_DOMAIN="local.pcfdev.io"
+   USE_CREDHUB=$(cat $VARS_FILE | grep "secure_service_credentials" | grep "true" | wc -l)
+   if [ "$USE_CREDHUB" == "1" ]; then
+     echo "Secure Service Credentials feature must be disabled when deploying on PCFDev" 
+     exit 1 
+   fi
 fi
 
 if [[ $KEEP_ERRAND_ALIVE == true ]]; then
