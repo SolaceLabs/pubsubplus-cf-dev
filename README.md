@@ -225,6 +225,18 @@ Ensure VirtualBox is installed.
 
 Follow the [WSL installation instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and select the Ubuntu distribution.
 
+### Installation on WSL - Step 2 - Run the installer that sets up Bosh and CF
+
+First of all, enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
+
+In a Windows Administrator CMD console, run:
+
+~~~
+route add 10.244.0.0/19 192.168.50.6
+~~~
+
+_Without enabled routing, the VMs will not be able to communicate. You will have re-run this if you reboot your computer_
+
 Open an Ubuntu shell by typing Ubuntu into the Windows search tool and clicking on the application's icon.
 
 The script that installs bosh assumes certain file locations. These can be overridden by environment variables. These variables with their defaults are:
@@ -252,6 +264,7 @@ solace-messaging-cf-dev/bin/setup_bosh_on_wsl.sh
 ~~~
 
 That script will install ruby and other required programs and libraries, clone the repository if it's not already cloned, create the bosh virtual machine and deploy Cloud Foundry.
+
 
 <a name="installation-on-linux"></a>
 # Installation on Linux

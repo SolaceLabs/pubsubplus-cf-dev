@@ -50,19 +50,18 @@ function installBosh() {
 function deployCf() {
     source solace-messaging-cf-dev/workspace/bosh_env.sh
     solace-messaging-cf-dev/bin/cf_deploy.sh
+    #solace-messaging-cf-dev/bin/cf_mysql_deploy.sh
 }
 
 function installPrograms() {
 
-    sudo apt-get install -y jq build-essential zlibc zlib1g-dev ruby ruby-dev openssl libssl-dev libxslt-dev libxml2-dev libreadline6 libreadline6-dev libyaml-dev libsqlite3-dev sqlite3 
-    sudo gem install bundler
 
     # CF CLI from https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
     wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
     echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
     sudo apt-get update
-    sudo wget -O /etc/yum.repos.d/cloudfoundry-cli.repo https://packages.cloudfoundry.org/fedora/cloudfoundry-cli.repo
-    sudo apt-get install cf-cli
+    sudo apt-get install -y jq build-essential zlibc zlib1g-dev ruby ruby-dev rubygems openssl libssl-dev libxslt-dev libxml2-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 cf-cli
+    sudo gem install bundler
 }
 
 cd
@@ -72,4 +71,6 @@ set -e
 cloneRepo
 installBosh
 deployCf
+echo Now run: source solace-messaging-cf-dev/workspace/bosh_env.sh
+echo    then: solace-messaging-cf-dev/bin/cf_env.sh
 
