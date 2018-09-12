@@ -39,7 +39,9 @@ This guide will provide different steps for deploying on Windows than Linux ( Ma
 The following issues have been noted and addressed in this guide:
 
 - Windows is not yet supported by [bosh create-env](https://github.com/cloudfoundry/bosh/issues/1821)
-  - Workaround: use the old [Vagrant based BOSH-lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md). 
+  - Workaround 1: use the old [Vagrant based BOSH-lite]
+  (https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md).
+  - Workaround 2: install on the Windows Sybsystem for Linux (only available on Windows 10)
 - CF logging features do not work on a deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment) to the [Vagrant based BOSH-lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md)
   - Workaround: use [PCF-Dev](https://pivotal.io/pcf-dev) to host the CF deployment and cf-mysql. 
 
@@ -74,7 +76,7 @@ If you are installing this in a VM you will need to ensure that:
 
  
 <a name="installation-on-windows"></a>
-# Installation on Windows
+# Installation on Windows (without the Windows Subsystem for Linux)
 
 <a name="windows-overview"></a>
 ## Overview of Windows Deployment
@@ -193,6 +195,63 @@ vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
 
 You are now ready for a [Solace Messaging Deployment](#solace-messaging-deployment)
+
+<a name="installation-on-windows-subsystem-for-linux"></a>
+# Installation on Windows using the Windows Subsystem for Linux (WSL)
+
+<a name="wsl-overview"></a>
+## Overview of WSL Deployment
+
+Here is an overview of what this project will help you install if you are using a WSL deployment:
+
+![](resources/overview-wsl.png)
+
+This guide will help you install Bosh VM for hosting Solace PubSub+ instances.
+
+<a name="installation-steps-on-wsl"></a>
+## Installation Steps on WSL
+
+The goal of the installation steps is to start the required VMs on Windows.
+
+
+_The setup was last tested on Windows host with 32GB of RAM, using:_
+- WSL with Ubuntu 18.04
+- cf version 6.38.0+7ddf0aadd.2018-08-07
+- VirtualBox Version 5.2.18r124329
+
+### Installation on WSL - Step 1 - Install Windows Subsystem for Linux
+
+Ensure VirtualBox is installed.
+
+Follow the [WSL installation instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and select the Ubuntu distribution.
+
+Open an Ubuntu shell by typing Ubuntu into the Windows search tool and clicking on the application's icon.
+
+The script that installs bosh assumes certain file locations. These can be overridden by environment variables. These variables with their defaults are:
+
+~~~
+WIN_DRIVE: /mnt/c
+VIRTUALBOX_HOME: $WIN_DRIVE/Program Files/Oracle/VirtualBox
+GIT_REPO_BASE: https://github.com/SolaceDev
+~~~
+
+In WSL, the drives containing the Windows file systems are accessible through /mnt/c, mnt/d etc.
+
+If these values are correct for your system then you can invoke the Bosh/CF installation script by running
+
+~~~
+curl -L https://github.com/SolaceDev/solace-messaging-cf-dev/raw/master/bin/setup_bosh_on_wsl.sh | bash
+~~~
+
+Otherwise clone the repository, set the environment variables correctly and run the script. For example:
+
+~~~
+git clone https://github.com/SolaceDev/solace-messaging-cf-dev/
+export WIN_DRIVE=/mnt/d
+solace-messaging-cf-dev/bin/setup_bosh_on_wsl.sh
+~~~
+
+That script will install ruby and other required programs and libraries, clone the repository if it's not already cloned, create the bosh virtual machine and deploy Cloud Foundry.
 
 <a name="installation-on-linux"></a>
 # Installation on Linux
@@ -432,10 +491,10 @@ cf m
 
 You can use your browser to examine the deployed service broker dashboard: 
 
-* On Windows, having PCF-Dev deployed service broker
+* On Windows (non-WSL), having PCF-Dev deployed service broker
   * [ service broker dashboard ](http://solace-pubsub-broker.local.pcfdev.io/)
 
-* On Linux, having service broker deployed on CF-Deployment
+* On Linux or WSL, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-pubsub-broker.bosh-lite.com/)
 
 * For Linux and Windows, you will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
