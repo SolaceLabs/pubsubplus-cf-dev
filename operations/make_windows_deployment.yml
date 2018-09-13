@@ -14,15 +14,9 @@
 - type: remove
   path: /instance_groups/name=standard-medium/jobs/name=route_registrar
 - type: remove
-  path: /instance_groups/name=standard-large/jobs/name=route_registrar
-- type: remove
   path: /instance_groups/name=standard-medium-ha/jobs/name=route_registrar_active
 - type: remove
   path: /instance_groups/name=standard-medium-ha/jobs/name=route_registrar
-- type: remove
-  path: /instance_groups/name=standard-large-ha/jobs/name=route_registrar_active
-- type: remove
-  path: /instance_groups/name=standard-large-ha/jobs/name=route_registrar
 
 - type: replace
   path: /instance_groups/name=deploy-all/properties/cf/admin_password?
