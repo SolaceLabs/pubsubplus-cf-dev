@@ -4,6 +4,7 @@ set -x
 export WIN_DRIVE=${WIN_DRIVE:-"/mnt/c"}
 export VIRTUALBOX_HOME=${VIRTUALBOX_HOME:-"$WIN_DRIVE/Program Files/Oracle/VirtualBox"}
 export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceDev"}
+export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 
 # vboxmanage has to be able to see $HOME/.bosh_virtualbox_cpi in the Windows filesystem.
 # Therefore we create the files there, and link to them from the Linux home.
@@ -55,12 +56,13 @@ function deployCf() {
 
 function installPrograms() {
 
+    # Install the cf cli tool.
+    curl -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&source=github" | tar -zx
+    sudo mv cf /usr/local/bin
 
-    # CF CLI from https://docs.cloudfoundry.org/cf-cli/install-go-cli.html
-    wget -q -O - https://packages.cloudfoundry.org/debian/cli.cloudfoundry.org.key | sudo apt-key add -
-    echo "deb https://packages.cloudfoundry.org/debian stable main" | sudo tee /etc/apt/sources.list.d/cloudfoundry-cli.list
     sudo apt-get update
-    sudo apt-get install -y jq build-essential zlibc zlib1g-dev ruby ruby-dev rubygems openssl libssl-dev libxslt-dev libxml2-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3 cf-cli
+
+    sudo apt-get install -y jq build-essential zlibc zlib1g-dev ruby ruby-dev rubygems openssl libssl-dev libxslt-dev libxml2-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3
     sudo gem install bundler
 }
 
