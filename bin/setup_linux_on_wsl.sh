@@ -21,37 +21,45 @@ function setupLinks() {
 }
 
 function cloneRepo() {
-    if [ ! -e solace-messaging-cf-dev ]; then
-        (
-            git clone $GIT_REPO_BASE/solace-messaging-cf-dev.git
-            cd solace-messaging-cf-dev
-            if [ ! -z $GIT_BRANCH ]; then
-                git checkout $GIT_BRANCH
-            fi
+    if [ ! -d repos ]; then
+        mkdir repos
+    fi
+    cd repos
+    if [ ! -d solace-messaging-cf-dev ]; then
+    (
+        git clone $GIT_REPO_BASE/solace-messaging-cf-dev.git
+        cd solace-messaging-cf-dev
+        if [ ! -z $BRANCH ]; then
+            git checkout $BRANCH
+        fi
+    )
+    fi
 
-            git clone $GIT_REPO_BASE/cf-solace-messaging-deployment.git
-            cd cf-solace-messaging-deployment
-            if [ ! -z $GIT_BRANCH ]; then
-                git checkout $GIT_BRANCH
-            fi
-        )
+    if [ ! -f solace-messaging-cf-dev/cf-solace-messaging-deployment/README.md ]; then
+    (
+        cd solace-messaging-cf-dev
+        git clone $GIT_REPO_BASE/cf-solace-messaging-deployment.git
+        cd cf-solace-messaging-deployment
+        if [ ! -z $BRANCH ]; then
+            git checkout $BRANCH
+        fi
+    )
     fi
 }
 
 function installBosh() {
-    solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
+    repos/solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
     if [ ! -e /usr/local/bin/bosh ]; then
-        sudo cp solace-messaging-cf-dev/workspace/bucc/bin/bosh /usr/local/bin
+        sudo cp $WORKSPACE/bucc/bin/bosh /usr/local/bin
     fi
     if [ ! -e /usr/local/bin/bucc ]; then
-        sudo cp solace-messaging-cf-dev/workspace/bucc/bin/bucc /usr/local/bin
+        sudo cp $WORKSPACE/bucc/bin/bucc /usr/local/bin
     fi
 }
 
 function deployCf() {
-    source solace-messaging-cf-dev/workspace/bosh_env.sh
-    solace-messaging-cf-dev/bin/cf_deploy.sh
-    #solace-messaging-cf-dev/bin/cf_mysql_deploy.sh
+    source $WORKSPACE/bosh_env.sh
+    repos/solace-messaging-cf-dev/bin/cf_deploy.sh
 }
 
 function installPrograms() {
@@ -66,6 +74,20 @@ function installPrograms() {
     sudo gem install bundler
 }
 
+function createSettingsFile() {
+	SETTINGS_FILE=$HOME/.settings.sh
+
+	if [ ! -f $SETTINGS_FILE ]; then
+		echo "Capturing settings in $SETTINGS_FILE"
+		echo "export SOLACE_MESSAGING_CF_DEV=$HOME/repos/solace-messaging-cf-dev" >> $SETTINGS_FILE
+		echo "export WORKSPACE=$HOME/workspace" >> $SETTINGS_FILE
+		echo "export SOLACE_BUILD_DIR=$HOME/workspace/build" >> $SETTINGS_FILE
+		echo "export SOLACE_CACHE=$HOME/.SOLACE_CACHE" >> $SETTINGS_FILE
+		echo "source $SETTINGS_FILE" >> ~/.profile
+		echo "source repos/solace-messaging-cf-dev/.profile" >> ~/.profile
+	fi
+}
+
 cd
 setupLinks
 installPrograms
@@ -73,6 +95,6 @@ set -e
 cloneRepo
 installBosh
 deployCf
-echo Now run: source solace-messaging-cf-dev/workspace/bosh_env.sh
-echo    then: solace-messaging-cf-dev/bin/cf_env.sh
+createSettingsFile
+source repos/solace-messaging-cf-dev/.profile
 
