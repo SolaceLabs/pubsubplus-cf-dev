@@ -24,27 +24,29 @@ function cloneRepo() {
     if [ ! -d repos ]; then
         mkdir repos
     fi
-    cd repos
-    if [ ! -d solace-messaging-cf-dev ]; then
     (
-        git clone $GIT_REPO_BASE/solace-messaging-cf-dev.git
-        cd solace-messaging-cf-dev
-        if [ ! -z $BRANCH ]; then
-            git checkout $BRANCH
+        cd repos
+        if [ ! -d solace-messaging-cf-dev ]; then
+        (
+            git clone $GIT_REPO_BASE/solace-messaging-cf-dev.git
+            cd solace-messaging-cf-dev
+            if [ ! -z $BRANCH ]; then
+                git checkout $BRANCH
+            fi
+        )
         fi
-    )
-    fi
 
-    if [ ! -f solace-messaging-cf-dev/cf-solace-messaging-deployment/README.md ]; then
-    (
-        cd solace-messaging-cf-dev
-        git clone $GIT_REPO_BASE/cf-solace-messaging-deployment.git
-        cd cf-solace-messaging-deployment
-        if [ ! -z $BRANCH ]; then
-            git checkout $BRANCH
+        if [ ! -f solace-messaging-cf-dev/cf-solace-messaging-deployment/README.md ]; then
+        (
+            cd solace-messaging-cf-dev
+            git clone $GIT_REPO_BASE/cf-solace-messaging-deployment.git
+            cd cf-solace-messaging-deployment
+            if [ ! -z $BRANCH ]; then
+                git checkout $BRANCH
+            fi
+        )
         fi
     )
-    fi
 }
 
 function installBosh() {
@@ -89,10 +91,10 @@ function createSettingsFile() {
 }
 
 cd
-setupLinks
-installPrograms
+#setupLinks
+#installPrograms
 set -e
-cloneRepo
+#cloneRepo
 installBosh
 deployCf
 createSettingsFile
