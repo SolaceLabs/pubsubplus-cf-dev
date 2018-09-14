@@ -91,10 +91,10 @@ function createSettingsFile() {
 }
 
 cd
-#setupLinks
-#installPrograms
+setupLinks
+installPrograms
 set -e
-#cloneRepo
+cloneRepo
 installBosh
 deployCf
 createSettingsFile
