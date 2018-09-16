@@ -13,6 +13,9 @@ solace_router_client_secret: 1234
 # The start port seed from which all ports allocation are based.
 starting_port: 7000
 
+# Increase security by hiding service instance credentials from VCAP services
+secure_service_credentials: false
+
 # This is the password set for the "admin" user on the VMR
 vmr_admin_password: admin1
 ##

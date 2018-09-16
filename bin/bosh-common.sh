@@ -11,7 +11,7 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"3541.10"}
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.26"}
 export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
@@ -482,6 +482,9 @@ fi
 bucc env > $WORKSPACE/bosh_env.sh
 echo "export PATH=\$PATH:$SCRIPTPATH" >> $WORKSPACE/bosh_env.sh
 
+source $WORKSPACE/bosh_env.sh
+echo "Updating runtime-config to activate bosh-dns" 
+bosh -n update-runtime-config runtime-config.yml
 }
 
 function bosh_lite_vm_additions() {
