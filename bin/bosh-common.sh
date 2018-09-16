@@ -484,7 +484,7 @@ echo "export PATH=\$PATH:$SCRIPTPATH" >> $WORKSPACE/bosh_env.sh
 
 source $WORKSPACE/bosh_env.sh
 echo "Updating runtime-config to activate bosh-dns" 
-bosh -n update-runtime-config runtime-config.yml
+bosh -n update-runtime-config $SCRIPTPATH/runtime-config.yml
 }
 
 function bosh_lite_vm_additions() {

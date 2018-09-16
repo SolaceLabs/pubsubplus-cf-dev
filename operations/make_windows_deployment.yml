@@ -14,15 +14,9 @@
 - type: remove
   path: /instance_groups/name=standard-medium/jobs/name=route_registrar
 - type: remove
-  path: /instance_groups/name=standard-large/jobs/name=route_registrar
-- type: remove
   path: /instance_groups/name=standard-medium-ha/jobs/name=route_registrar_active
 - type: remove
   path: /instance_groups/name=standard-medium-ha/jobs/name=route_registrar
-- type: remove
-  path: /instance_groups/name=standard-large-ha/jobs/name=route_registrar_active
-- type: remove
-  path: /instance_groups/name=standard-large-ha/jobs/name=route_registrar
 
 - type: replace
   path: /instance_groups/name=solace-od-service-adapter/jobs/name=broker/properties/service_deployment/releases/name=solace-pubsub/jobs
@@ -43,3 +37,68 @@
 - type: replace
   path: /instance_groups/name=delete-all/properties/cf/admin_password?
   value: admin
+
+# Deploy credhub job in management vm that provides bosh-link required by solace deployment 
+- type: replace
+  path: /releases/-
+  value: 
+    name: credhub
+    version: latest
+    url: https://bosh.io/d/github.com/pivotal-cf/credhub-release
+- type: replace
+  path: /instance_groups/name=management/jobs/-
+  value: 
+    name: credhub
+    release: credhub
+    properties:
+      credhub:
+        internal_url: credhub.service.cf.internal
+        tls: ((credhub-tls))
+        authentication:
+          uaa:
+            enabled: false
+        data_storage:
+          type: in-memory
+          username: admin
+          password: ((database-admin))
+          host: 127.0.0.1
+          port: 5432
+          database: credhub
+          require_tls: false
+        encryption:
+          keys:
+          - provider_name: int
+            key_properties:
+              encryption_password: credhub-encryption-password
+            active: true
+          providers:
+          - name: int
+            type: internal
+    provides:
+      credhub:
+        as: solace-credhub
+- type: replace
+  path: /instance_groups/name=deploy-all/jobs/name=deploy-all/consumes/credhub
+  value: 
+    from: solace-credhub
+- type: replace
+  path: /instance_groups/name=deploy-all/properties/uaa/admin_client_secret
+  value: wont_use 
+- type: replace
+  path: /variables/-
+  value: 
+    name: credhub-ca
+    type: certificate
+    options:
+      is_ca: true
+      common_name: CredHub CA
+- type: replace
+  path: /variables/-
+  value: 
+    name: credhub-tls
+    type: certificate
+    options:
+      ca: credhub-ca
+      common_name: 127.0.0.1
+      alternative_names:
+      - credhub.bosh-lite.com

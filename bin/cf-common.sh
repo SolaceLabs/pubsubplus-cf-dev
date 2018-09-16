@@ -144,6 +144,7 @@ function lookupServiceBrokerVMRs() {
  export LARGE_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
  export LARGE_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
  export LARGE_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+
 }
 
 #Deprecated 1.1.0
