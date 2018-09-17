@@ -1,6 +1,6 @@
 # SOLACE-MESSAGING-CF-DEV
 
-This project provides instructions and tools that support local development and testing of Solace Messaging for Cloud Foundry.
+This project provides instructions and tools that support local development and testing of Solace PubSub+ for Cloud Foundry.
 
 ## Table of Contents:
 
@@ -14,17 +14,18 @@ This project provides instructions and tools that support local development and 
 * [Installation on Linux](#installation-on-linux)
   * [Overview of Linux Deployment](#linux-overview)
   * [Installation Steps on Linux](#installation-steps-on-linux)
-* [Solace Messaging Deployment](#solace-messaging-deployment)
+* [Solace PubSub+ Deployment](#solace-pubsub-deployment)
 * [Other useful commands and tools](#other-useful-commands-and-tools)
 
 <a name="about"></a>
 # About
 
-A Deployment Solace Messaging for Cloud Foundry has prerequisites for which this guide will provide steps to satisfy:
+A Deployment of Solace PubSub+ for Cloud Foundry has prerequisites for which this guide will provide steps to satisfy:
 
-- A deployment of [BOSH](https://github.com/cloudfoundry/bosh) or [BOSH-lite](https://github.com/cloudfoundry/bosh-lite): Hosting the Solace PubSub+ instances.
+- A deployment of [BOSH](https://github.com/cloudfoundry/bosh): Hosting the Solace PubSub+ software message brokers
 - A deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment): Hosting the Solace Service Broker and Test Applications.
-- A [Solace BOSH Deployment](https://github.com/SolaceDev/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace Messaging for Cloud Foundry
+- Optionally a deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Provides p-mysql service required by the Solace Service Broker. By default this is not needed - the service broker uses an internal instance.
+- A [Solace BOSH Deployment](https://github.com/SolaceDev/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace PubSub+ for Cloud Foundry
 
 <a name="operating-system"></a>
 # Operating system
@@ -75,7 +76,9 @@ Here is an overview of what this project will help you install if you are using 
 
 ![](resources/overview-wsl.png)
 
-This guide will help you install Bosh VM for hosting Solace PubSub+ instances.
+* The BOSH-lite VM for hosting PubSub+.
+  - Size as recommended below to fit the Solace PubSub+ software message brokers.
+* The CF deployment, running in the Bosh-lite VM.
 
 <a name="installation-steps-on-windows"></a>
 ## Installation Steps on Windows
@@ -164,9 +167,9 @@ This guide will help you install and deploy the following:
 * cli-tools to provide a reliable environment to run the scripts of this project.
   - Tested with 512mb of ram, just enough to run some scripts.
   - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
-* BOSH-lite for hosting CF, Solace PubSub+ instances.
+* BOSH-lite for hosting CF, Solace PubSub+ software message brokers and optionally CF-MYSQL.
   - Size as recommended below to fit the PubSub+ instances.
-* A Deployment of CF and CF-MYSQL to BOSH-lite.
+* A Deployment of CF and optionally CF-MYSQL to BOSH-lite.
 
 The setup was last tested on:
 
@@ -228,11 +231,11 @@ To set BOSH-lite please use [bin/bosh_lite_vm.sh -c](bin/bosh_lite_vm.sh), the '
 * Enable routing so that your hosting computer can communicate with the VMs hosting BOSH-lite
 
 * The following environment variable parameters are available to adjust the size of the BOSH-lite VM when creating it.
-  - VM_MEMORY=8192 is the default: it is enough to support the deployment of CF, CF-MYSQL and a single PubSub+ instance
-  - VM_SWAP=8192 is the default: it is enough to support up to 4 PubSub+ instances before needing to add more.
-  - VM_DISK_SIZE=65_536 is the default: it is enough to support up to 4 PubSub+ instances before needing more storage.
+  - VM_MEMORY=8192 is the default: it is enough to support the deployment of CF, CF-MYSQL and a single message broker
+  - VM_SWAP=8192 is the default: it is enough to support up to 4 message brokers before needing to add more.
+  - VM_DISK_SIZE=65_536 is the default: it is enough to support up to 4 message brokers before needing more storage.
   - VM_EPHEMERAL_DISK_SIZE=32_768 is the default: it provides enough room to spare for multiple deployments and re-deployment. You should not need to adjust this.
-  - In general under a BOSH-lite deployment you should add 4000 Mb to VM_MEMORY and 2000 Mb to VM_SWAP per additional PubSub+ instance.
+  - In general under a BOSH-lite deployment you should add 4000 Mb to VM_MEMORY and 2000 Mb to VM_SWAP per additional message broker.
 
 ~~~~
 cd bin
@@ -250,12 +253,12 @@ cd bin
 ./cf_deploy.sh 
 ~~~~ 
 
-You are now ready for a [Solace Messaging Deployment](#solace-messaging-deployment)
+You are now ready for a [Solace PubSub+ Deployment](#solace-pubsub-deployment)
 
-<a name="solace-messaging-deployment"></a>
-# Solace Messaging Deployment
+<a name="solace-pubsub-deployment"></a>
+# Solace PubSub+ Deployment
 
-The goal of the deployment steps is to install Solace Messaging into the running CF environment.
+The goal of the deployment steps is to install Solace PubSub+ into the running CF environment.
 
 ![](resources/deployment.png)
 
@@ -270,10 +273,10 @@ The goal of the deployment steps is to install Solace Messaging into the running
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
-For my example I have downloaded version 1.4.0 and placed it in:
+For my example I have downloaded version 2.0.0 and placed it in:
 
 ~~~~
-solace-messaging-cf-dev/workspace/solace-messaging-1.4.0.pivotal
+solace-messaging-cf-dev/workspace/solace-pubsub-2.0.0.pivotal
 ~~~~
 
 
@@ -294,7 +297,7 @@ The pivotal file is a zip file. We need to extract the relevant bosh releases ne
 Do the following to extract the tile contents, adjusting the file name as appropritate:
 
 ~~~~
-extract_tile.sh -t ~/workspace/solace-pubsub-1.4.0.pivotal
+extract_tile.sh -t ~/workspace/solace-pubsub-2.0.0.pivotal
 ~~~~
 
 You will find the relevant contents extracted to ~/workspace/releases
@@ -315,18 +318,18 @@ cf_mysql_deploy.sh
 ~~~
 and providing the -z option to the solace_deploy.sh script (see next step.)
 
-### Deployment Step 4 - Deploy 
+This will deploy the Solace PubSub+ software message brokers to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
 
-This will deploy the PubSub+ instance(s) to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
+_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of message brokers that you want to deploy._
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of PubSub+ instances that you want to deploy._
 
-**Example:** Deploy the default which is a single instance of a Shared PubSub+ instance using a self-signed server certificate and evaluation PubSub+ instance edition.
+**Example:** Deploy the default which is a single instance of a enterprise-shared Solace PubSub+ software message broker using a self-signed server certificate and evaluation edition.
 ~~~~
 solace_deploy.sh
 ~~~~
 
-The deployment variables file used as default can be found under [templates](templates/1.4.0/),  you can make a copy and edit it.
+The deployment variables file used as default can be found under [templates](templates/2.0.0/),  you can make a copy and edit it.
 
 **Example:** Setting admin password to 'solace1' and setting a test server certificate and disabling the service broker's certificate validation.
 ~~~~
@@ -337,12 +340,12 @@ _The current deployment can be updated by simply rerunning the deployment script
 
 ## Using the Deployment
 
-At this stage, solace-pubsub is a service in the CF Deployment, and the BOSH-lite PubSub+ deployment will auto register with the service broker
+At this stage, solace-pubsub is a service in the CF Deployment, and the BOSH-lite message broker deployment will auto register with the service broker
 and become available for use in CF.
 
 _You can use 'cf' from cli-tools, or directly from your host computer, they both access the same CF instance_
 
-For example if you deployed the default Shared PubSub+ instance, a "shared" service plan will be available and you can do this:
+For example if you deployed the default enterprise-shared message broker, a "shared" service plan will be available and you can do this:
 
 ~~~~
 cf m
@@ -463,7 +466,7 @@ bosh_lite_vm.sh -r
 
 Alternatively you can use the virtualbox GUI to the 'start' > 'headless start'. 
 
-## Working with PubSub+ instance in the BOSH deployment
+## Working with Solace PubSub+ in the BOSH deployment
 
 ### Listing the VMs
 
@@ -473,14 +476,14 @@ From the cli-tools vm:
 bosh vms
 ~~~~
 
-### Access the PubSub+ instance cli
+### Access the Solace PubSub+ cli
 
-Get the list of vms, to find the IP address of the PubSub+ instance you want:
+Get the list of vms, to find the IP address of the message broker instance you want:
 ~~~~
 bosh vms
 ~~~~
 
-Now ssh to the PubSub+ instance. The admin password is whatever you had set in the vars.yml and the SSH port on this BOSH-lite deployment is set to 3022.
+Now ssh to the message broker. The admin password is whatever you had set in the vars.yml and the SSH port on this BOSH-lite deployment is set to 3022.
 
 ~~~~
 ssh -p 3022 admin@10.244.0.150
@@ -488,7 +491,7 @@ ssh -p 3022 admin@10.244.0.150
 
 ## How to cleanup
 
-### Deleting the Solace Messaging deployment
+### Deleting the Solace PubSub+ deployment
 
 From the cli-tools vm:
 ~~~~
