@@ -31,7 +31,7 @@ A Deployment Solace Messaging for Cloud Foundry has prerequisites for which this
 
 This project and its tools will support a deployment on Linux, Mac and the Windows Subsystem for Linux (WSL) which is available on Windows 10 and later.
 
-Any instructions given for Linux will work on Mac.
+Any instructions given for Linux will work on Mac and the WSL.
 
 This guide will provide different steps for deploying on Windows than Linux ( Mac ).
 
@@ -279,7 +279,7 @@ solace-messaging-cf-dev/workspace/solace-messaging-1.4.0.pivotal
 
 #### Login to cli-tools VM
 
-All deployment steps require you to be logged in to the cli-tools VM unless you are using WSL.
+All deployment steps require you to be logged in to the cli-tools VM **unless you are using WSL.**
 
 ~~~~
 cd solace-messaging-cf-dev
@@ -291,7 +291,7 @@ vagrant ssh
 
 The pivotal file is a zip file. We need to extract the relevant bosh releases needed for this deployment.
 
-Do the following to extract the tile contents:
+Do the following to extract the tile contents, adjusting the file name as appropritate:
 
 ~~~~
 extract_tile.sh -t ~/workspace/solace-pubsub-1.4.0.pivotal
@@ -307,14 +307,19 @@ To upload the extracted bosh releases to BOSH-lite.
 solace_upload_releases.sh
 ~~~~
 
+### Deployment Step 3 - Optional: Deploy cf-mysql
 
-### Deployment Step 3 - Deploy 
+The solace deployment uses mysql to keep track of its state. By default it uses an internal instance of mysql, but if you need to you can deploy a cf mysql deployment by running
+~~~
+cf_mysql_deploy.sh
+~~~
+and providing the -z option to the solace_deploy.sh script (see next step.)
+
+### Deployment Step 4 - Deploy 
 
 This will deploy the PubSub+ instance(s) to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of PubSub+ instances that you want to deploy._
-
-If deploying on **Windows**, you must also provide a `-w` option to the `solace_deploy.sh` script.
 
 **Example:** Deploy the default which is a single instance of a Shared PubSub+ instance using a self-signed server certificate and evaluation PubSub+ instance edition.
 ~~~~
@@ -381,14 +386,12 @@ cf m
 
 ## Service Broker
 
-
-
 You can use your browser to examine the deployed service broker dashboard: 
 
 * On Windows (non-WSL), having PCF-Dev deployed service broker
   * [ service broker dashboard ](http://solace-pubsub-broker.local.pcfdev.io/)
 
-* On Linux or WSL, having service broker deployed on CF-Deployment
+* On Linux, Mac or WSL, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-pubsub-broker.bosh-lite.com/)
 
 * For Linux and Windows, you will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
@@ -406,8 +409,6 @@ getServiceBrokerInfo.sh
 
 ## To use TCP Routing feature
 
-TCP Routing feature is available only on the Linux deployment.
-
 In the cli-tools vm you can run this script to set up the solace router uaa client and the tcp domain. 
 
 ~~~
@@ -421,19 +422,6 @@ This way you don't need to recreate them. Their state is saved to disk.
 
 ### Suspending all VMS
 
-* On Windows: 
-
-~~~~
-cd solace-messaging-cf-dev
-
-cd cli-tools
-vagrant suspend
-
-cd ../workspace/bosh-lite
-vagrant suspend
-
-cf dev suspend
-~~~~
 
 * On Linux: 
 
@@ -443,6 +431,8 @@ cd solace-messaging-cf-dev
 cd cli-tools
 vagrant suspend
 ~~~~ 
+
+* On all platforms:
 
 The bosh created VM in virtualbox cannot be successfully restarted.  But they can be preserved by pausing and saving their state in virtualbox. 
 
@@ -454,20 +444,6 @@ Alternatively you can use the virtualbox GUI to 'pause' and 'close' > 'save stat
 
 ### Resuming all VMS
 
-* On Windows: 
-
-~~~~
-cd solace-messaging-cf-dev
-
-cd cli-tools
-vagrant resume
-
-cd ../workspace/bosh-lite
-vagrant resume
-
-cf dev resume
-~~~~
-
 * On Linux: 
 
 ~~~~
@@ -476,6 +452,8 @@ cd solace-messaging-cf-dev
 cd cli-tools
 vagrant resume
 ~~~~
+
+* On all platforms:
 
 The bosh created VM in virtualbox may be resumed if previously paused and saved by using [bosh_lite_vm.sh -s](bin/bosh_lite_vm.sh)
 
@@ -517,20 +495,7 @@ From the cli-tools vm:
 solace_delete_deployment.sh
 ~~~~
 
-### How to delete BOSH-lite VM
-
-On your host computer (not cli-tools)
-
-* On Windows
-
-~~~~
-cd solace-messaging-cf-dev
-cd workspace
-cd bosh-lite
-vagrant destroy
-~~~~
-
-* On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL
+* On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL if it was installed:
 
 ~~~~
 bosh_lite_vm.sh -d
@@ -538,23 +503,13 @@ bosh_lite_vm.sh -d
 
 ### How to delete cli-tools VM
 
-On your host computer (not cli-tools)
+This is not necessary if you're using WSL.
 
-* For both Windows and Linux
+On your host computer (not cli-tools)
 
 ~~~~
 cd solace-messaging-cf-dev
 cd cli-tools
 vagrant destroy
-~~~~
-
-### How to delete PCF-Dev
-
-* On Windows to delete PCF-Dev
-
-On your host computer (not cli-tools)
-
-~~~~
-cf dev destroy
 ~~~~
 
