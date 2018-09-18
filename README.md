@@ -96,9 +96,9 @@ Ensure VirtualBox is installed.
 
 Follow the [WSL installation instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and select the Ubuntu distribution.
 
-### Installation on Windows - Step 2 - Run the installer that sets up Bosh and CF
+### Installation on Windows - Step 2 - Set up the network route to the bosh vms.
 
-First of all, enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
+This enables routing so communication can work between your hosting computer and the VMs.
 
 In a Windows Administrator CMD console, run:
 
@@ -108,47 +108,54 @@ route add 10.244.0.0/19 192.168.50.6
 
 _Without enabled routing, the VMs will not be able to communicate. You will have re-run this if you reboot your computer_
 
-Open an Ubuntu shell by typing Ubuntu into the Windows search tool and clicking on the application's icon.
+### Installation on Windows - Step 3 - Log into the WSL
 
-This project provides a script that installs bosh assumes certain file locations. These can be overridden by environment variables. These variables with their defaults are:
+Type Ubuntu into the Windows search tool and click the Ubuntu icon to start a bash shell.
 
-~~~
-WIN_DRIVE: /mnt/c
-VIRTUALBOX_HOME: $WIN_DRIVE/Program Files/Oracle/VirtualBox
-GIT_REPO_BASE: https://github.com/SolaceDev
-~~~
+### Installation on Windows - Step 4 - Run the installer that sets up Bosh and CF
 
-In WSL, the drives containing the Windows file systems are accessible through /mnt/c, mnt/d etc.
+This project provides a script that installs bosh. It assumes certain file locations and other settings. These can be overridden by environment variables. These variables with their defaults are:
 
-If these values are correct for your system then you can invoke the Bosh/CF installation script by running
+  - BRANCH The git branch of this project, and the cf-solace-messaging-deployment subproject, that will get checked out the first time this project is cloned by the installation script. If it is not set then the script will not switch branches. 
+  - GIT_REPO_BASE=https://github.com/SolaceDev - this is where this project is located in Github.
+  - REPOS_DIR=$HOME/repos - this is the parent directory of the the local clone of this project.
+  - VM_MEMORY=8192 - the size of the Virtual Machine that will host bosh. The default is large enough to support the deployment of CF, CF-MYSQL and a single PubSub+ instance
+  - VM_SWAP=8192 This is the size of the VM's swap file. The default is large enough to support up to 4 PubSub+ instances before needing to add more.
+  - VM_DISK_SIZE=65_536 - the VM's disk size. The default is enough to support up to 4 PubSub+ instances before needing more storage.
+  - VM_EPHEMERAL_DISK_SIZE=32_768 The ephemeral disk size. The default provides enough room to spare for multiple deployments and re-deployment. You should not need to adjust this.
+  - WIN_DRIVE=/mnt/c - this is the mounted Windows drive (C: or D: etc.)
+  - VIRTUALBOX_HOME=$WIN_DRIVE/Program Files/Oracle/VirtualBox - this is where the script looks for the VirtualBox executables.
+  - In general under a BOSH-lite deployment you should add 4000 Mb to VM_MEMORY and 2000 Mb to VM_SWAP per additional PubSub+ instance.
+
+That script will install ruby and other required programs and libraries, clone the repository if it's not already cloned, create the bosh virtual machine and deploy Cloud Foundry.
+
+
+The script also calls another script, bosh_lite_vm.sh, which downloads and uses [BUCC](https://github.com/starkandwayne/bucc). That provides a convenient wrapper around a [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment).
+
+Finally it will give you the option to add a couple of commands to your .profile so that when you log in after the deploy is finished, the bosh and cf environment will automatically get set up, and it will log you into cf.
+
+There are two ways of running the script:
+
+#### Option 1: Directly through curl:
 
 ~~~
 curl -L https://github.com/SolaceDev/solace-messaging-cf-dev/raw/master/bin/setup_bosh_on_wsl.sh | bash
 ~~~
 
-Otherwise clone the repository, set the environment variables correctly and run the script. The script expects the repository to be under $HOME/repos. For example if VirtualBox was installed to a different directory, do this:
+With this option, this project will automatically get cloned and git will check out the branch specified by the BRANCH environment variable if it is set.
 
+#### Option 2: Manually cloning the repository
+
+First ensure that the directory corresponding to the REPOS_DIR environment variable exists, and cd to that directory (the default is $HOME/repos). Then clone this project and run the script:
 ~~~
 cd
 mkdir repos
 cd repos
 git clone https://github.com/SolaceDev/solace-messaging-cf-dev/
-export VIRTUALBOX_HOME=/mnt/d/Apps/VirtualBox
 solace-messaging-cf-dev/bin/setup_bosh_on_wsl.sh
 ~~~
 
-That script will install ruby and other required programs and libraries, clone the repository if it's not already cloned, create the bosh virtual machine and deploy Cloud Foundry.
-
-The script also calls another script, bosh_lite_vm.sh, which downloads and uses [BUCC](https://github.com/starkandwayne/bucc). That provides a convenient wrapper around a [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment).
-
-It creates the BOSH-lite VM. The following environment variable parameters are available to adjust the size of the BOSH-lite VM when creating it.
-  - VM_MEMORY=8192 is the default: it is enough to support the deployment of CF, CF-MYSQL and a single PubSub+ instance
-  - VM_SWAP=8192 is the default: it is enough to support up to 4 PubSub+ instances before needing to add more.
-  - VM_DISK_SIZE=65_536 is the default: it is enough to support up to 4 PubSub+ instances before needing more storage.
-  - VM_EPHEMERAL_DISK_SIZE=32_768 is the default: it provides enough room to spare for multiple deployments and re-deployment. You should not need to adjust this.
-  - In general under a BOSH-lite deployment you should add 4000 Mb to VM_MEMORY and 2000 Mb to VM_SWAP per additional PubSub+ instance.
-
-The script also copies the command line programs bosh, bucc and cf to /usr/local/bin. Further, it adds a command to your .profile which sets up the proper bosh and cf environment variables to be able to connect to the cf environment as soon as you log into WSL.
+With this option, the script **will not** switch to the git branch specified by the BRANCH environment variable.
 
 Once that is complete then you can deploy Solace as per [these instructions.](#solace-messaging-deployment). Note that it is not necessary to use the cli-tools vagrant virtual machine - the commands should work fine running under WSL.
 

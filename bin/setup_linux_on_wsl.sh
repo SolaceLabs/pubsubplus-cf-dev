@@ -5,6 +5,8 @@ export WIN_DRIVE=${WIN_DRIVE:-"/mnt/c"}
 export VIRTUALBOX_HOME=${VIRTUALBOX_HOME:-"$WIN_DRIVE/Program Files/Oracle/VirtualBox"}
 export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceDev"}
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
+SETTINGS_FILE=$HOME/.settings.sh
+export REPOS_DIR=${REPOS_DIR:-$HOME/repos}
 
 # vboxmanage has to be able to see $HOME/.bosh_virtualbox_cpi in the Windows filesystem.
 # Therefore we create the files there, and link to them from the Linux home.
@@ -21,11 +23,11 @@ function setupLinks() {
 }
 
 function cloneRepo() {
-    if [ ! -d repos ]; then
-        mkdir repos
+    if [ ! -d $REPOS_DIR ]; then
+        mkdir $REPOS_DIR
     fi
     (
-        cd repos
+        cd $REPOS_DIR
         if [ ! -d solace-messaging-cf-dev ]; then
         (
             git clone $GIT_REPO_BASE/solace-messaging-cf-dev.git
@@ -50,18 +52,12 @@ function cloneRepo() {
 }
 
 function installBosh() {
-    repos/solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
-    if [ ! -e /usr/local/bin/bosh ]; then
-        sudo cp $WORKSPACE/bucc/bin/bosh /usr/local/bin
-    fi
-    if [ ! -e /usr/local/bin/bucc ]; then
-        sudo cp $WORKSPACE/bucc/bin/bucc /usr/local/bin
-    fi
+    $REPOS_DIR/solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
 }
 
 function deployCf() {
     source $WORKSPACE/bosh_env.sh
-    repos/solace-messaging-cf-dev/bin/cf_deploy.sh
+    $REPOS_DIR/solace-messaging-cf-dev/bin/cf_deploy.sh
 }
 
 function installPrograms() {
@@ -77,17 +73,29 @@ function installPrograms() {
 }
 
 function createSettingsFile() {
-	SETTINGS_FILE=$HOME/.settings.sh
 
 	if [ ! -f $SETTINGS_FILE ]; then
 		echo "Capturing settings in $SETTINGS_FILE"
-		echo "export SOLACE_MESSAGING_CF_DEV=$HOME/repos/solace-messaging-cf-dev" >> $SETTINGS_FILE
+		echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev" >> $SETTINGS_FILE
 		echo "export WORKSPACE=$HOME/workspace" >> $SETTINGS_FILE
 		echo "export SOLACE_BUILD_DIR=$HOME/workspace/build" >> $SETTINGS_FILE
 		echo "export SOLACE_CACHE=$HOME/.SOLACE_CACHE" >> $SETTINGS_FILE
-		echo "source $SETTINGS_FILE" >> ~/.profile
-		echo "source repos/solace-messaging-cf-dev/.profile" >> ~/.profile
+		echo "export PATH=\$PATH:$WORKSPACE/bucc/bin" >> $SETTINGS_FILE
 	fi
+}
+
+function alterProfile() {
+    NUM_LINES=`grep -c "source $SETTINGS_FILE" ~/.profile`
+
+    if [ "$NUM_LINES" -eq 0 ]; then
+        echo out there
+        read -p "Would you like  your .profile modified to automatically set up the CF environment when you next log in? (yN): "
+
+        if [[ $REPLY =~ ^[Yy] ]]; then
+            echo "source $SETTINGS_FILE" >> ~/.profile
+            echo "source $REPOS_DIR/solace-messaging-cf-dev/.profile" >> ~/.profile
+        fi
+    fi
 }
 
 cd
@@ -98,5 +106,6 @@ cloneRepo
 installBosh
 deployCf
 createSettingsFile
-source repos/solace-messaging-cf-dev/.profile
+set +e
+alterProfile
 
