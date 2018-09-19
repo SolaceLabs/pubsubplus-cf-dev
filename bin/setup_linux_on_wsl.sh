@@ -1,12 +1,17 @@
 #!/bin/bash
 set -x
 
+export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 export WIN_DRIVE=${WIN_DRIVE:-"/mnt/c"}
 export VIRTUALBOX_HOME=${VIRTUALBOX_HOME:-"$WIN_DRIVE/Program Files/Oracle/VirtualBox"}
 export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceDev"}
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
-SETTINGS_FILE=$HOME/.settings.sh
+export SETTINGS_FILE=${SETTINGS_FILE:-$HOME/.settings.sh}
 export REPOS_DIR=${REPOS_DIR:-$HOME/repos}
+
+SETUP_LOG_FILE=${SETUP_LOG_FILE:-"$WORKSPACE/$SCRIPT.log"}
 
 # vboxmanage has to be able to see $HOME/.bosh_virtualbox_cpi in the Windows filesystem.
 # Therefore we create the files there, and link to them from the Linux home.
@@ -72,20 +77,22 @@ function installPrograms() {
     sudo gem install bundler
 }
 
+function getSettingsEnv() {
+		echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev"
+		echo "export WORKSPACE=$HOME/workspace"
+		echo "export PATH=\$PATH:$WORKSPACE/bucc/bin"
+}
+
 function createSettingsFile() {
 
 	if [ ! -f $SETTINGS_FILE ]; then
 		echo "Capturing settings in $SETTINGS_FILE"
-		echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev" >> $SETTINGS_FILE
-		echo "export WORKSPACE=$HOME/workspace" >> $SETTINGS_FILE
-		echo "export SOLACE_BUILD_DIR=$HOME/workspace/build" >> $SETTINGS_FILE
-		echo "export SOLACE_CACHE=$HOME/.SOLACE_CACHE" >> $SETTINGS_FILE
-		echo "export PATH=\$PATH:$WORKSPACE/bucc/bin" >> $SETTINGS_FILE
+	        getSettingsEnv >> $SETTINGS_FILE
 	fi
 }
 
 function alterProfile() {
-    NUM_LINES=`grep -c "source $SETTINGS_FILE" ~/.profile`
+    NUM_LINES=$( grep -c "source $SETTINGS_FILE" ~/.profile )
 
     if [ "$NUM_LINES" -eq 0 ]; then
         echo out there
@@ -98,6 +105,8 @@ function alterProfile() {
     fi
 }
 
+function setupLinuxOnWsl() {
+
 cd
 setupLinks
 installPrograms
@@ -109,3 +118,11 @@ createSettingsFile
 set +e
 alterProfile
 
+}
+
+
+#### 
+
+setupLinuxOnWsl | tee $SETUP_LOG_FILE
+
+echo "Setup log file: $SETUP_LOG_FILE"
