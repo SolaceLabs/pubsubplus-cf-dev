@@ -22,33 +22,26 @@ This project provides instructions and tools that support local development and 
 
 A Deployment of Solace PubSub+ for Cloud Foundry has prerequisites for which this guide will provide steps to satisfy:
 
-- A deployment of [BOSH](https://github.com/cloudfoundry/bosh) or [BOSH-lite](https://github.com/cloudfoundry/bosh-lite): Hosting the Solace PubSub+ software message brokers
+- A deployment of [BOSH](https://github.com/cloudfoundry/bosh): Hosting the Solace PubSub+ software message brokers
 - A deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment): Hosting the Solace Service Broker and Test Applications.
-- A deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Provides p-mysql service required by the Solace Service Broker
+- Optionally a deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Provides p-mysql service required by the Solace Service Broker. By default this is not needed - the service broker uses an internal instance.
 - A [Solace BOSH Deployment](https://github.com/SolaceDev/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace PubSub+ for Cloud Foundry
 
 <a name="operating-system"></a>
 # Operating system
 
-This project and its tools will support a deployment on Windows, Linux and Mac.
+This project and its tools will support a deployment on Linux, Mac and the Windows Subsystem for Linux (WSL) which is available on Windows 10 and later.
 
-Any instructions given for Linux will work on Mac.
+Any instructions given for Linux will work on Mac and the WSL.
 
 This guide will provide different steps for deploying on Windows than Linux ( Mac ).
-
-The following issues have been noted and addressed in this guide:
-
-- Windows is not yet supported by [bosh create-env](https://github.com/cloudfoundry/bosh/issues/1821)
-  - Workaround: use the old [Vagrant based BOSH-lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md). 
-- CF logging features do not work on a deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment) to the [Vagrant based BOSH-lite](https://github.com/cloudfoundry/bosh-lite/blob/master/docs/README.md)
-  - Workaround: use [PCF-Dev](https://pivotal.io/pcf-dev) to host the CF deployment and cf-mysql. 
 
 <a name="hardware-requirements"></a>
 # Hardware Requirements
 
 Each of the following requirements for tools and software products needs to be satisfied.
 
-A key goal is to keep what is installed directly on your host computer to a minimum, while containing everything else inside VMs.
+A key goal is to keep what is installed directly on your host computer to a minimum, while containing everything else inside VMs and the WSL.
 With this approach we keep a high level of containment within VMs and isolation from the host system.
 
 RAM is biggest requirement, 16GB is the minimum, and 32GB is preferred.
@@ -65,134 +58,106 @@ Directly on your computer, you must have or get the following:
 
 * Install latest [Git](https://git-scm.com/downloads) (version 2.7.1+)
 * Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (version 5.2.6+)
-* Install latest [Vagrant](https://www.vagrantup.com/downloads.htm) (version 2.0.1+)
+* Unless you are installing on WSL, you will also need the latest [Vagrant](https://www.vagrantup.com/downloads.htm) (version 2.0.1+)
 * Shell access, use your preferred shell.
  
 If you are installing this in a VM you will need to ensure that:
 
 * Intel VT-x/EPT or AMD-RVI Virtualization is enabled.
 
- 
+
 <a name="installation-on-windows"></a>
 # Installation on Windows
 
 <a name="windows-overview"></a>
 ## Overview of Windows Deployment
 
-Here is an overview of what this project will help you install if you are using a windows deployment:
+Here is an overview of what this project will help you install if you are using a Windows deployment:
 
-![](resources/overview.png)
+![](resources/overview-wsl.png)
 
-This guide will help you install the following VMs:
-
-* cli-tools to provide a reliable environment to run the scripts of this project.
-  - Tested with 512mb of ram, just enough to run some scripts.
-  - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
-* PCF-Dev for hosting the solace service broker and your applications.
-  - Tested with 4GB, but you may size to suite your needs for hosting for your apps.
-* BOSH-lite for hosting PubSub+.
+* The BOSH-lite VM for hosting PubSub+.
   - Size as recommended below to fit the Solace PubSub+ software message brokers.
+* The CF deployment, running in the Bosh-lite VM.
 
 <a name="installation-steps-on-windows"></a>
 ## Installation Steps on Windows
 
 The goal of the installation steps is to start the required VMs on Windows.
 
-![](resources/installation.png)
-
 _The setup was last tested on Windows host with 32GB of RAM, using:_
-- git version 2.16.2.windows.1
-- cf version 6.35.2+88a03e995.2018-03-15
-- Vagrant 2.0.3
-- VirtualBox Version 5.2.8r121009
+- WSL with Ubuntu 18.04
+- cf version 6.38.0+7ddf0aadd.2018-08-07
+- VirtualBox Version 5.2.18r124329
 
-### Installation on Windows - Step 1 - Clone this project and start up its cli-tools vm
+### Installation on WSL - Step 1 - Install the Windows Subsystem for Linux
 
-On your computer, clone this project and start up the cli-tools vm. We will come back to use it in later steps.
+Ensure VirtualBox is installed.
 
-~~~~
-git clone https://github.com/SolaceLabs/solace-messaging-cf-dev.git
-cd solace-messaging-cf-dev
-git submodule init
-git submodule update
-cd cli-tools
-vagrant up
-~~~~
+Follow the [WSL installation instructions](https://docs.microsoft.com/en-us/windows/wsl/install-win10) and select the Ubuntu distribution.
 
+### Installation on Windows - Step 2 - Set up the network route to the bosh vms.
 
-Just an example on how to run commands in cli-tools vm, which you need to do later.
-~~~~
-cd solace-messaging-cf-dev
-cd cli-tools
-vagrant ssh
+This enables routing so communication can work between your hosting computer and the VMs.
 
-echo "I am running inside cli-tools vm"
-exit
-~~~~
-
-_The cli-tools VM will contains all the necessary tools to run the scripts of this project, including 
-another clone of this project. The workspace folder visible on your computer is shared with the cli-tools VM._
-
-### Installation on Windows - Step 2 - PCF-Dev
-
-PCF-Dev provides a local installation of cloud foundry in a box to help test applications.
-
-Using PCF-Dev you can install and test applications, bind to services that are available in PCF-Dev.
-
-You can also add services to PCF-Dev, such as solace-pubsub and use solace-pubsub with your applications.
-
-Our goal is to to add solace-pubsub as a service in PCF-Dev.
-
-You need to install [PCF-Dev](https://pivotal.io/pcf-dev). Please follow these instructions:
-
-* Install [cf cli - The Cloud Foundry Command Line Interface](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-the-cf-cli)
-* Install [PCF Plugin which is used by cf cli](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/install-pcf-dev) 
-* Start PCF-Dev, using 4GB of ram. You may choose to adjust this.
-
-~~~~
-cf dev start -m 4096
-~~~~
-
-At this point PCF-Dev is locally installed and ready to host applications and services.
-
-Optionally, you may follow the full [Getting started with pivotal cloud foundry introduction guide](https://pivotal.io/platform/pcf-tutorials/getting-started-with-pivotal-cloud-foundry-dev/introduction), as you would learn how to install a test application in PCF-Dev.
-
-### Installation on Windows - Step 3 - BOSH-lite
-
-We will use [BOSH-lite](https://github.com/cloudfoundry/bosh-lite) to deploy the Solace Solace PubSub+ software message broker(s).
-
-But first you need to install [BOSH-lite](https://github.com/cloudfoundry/bosh-lite):
-
-* By now you have already installed  [Virtual Box](https://www.virtualbox.org/wiki/Downloads) and [Vagrant](https://www.vagrantup.com/downloads.htm).
-* Clone bosh-lite in the workspace of this project.
+In a Windows Administrator CMD console, run:
 
 ~~~
-cd solace-messaging-cf-dev
-cd workspace
-git clone https://github.com/cloudfoundry/bosh-lite
-cp ../bin/create_swap.sh bosh-lite
-cd bosh-lite
+route add 10.244.0.0/19 192.168.50.6
 ~~~
 
-* Then start bosh-lite:
-  - Use VM_MEMORY=5000 if you want to host a single message broker
-  - Use VM_MEMORY=15000 if you want to host 3 message brokers that can form an HA Group
-  - In general, use VM_MEMORY=5000 * [Number of message brokers]
-  - Also note the additional swap space, use 2048 Mb per message broker.
+_Without enabled routing, the VMs will not be able to communicate. You will have re-run this if you reboot your computer_
+
+### Installation on Windows - Step 3 - Log into the WSL
+
+Type Ubuntu into the Windows search tool and click the Ubuntu icon to start a bash shell.
+
+### Installation on Windows - Step 4 - Run the installer that sets up Bosh and CF
+
+This project provides a script that installs bosh. It assumes certain file locations and other settings. These can be overridden by environment variables. These variables with their defaults are:
+
+  - BRANCH The git branch of this project, and the cf-solace-messaging-deployment subproject, that will get checked out the first time this project is cloned by the installation script. If it is not set then the script will not switch branches. 
+  - GIT_REPO_BASE=https://github.com/SolaceDev - this is where this project is located in Github.
+  - REPOS_DIR=$HOME/repos - this is the parent directory of the the local clone of this project.
+  - VM_MEMORY=8192 - the size of the Virtual Machine that will host bosh. The default is large enough to support the deployment of CF, CF-MYSQL and a single PubSub+ instance
+  - VM_SWAP=8192 This is the size of the VM's swap file. The default is large enough to support up to 4 PubSub+ instances before needing to add more.
+  - VM_DISK_SIZE=65_536 - the VM's disk size. The default is enough to support up to 4 PubSub+ instances before needing more storage.
+  - VM_EPHEMERAL_DISK_SIZE=32_768 The ephemeral disk size. The default provides enough room to spare for multiple deployments and re-deployment. You should not need to adjust this.
+  - WIN_DRIVE=/mnt/c - this is the mounted Windows drive (C: or D: etc.)
+  - VIRTUALBOX_HOME=$WIN_DRIVE/Program Files/Oracle/VirtualBox - this is where the script looks for the VirtualBox executables.
+  - In general under a BOSH-lite deployment you should add 4000 Mb to VM_MEMORY and 2000 Mb to VM_SWAP per additional PubSub+ instance.
+
+That script will install ruby and other required programs and libraries, clone the repository if it's not already cloned, create the bosh virtual machine and deploy Cloud Foundry.
+
+
+The script also calls another script, bosh_lite_vm.sh, which downloads and uses [BUCC](https://github.com/starkandwayne/bucc). That provides a convenient wrapper around a [bosh-deployment](https://github.com/cloudfoundry/bosh-deployment).
+
+Finally it will give you the option to add a couple of commands to your .profile so that when you log in after the deploy is finished, the bosh and cf environment will automatically get set up, and it will log you into cf.
+
+There are two ways of running the script:
+
+#### Option 1: Directly through curl:
 
 ~~~
-set VM_MEMORY=5000
-vagrant up --provider=virtualbox
-vagrant ssh -c "sudo /vagrant/create_swap.sh 2048 additionalSwapFile"
+curl -L https://github.com/SolaceDev/solace-messaging-cf-dev/raw/master/bin/setup_bosh_on_wsl.sh | bash
 ~~~
 
-* VERY IMPORTANT: enable routing so communication can work between your hosting computer and the VMs, one of these should work for you.
-  - bosh-lite/bin/add-route
-  - bosh-lite/bin/add-route.bat
+With this option, this project will automatically get cloned and git will check out the branch specified by the BRANCH environment variable if it is set.
 
-_Without enabled routing, the VMs will not be able to communicate. You will have re-run the add-route* scripts if you reboot your computer_
+#### Option 2: Manually cloning the repository
 
-You are now ready for a [Solace PubSub+ Deployment](#solace-pubsub-deployment)
+First ensure that the directory corresponding to the REPOS_DIR environment variable exists, and cd to that directory (the default is $HOME/repos). Then clone this project and run the script:
+~~~
+cd
+mkdir repos
+cd repos
+git clone https://github.com/SolaceDev/solace-messaging-cf-dev/
+solace-messaging-cf-dev/bin/setup_bosh_on_wsl.sh
+~~~
+
+With this option, the script **will not** switch to the git branch specified by the BRANCH environment variable.
+
+Once that is complete then you can deploy Solace as per [these instructions.](#solace-messaging-deployment). Note that it is not necessary to use the cli-tools vagrant virtual machine - the commands should work fine running under WSL.
 
 <a name="installation-on-linux"></a>
 # Installation on Linux
@@ -209,9 +174,9 @@ This guide will help you install and deploy the following:
 * cli-tools to provide a reliable environment to run the scripts of this project.
   - Tested with 512mb of ram, just enough to run some scripts.
   - You may wish to increase the ram if you want to test applications from this VM. The setting for ram is in [config.yml](cli-tools/config.yml).
-* BOSH-lite for hosting CF, CF-MYSQL, Solace PubSub+ software message brokers.
-  - Size as recommended below to fit the message brokers
-* A Deployment of CF and CF-MYSQL to BOSH-lite.
+* BOSH-lite for hosting CF, Solace PubSub+ software message brokers and optionally CF-MYSQL.
+  - Size as recommended below to fit the PubSub+ instances.
+* A Deployment of CF and optionally CF-MYSQL to BOSH-lite.
 
 The setup was last tested on:
 
@@ -284,17 +249,15 @@ cd bin
 ./bosh_lite_vm.sh -c
 ~~~~
 
-### Installation on Linux - Step 3 - Deploy CF and cf-mysql 
+### Installation on Linux - Step 3 - Deploy CF
 
-To deploy CF and cf-mysql in BOSH-lite to host the Solace service broker and other applications:
+To deploy CF in BOSH-lite to host the Solace service broker and other applications:
 
 * Run [cf_deploy.sh](bin/cf_deploy.sh). This script will deploy cf from this repository: [cf-deployment](https://github.com/cloudfoundry/cf-deployment). 
-* Run [cf_mysql_deploy.sh](bin/cf_mysql_deploy.sh). This script will deploy cf-mysql from this repository: [cf-mysql-deployment](https://github.com/cloudfoundry/cf-mysql-deployment).
 
 ~~~~
 cd bin
 ./cf_deploy.sh 
-./cf_mysql_deploy.sh 
 ~~~~ 
 
 You are now ready for a [Solace PubSub+ Deployment](#solace-pubsub-deployment)
@@ -326,7 +289,7 @@ solace-messaging-cf-dev/workspace/solace-pubsub-2.0.0.pivotal
 
 #### Login to cli-tools VM
 
-All deployment steps require you to be logged in to the cli-tools VM 
+All deployment steps require you to be logged in to the cli-tools VM **unless you are using WSL.**
 
 ~~~~
 cd solace-messaging-cf-dev
@@ -338,7 +301,7 @@ vagrant ssh
 
 The pivotal file is a zip file. We need to extract the relevant bosh releases needed for this deployment.
 
-Do the following to extract the tile contents:
+Do the following to extract the tile contents, adjusting the file name as appropritate:
 
 ~~~~
 extract_tile.sh -t ~/workspace/solace-pubsub-2.0.0.pivotal
@@ -354,14 +317,19 @@ To upload the extracted bosh releases to BOSH-lite.
 solace_upload_releases.sh
 ~~~~
 
+### Deployment Step 3 - Optional: Deploy cf-mysql
 
-### Deployment Step 3 - Deploy 
+The solace deployment uses mysql to keep track of its state. By default it uses an internal instance of mysql, but if you need to you can deploy a cf mysql deployment by running
+~~~
+cf_mysql_deploy.sh
+~~~
+and providing the -z option to the solace_deploy.sh script (see next step.)
 
 This will deploy the Solace PubSub+ software message brokers to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
 
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of message brokers that you want to deploy._
 
-If deploying on **Windows**, you must also provide a `-w` option to the `solace_deploy.sh` script.
+_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of PubSub+ instances that you want to deploy._
 
 **Example:** Deploy the default which is a single instance of a enterprise-shared Solace PubSub+ software message broker using a self-signed server certificate and evaluation edition.
 ~~~~
@@ -428,14 +396,12 @@ cf m
 
 ## Service Broker
 
-
-
 You can use your browser to examine the deployed service broker dashboard: 
 
-* On Windows, having PCF-Dev deployed service broker
+* On Windows (non-WSL), having PCF-Dev deployed service broker
   * [ service broker dashboard ](http://solace-pubsub-broker.local.pcfdev.io/)
 
-* On Linux, having service broker deployed on CF-Deployment
+* On Linux, Mac or WSL, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-pubsub-broker.bosh-lite.com/)
 
 * For Linux and Windows, you will need a username and password, do the following to discover the generated solace_broker_user and solace_broker_password
@@ -453,8 +419,6 @@ getServiceBrokerInfo.sh
 
 ## To use TCP Routing feature
 
-TCP Routing feature is available only on the Linux deployment.
-
 In the cli-tools vm you can run this script to set up the solace router uaa client and the tcp domain. 
 
 ~~~
@@ -468,19 +432,6 @@ This way you don't need to recreate them. Their state is saved to disk.
 
 ### Suspending all VMS
 
-* On Windows: 
-
-~~~~
-cd solace-messaging-cf-dev
-
-cd cli-tools
-vagrant suspend
-
-cd ../workspace/bosh-lite
-vagrant suspend
-
-cf dev suspend
-~~~~
 
 * On Linux: 
 
@@ -490,6 +441,8 @@ cd solace-messaging-cf-dev
 cd cli-tools
 vagrant suspend
 ~~~~ 
+
+* On all platforms:
 
 The bosh created VM in virtualbox cannot be successfully restarted.  But they can be preserved by pausing and saving their state in virtualbox. 
 
@@ -501,20 +454,6 @@ Alternatively you can use the virtualbox GUI to 'pause' and 'close' > 'save stat
 
 ### Resuming all VMS
 
-* On Windows: 
-
-~~~~
-cd solace-messaging-cf-dev
-
-cd cli-tools
-vagrant resume
-
-cd ../workspace/bosh-lite
-vagrant resume
-
-cf dev resume
-~~~~
-
 * On Linux: 
 
 ~~~~
@@ -523,6 +462,8 @@ cd solace-messaging-cf-dev
 cd cli-tools
 vagrant resume
 ~~~~
+
+* On all platforms:
 
 The bosh created VM in virtualbox may be resumed if previously paused and saved by using [bosh_lite_vm.sh -s](bin/bosh_lite_vm.sh)
 
@@ -564,20 +505,7 @@ From the cli-tools vm:
 solace_delete_deployment.sh
 ~~~~
 
-### How to delete BOSH-lite VM
-
-On your host computer (not cli-tools)
-
-* On Windows
-
-~~~~
-cd solace-messaging-cf-dev
-cd workspace
-cd bosh-lite
-vagrant destroy
-~~~~
-
-* On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL
+* On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL if it was installed:
 
 ~~~~
 bosh_lite_vm.sh -d
@@ -585,23 +513,13 @@ bosh_lite_vm.sh -d
 
 ### How to delete cli-tools VM
 
-On your host computer (not cli-tools)
+This is not necessary if you're using WSL.
 
-* For both Windows and Linux
+On your host computer (not cli-tools)
 
 ~~~~
 cd solace-messaging-cf-dev
 cd cli-tools
 vagrant destroy
-~~~~
-
-### How to delete PCF-Dev
-
-* On Windows to delete PCF-Dev
-
-On your host computer (not cli-tools)
-
-~~~~
-cf dev destroy
 ~~~~
 

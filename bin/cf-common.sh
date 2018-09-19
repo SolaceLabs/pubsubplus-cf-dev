@@ -11,6 +11,8 @@ MEDIUM_HA_POOL_NAME="enterprise-medium-ha"
 LARGE_HA_PLAN="6a833e3f-3a24-419d-94d9-4bb38dc51f04"
 LARGE_HA_POOL_NAME="enterprise-large-ha"
 
+export SOLACE_SERVICE_NAME="solace-pubsub"
+
 export PAIRS_PARAM="includeMonitor=false"
 export MONITOR_PARAM="includeBackup=false&includePrimary=false"
 export PRIMARY_PARAM="includeMonitor=false&includeBackup=false"
@@ -90,19 +92,19 @@ function lookupServiceBrokerDetails() {
 
  if [ "$SB_RUNNING" -eq "1" ]; then
     lookupServiceBrokerVMRs
-    log "Servicebroker LARGE_VMR_LIST: ${LARGE_VMR_LIST} "
-    log "Servicebroker SHARED_VMR_LIST: ${SHARED_VMR_LIST} "
-    log "Servicebroker LARGE_HA_VMR_LIST: ${LARGE_HA_VMR_LIST} "
-    log "Servicebroker LARGE_HA_VMR_PAIRS_LIST: ${LARGE_HA_VMR_PAIRS_LIST} "
-    log "Servicebroker LARGE_HA_VMR_PRIMARY_LIST: ${LARGE_HA_VMR_PRIMARY_LIST} "
-    log "Servicebroker LARGE_HA_VMR_BACKUP_LIST: ${LARGE_HA_VMR_BACKUP_LIST} "
-    log "Servicebroker LARGE_HA_VMR_MONITOR_LIST: ${LARGE_HA_VMR_MONITOR_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_LIST: ${MEDIUM_HA_VMR_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_PAIRS_LIST: ${MEDIUM_HA_VMR_PAIRS_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_PRIMARY_LIST: ${MEDIUM_HA_VMR_PRIMARY_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_BACKUP_LIST: ${MEDIUM_HA_VMR_BACKUP_LIST} "
-    log "Servicebroker MEDIUM_HA_VMR_MONITOR_LIST: ${MEDIUM_HA_VMR_MONITOR_LIST} "
-    log "Servicebroker ALL_VMR_LIST: ${ALL_VMR_LIST} "
+    log "Servicebroker LARGE_LIST: ${LARGE_LIST} "
+    log "Servicebroker SHARED_LIST: ${SHARED_LIST} "
+    log "Servicebroker LARGE_HA_LIST: ${LARGE_HA_LIST} "
+    log "Servicebroker LARGE_HA_PAIRS_LIST: ${LARGE_HA_PAIRS_LIST} "
+    log "Servicebroker LARGE_HA_PRIMARY_LIST: ${LARGE_HA_PRIMARY_LIST} "
+    log "Servicebroker LARGE_HA_BACKUP_LIST: ${LARGE_HA_BACKUP_LIST} "
+    log "Servicebroker LARGE_HA_MONITOR_LIST: ${LARGE_HA_MONITOR_LIST} "
+    log "Servicebroker MEDIUM_HA_LIST: ${MEDIUM_HA_LIST} "
+    log "Servicebroker MEDIUM_HA_PAIRS_LIST: ${MEDIUM_HA_PAIRS_LIST} "
+    log "Servicebroker MEDIUM_HA_PRIMARY_LIST: ${MEDIUM_HA_PRIMARY_LIST} "
+    log "Servicebroker MEDIUM_HA_BACKUP_LIST: ${MEDIUM_HA_BACKUP_LIST} "
+    log "Servicebroker MEDIUM_HA_MONITOR_LIST: ${MEDIUM_HA_MONITOR_LIST} "
+    log "Servicebroker ALL_LIST: ${ALL_LIST} "
     getServiceBrokerRouterInventory
     log "Servicebroker AvailabilityZones ${AVAILABILITY_ZONE_COUNT} : ${AVAILABILITY_ZONES} "
  else
@@ -127,39 +129,40 @@ function lookupServiceBrokerVMRs() {
 
  ROUTERS_DATA=`echo $INFO_DATA | jq -c ".messageRouters"`
   
- export ALL_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
- export SHARED_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "enterprise-shared"))'    | jq -c '.[] | .sshLink'))
- export LARGE_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "enterprise-large"))'     | jq -c '.[] | .sshLink'))
+ export ALL_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
+ export SHARED_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "enterprise-shared"))'    | jq -c '.[] | .sshLink'))
+ export LARGE_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "enterprise-large"))'     | jq -c '.[] | .sshLink'))
  
- export MEDIUM_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export MEDIUM_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
  
- export LARGE_HA_VMR_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "enterprise-large-ha"))'                        | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export LARGE_HA_VMR_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "enterprise-large-ha"))'                        | jq -c '.[] | .sshLink'))
+ export LARGE_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+ export LARGE_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+ export LARGE_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+
 }
 
 #Deprecated 1.1.0
 function deprecated_lookupServiceBrokerVMRs() {
 
- export ALL_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links`
- export SHARED_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$SHARED_PLAN`
- export LARGE_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_PLAN`
- export MEDIUM_HA_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN`
- export MEDIUM_HA_VMR_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PAIRS_PARAM`
- export MEDIUM_HA_VMR_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PRIMARY_PARAM`
- export MEDIUM_HA_VMR_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$BACKUP_PARAM`
- export MEDIUM_HA_VMR_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$MONITOR_PARAM`
- export LARGE_HA_VMR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN`
- export LARGE_HA_VMR_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PAIRS_PARAM`
- export LARGE_HA_VMR_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PRIMARY_PARAM`
- export LARGE_HA_VMR_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$BACKUP_PARAM`
- export LARGE_HA_VMR_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$MONITOR_PARAM`
+ export ALL_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links`
+ export SHARED_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$SHARED_PLAN`
+ export LARGE_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_PLAN`
+ export MEDIUM_HA_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN`
+ export MEDIUM_HA_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PAIRS_PARAM`
+ export MEDIUM_HA_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$PRIMARY_PARAM`
+ export MEDIUM_HA_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$BACKUP_PARAM`
+ export MEDIUM_HA_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$MEDIUM_HA_PLAN?$MONITOR_PARAM`
+ export LARGE_HA_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN`
+ export LARGE_HA_PAIRS_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PAIRS_PARAM`
+ export LARGE_HA_PRIMARY_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$PRIMARY_PARAM`
+ export LARGE_HA_BACKUP_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$BACKUP_PARAM`
+ export LARGE_HA_MONITOR_LIST=`curl -sX GET $SB_BASE/solace/manage/solace_message_routers/links/$LARGE_HA_PLAN?$MONITOR_PARAM`
 
 }
 
@@ -171,19 +174,19 @@ function formatVMRList() {
 function showServiceBrokerVMRs() {
 
  log "ServiceBroker: VMR Lists "
- echo "ALL_VMR_LIST=${ALL_VMR_LIST}"
- echo "SHARED_VMR_LIST=${SHARED_VMR_LIST}"
- echo "LARGE_VMR_LIST=${LARGE_VMR_LIST}"
- echo "MEDIUM_HA_VMR_LIST=${MEDIUM_HA_VMR_LIST}"
- echo "MEDIUM_HA_VMR_PAIRS_LIST=${MEDIUM_HA_VMR_PAIRS_LIST}"
- echo "MEDIUM_HA_VMR_PRIMARY_LIST=${MEDIUM_HA_VMR_PRIMARY_LIST}"
- echo "MEDIUM_HA_VMR_BACKUP_LIST=${MEDIUM_HA_VMR_BACKUP_LIST}"
- echo "MEDIUM_HA_VMR_MONITOR_LIST=${MEDIUM_HA_VMR_MONITOR_LIST}"
- echo "LARGE_HA_VMR_LIST=${LARGE_HA_VMR_LIST}"
- echo "LARGE_HA_VMR_PAIRS_LIST=${LARGE_HA_VMR_PAIRS_LIST}"
- echo "LARGE_HA_VMR_PRIMARY_LIST=${LARGE_HA_VMR_PRIMARY_LIST}"
- echo "LARGE_HA_VMR_BACKUP_LIST=${LARGE_HA_VMR_BACKUP_LIST}"
- echo "LARGE_HA_VMR_MONITOR_LIST=${LARGE_HA_VMR_MONITOR_LIST}"
+ echo "ALL_LIST=${ALL_LIST}"
+ echo "SHARED_LIST=${SHARED_LIST}"
+ echo "LARGE_LIST=${LARGE_LIST}"
+ echo "MEDIUM_HA_LIST=${MEDIUM_HA_LIST}"
+ echo "MEDIUM_HA_PAIRS_LIST=${MEDIUM_HA_PAIRS_LIST}"
+ echo "MEDIUM_HA_PRIMARY_LIST=${MEDIUM_HA_PRIMARY_LIST}"
+ echo "MEDIUM_HA_BACKUP_LIST=${MEDIUM_HA_BACKUP_LIST}"
+ echo "MEDIUM_HA_MONITOR_LIST=${MEDIUM_HA_MONITOR_LIST}"
+ echo "LARGE_HA_LIST=${LARGE_HA_LIST}"
+ echo "LARGE_HA_PAIRS_LIST=${LARGE_HA_PAIRS_LIST}"
+ echo "LARGE_HA_PRIMARY_LIST=${LARGE_HA_PRIMARY_LIST}"
+ echo "LARGE_HA_BACKUP_LIST=${LARGE_HA_BACKUP_LIST}"
+ echo "LARGE_HA_MONITOR_LIST=${LARGE_HA_MONITOR_LIST}"
 
 }
 
@@ -202,13 +205,13 @@ function checkServiceBrokerServicePlanStats() {
  log "ServiceBroker: service plan stats $1"
  curl -sX GET $SB_BASE/solace/status -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: shared plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$SHARED_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$SHARED_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: large plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$LARGE_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$LARGE_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: medium-ha plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$MEDIUM_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$MEDIUM_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
  log "ServiceBroker: large-ha plan stats"
- curl -sX GET $SB_BASE/solace/status/services/solace-messaging/plans/$LARGE_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
+ curl -sX GET $SB_BASE/solace/status/services/$SOLACE_SERVICE_NAME/plans/$LARGE_HA_PLAN -H "Content-Type: application/json;charset=UTF-8"
 
  getServiceBrokerMessageRoutersSummary $1
 
@@ -304,8 +307,8 @@ function switchToTestOrgAndSpace() {
 function enableAndShowInMarketPlace() {
 
  ## Checking Marketplace
- log "Enabling access to the Solace Service Broker provided service: solace-messaging"
- cf enable-service-access solace-messaging
+ log "Enabling access to the Solace Service Broker provided service: $SOLACE_SERVICE_NAME"
+ cf enable-service-access $SOLACE_SERVICE_NAME
 
  log "Marketplace:"
  cf m
@@ -313,8 +316,8 @@ function enableAndShowInMarketPlace() {
  #todo: Need to install tile for this check to work (enable_global_access_to_plans)
  # Rely on grep's non-0 exit code to fail script
 
- log "Checking marketplace for solace service: solace-messaging"
- cf m | grep solace-messaging
+ log "Checking marketplace for solace service: $SOLACE_SERVICE_NAME"
+ cf m | grep $SOLACE_SERVICE_NAME
  log "Checking marketplace for solace service plan: shared"
  cf m | grep shared 
  log "Checking marketplace for solace service plan: large"
@@ -325,13 +328,13 @@ function enableAndShowInMarketPlace() {
  cf m | grep large-ha
 
  log "Checking marketplace for solace service plan: shared, free"
- cf m -s solace-messaging | grep shared | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep shared | grep free
  log "Checking marketplace for solace service plan: large, free"
- cf m -s solace-messaging | grep -v large-ha | grep large | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep -v large-ha | grep large | grep free
  log "Checking marketplace for solace service plan: medium-ha, free"
- cf m -s solace-messaging | grep medium-ha | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep medium-ha | grep free
  log "Checking marketplace for solace service plan: large-ha, free"
- cf m -s solace-messaging | grep large-ha | grep free
+ cf m -s $SOLACE_SERVICE_NAME | grep large-ha | grep free
 
 }
 

@@ -8,7 +8,7 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
-export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v1.25.0"}
+export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v3.0.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
@@ -37,12 +37,19 @@ bosh update-cloud-config $SCRIPTPATH/../cf-solace-messaging-deployment/iaas-supp
 
 bosh -d cf deploy cf-deployment.yml \
 	-o operations/bosh-lite.yml \
+	-o operations/experimental/secure-service-credentials.yml \
 	-o operations/use-compiled-releases.yml \
 	-o operations/use-trusted-ca-cert-for-apps.yml \
+	-o $SCRIPTPATH/operations/trusted_certs.yml \
+	-o $SCRIPTPATH/operations/credhub.yml \
 	--vars-store $WORKSPACE/deployment-vars.yml \
-        -l $SCRIPTPATH/cf_trusted-ca-cert-for-apps.yml \
+	-l $SCRIPTPATH/cf_trusted-ca-cert-for-apps.yml \
 	-v system_domain=$SYSTEM_DOMAIN
         
+if [ "$?" -ne "0" ]; then
+  echo "ABORTING: cf-deployment was not successful"
+  exit 1
+fi
 
 if [ -f $SCRIPTPATH/cf_env.sh ]; then
   $SCRIPTPATH/cf_env.sh 
@@ -59,6 +66,9 @@ fi
 if [ -f $SCRIPTPATH/apply_open_security_groups.sh ]; then
   $SCRIPTPATH/apply_open_security_groups.sh
 fi
+
+echo "Setup environment for TCP Routes" 
+$SCRIPTPATH/setup_tcp_routing.sh
 
 echo
 echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""

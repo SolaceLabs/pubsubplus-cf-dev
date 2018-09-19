@@ -25,7 +25,9 @@ echo
 [[ $? -eq 0 ]] && { 
   $SCRIPTPATH/solace_add_service_broker.sh $ERRAND_PARAMS
   [[ $? -eq 0 ]] && { 
-    $SCRIPTPATH/solace_deployment_tests.sh $ERRAND_PARAMS
+    [[ ! -z "$SKIP_TEST" ]] || {
+       $SCRIPTPATH/solace_deployment_tests.sh $ERRAND_PARAMS
+    }
   }
 }
 

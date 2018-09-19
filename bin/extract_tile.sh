@@ -120,3 +120,13 @@ fi
 
 unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz 
 
+## Extract and show the Solace Service Broker version. 
+(
+ cd $TEMP_DIR
+ tar -xzf $WORKSPACE/releases/solace-pubsub-broker-$TILE_VERSION.tgz
+ tar -xzf packages/solace_pubsub_broker.tgz 
+ cd ./solace_pubsub_broker/ 
+ SOLACE_SERVICE_BROKER_VERSION=$(ls *.jar)
+ echo " Found Solace Service Broker [ $SOLACE_SERVICE_BROKER_VERSION ]"
+)
+
