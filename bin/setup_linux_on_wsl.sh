@@ -6,7 +6,7 @@ export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 export WIN_DRIVE=${WIN_DRIVE:-"/mnt/c"}
 export VIRTUALBOX_HOME=${VIRTUALBOX_HOME:-"$WIN_DRIVE/Program Files/Oracle/VirtualBox"}
-export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceDev"}
+export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceLabs"}
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 export SETTINGS_FILE=${SETTINGS_FILE:-$HOME/.settings.sh}
 export REPOS_DIR=${REPOS_DIR:-$HOME/repos}
