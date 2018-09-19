@@ -8,7 +8,7 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
-export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v3.0.0"}
+export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v4.2.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
@@ -37,9 +37,7 @@ bosh update-cloud-config $SCRIPTPATH/../cf-solace-messaging-deployment/iaas-supp
 
 bosh -d cf deploy cf-deployment.yml \
 	-o operations/bosh-lite.yml \
-	-o operations/experimental/secure-service-credentials.yml \
 	-o operations/use-compiled-releases.yml \
-	-o operations/use-trusted-ca-cert-for-apps.yml \
 	-o $SCRIPTPATH/operations/trusted_certs.yml \
 	-o $SCRIPTPATH/operations/credhub.yml \
 	--vars-store $WORKSPACE/deployment-vars.yml \
