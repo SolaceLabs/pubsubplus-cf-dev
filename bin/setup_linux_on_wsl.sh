@@ -1,12 +1,18 @@
 #!/bin/bash
 set -x
 
+export CF_DEPLOYMENT_VERSION=v4.2.0
+export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 export WIN_DRIVE=${WIN_DRIVE:-"/mnt/c"}
 export VIRTUALBOX_HOME=${VIRTUALBOX_HOME:-"$WIN_DRIVE/Program Files/Oracle/VirtualBox"}
-export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceDev"}
+export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceLabs"}
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
-SETTINGS_FILE=$HOME/.settings.sh
+export SETTINGS_FILE=${SETTINGS_FILE:-$HOME/.settings.sh}
 export REPOS_DIR=${REPOS_DIR:-$HOME/repos}
+
+SETUP_LOG_FILE=${SETUP_LOG_FILE:-"$WORKSPACE/$SCRIPT.log"}
 
 # vboxmanage has to be able to see $HOME/.bosh_virtualbox_cpi in the Windows filesystem.
 # Therefore we create the files there, and link to them from the Linux home.
@@ -53,6 +59,9 @@ function cloneRepo() {
 
 function installBosh() {
     $REPOS_DIR/solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
+    if [ ! -e /usr/local/bin/bosh ]; then
+        sudo cp $WORKSPACE/bucc/bin/bosh /usr/local/bin
+    fi
 }
 
 function deployCf() {
@@ -62,33 +71,36 @@ function deployCf() {
 
 function installPrograms() {
 
-    # Install the cf cli tool.
-    curl -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&source=github" | tar -zx
-    sudo mv cf /usr/local/bin
+    if [ ! -e /usr/local/bin/cf ]; then
+        # Install the cf cli tool.
+        curl -L "https://packages.cloudfoundry.org/stable?release=linux64-binary&source=github" | tar -zx
+        sudo mv cf /usr/local/bin
 
-    sudo apt-get update
+        sudo apt-get update
 
-    sudo apt-get install -y jq build-essential zlibc zlib1g-dev ruby ruby-dev rubygems openssl libssl-dev libxslt-dev libxml2-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3
-    sudo gem install bundler
+        sudo apt-get install -y jq build-essential zlibc zlib1g-dev ruby ruby-dev rubygems openssl libssl-dev libxslt-dev libxml2-dev libreadline-dev libyaml-dev libsqlite3-dev sqlite3
+        sudo gem install bundler
+    fi
+}
+
+function getSettingsEnv() {
+    echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev"
+    echo "export WORKSPACE=$HOME/workspace"
+    echo "export PATH=\$PATH:$WORKSPACE/bucc/bin"
 }
 
 function createSettingsFile() {
 
 	if [ ! -f $SETTINGS_FILE ]; then
 		echo "Capturing settings in $SETTINGS_FILE"
-		echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev" >> $SETTINGS_FILE
-		echo "export WORKSPACE=$HOME/workspace" >> $SETTINGS_FILE
-		echo "export SOLACE_BUILD_DIR=$HOME/workspace/build" >> $SETTINGS_FILE
-		echo "export SOLACE_CACHE=$HOME/.SOLACE_CACHE" >> $SETTINGS_FILE
-		echo "export PATH=\$PATH:$WORKSPACE/bucc/bin" >> $SETTINGS_FILE
+	        getSettingsEnv >> $SETTINGS_FILE
 	fi
 }
 
 function alterProfile() {
-    NUM_LINES=`grep -c "source $SETTINGS_FILE" ~/.profile`
+    NUM_LINES=$( grep -c "source $SETTINGS_FILE" ~/.profile )
 
     if [ "$NUM_LINES" -eq 0 ]; then
-        echo out there
         read -p "Would you like  your .profile modified to automatically set up the CF environment when you next log in? (yN): "
 
         if [[ $REPLY =~ ^[Yy] ]]; then
@@ -98,14 +110,23 @@ function alterProfile() {
     fi
 }
 
-cd
-setupLinks
-installPrograms
-set -e
-cloneRepo
-installBosh
-deployCf
-createSettingsFile
-set +e
-alterProfile
+function setupLinuxOnWsl() {
 
+    cd
+    setupLinks
+    installPrograms
+    set -e
+    cloneRepo
+    installBosh
+    deployCf
+    createSettingsFile
+    set +e
+    alterProfile
+}
+
+
+#### 
+
+setupLinuxOnWsl | tee $SETUP_LOG_FILE
+
+echo "Setup log file: $SETUP_LOG_FILE"

@@ -25,7 +25,7 @@ A Deployment of Solace PubSub+ for Cloud Foundry has prerequisites for which thi
 - A deployment of [BOSH](https://github.com/cloudfoundry/bosh): Hosting the Solace PubSub+ software message brokers
 - A deployment of [Cloud Foundry](https://github.com/cloudfoundry/cf-deployment): Hosting the Solace Service Broker and Test Applications.
 - Optionally a deployment of [Cloud Foundry MySQL](https://github.com/cloudfoundry/cf-mysql-deployment): Provides p-mysql service required by the Solace Service Broker. By default this is not needed - the service broker uses an internal instance.
-- A [Solace BOSH Deployment](https://github.com/SolaceDev/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace PubSub+ for Cloud Foundry
+- A [Solace BOSH Deployment](https://github.com/SolaceLabs/cf-solace-messaging-deployment/): Defines and produces the bosh manifests to deploy Solace PubSub+ for Cloud Foundry
 
 <a name="operating-system"></a>
 # Operating system
@@ -117,7 +117,7 @@ Type Ubuntu into the Windows search tool and click the Ubuntu icon to start a ba
 This project provides a script that installs bosh. It assumes certain file locations and other settings. These can be overridden by environment variables. These variables with their defaults are:
 
   - BRANCH The git branch of this project, and the cf-solace-messaging-deployment subproject, that will get checked out the first time this project is cloned by the installation script. If it is not set then the script will not switch branches. 
-  - GIT_REPO_BASE=https://github.com/SolaceDev - this is where this project is located in Github.
+  - GIT_REPO_BASE=https://github.com/SolaceLabs - this is where this project is located in Github.
   - REPOS_DIR=$HOME/repos - this is the parent directory of the the local clone of this project.
   - VM_MEMORY=8192 - the size of the Virtual Machine that will host bosh. The default is large enough to support the deployment of CF, CF-MYSQL and a single PubSub+ instance
   - VM_SWAP=8192 This is the size of the VM's swap file. The default is large enough to support up to 4 PubSub+ instances before needing to add more.
@@ -139,7 +139,7 @@ There are two ways of running the script:
 #### Option 1: Directly through curl:
 
 ~~~
-curl -L https://github.com/SolaceDev/solace-messaging-cf-dev/raw/master/bin/setup_bosh_on_wsl.sh | bash
+curl -L https://github.com/SolaceLabs/solace-messaging-cf-dev/raw/master/bin/setup_bosh_on_wsl.sh | bash
 ~~~
 
 With this option, this project will automatically get cloned and git will check out the branch specified by the BRANCH environment variable if it is set.
@@ -151,7 +151,7 @@ First ensure that the directory corresponding to the REPOS_DIR environment varia
 cd
 mkdir repos
 cd repos
-git clone https://github.com/SolaceDev/solace-messaging-cf-dev/
+git clone https://github.com/SolaceLabs/solace-messaging-cf-dev/
 solace-messaging-cf-dev/bin/setup_bosh_on_wsl.sh
 ~~~
 
