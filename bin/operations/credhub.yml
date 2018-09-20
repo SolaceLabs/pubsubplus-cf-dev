@@ -2,9 +2,6 @@
   path: /instance_groups/name=credhub/jobs/name=credhub/properties/credhub/internal_url?
   value: credhub.service.cf.internal
 - type: replace
-  path: /instance_groups/name=credhub/instances
-  value: 1
-- type: replace
   path: /instance_groups/name=credhub/jobs/name=credhub/provides?
   value:         
     credhub:
