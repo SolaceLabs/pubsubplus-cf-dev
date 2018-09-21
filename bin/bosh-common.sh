@@ -261,6 +261,7 @@ function runErrand() {
 
 function deleteSolaceDeployment() {
   SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+  runErrand $SELECTED_DEPLOYMENT delete-all-od-service-instances
   runErrand $SELECTED_DEPLOYMENT delete-all
   deleteDeployment $SELECTED_DEPLOYMENT
   deleteOrphanedDisks $SELECTED_DEPLOYMENT
