@@ -16,7 +16,7 @@ export STEMCELL=${STEMCELL:-"ubuntu-trusty"}
 export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
 export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
-export VM_MEMORY=${VM_MEMORY:-10240}
+export VM_MEMORY=${VM_MEMORY:-8192}
 export VM_CPUS=${VM_CPUS:-4}
 export VM_DISK_SIZE=${VM_DISK_SIZE:-"65_536"}
 export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
