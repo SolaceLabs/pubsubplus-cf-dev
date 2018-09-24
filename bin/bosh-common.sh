@@ -70,7 +70,7 @@ function targetBosh() {
 
 function prepareBosh() { 
 
-  FOUND_STEMCELL=`bosh stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
+  FOUND_STEMCELL=$( bosh stemcells | grep bosh-warden-boshlite-${STEMCELL}-go_agent | grep $STEMCELL_VERSION | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
 	echo "Downloading required stemcell $STEMCELL_NAME"
