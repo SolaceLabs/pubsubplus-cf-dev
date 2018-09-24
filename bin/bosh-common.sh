@@ -13,8 +13,6 @@ export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
 export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.40"}
 export STEMCELL=${STEMCELL:-"ubuntu-trusty"}
-export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
-export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
 
 export VM_MEMORY=${VM_MEMORY:-8192}
 export VM_CPUS=${VM_CPUS:-4}
@@ -70,6 +68,8 @@ function targetBosh() {
 
 function prepareBosh() { 
 
+  export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
+  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
   FOUND_STEMCELL=$( bosh stemcells | grep bosh-warden-boshlite-${STEMCELL}-go_agent | grep $STEMCELL_VERSION | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
@@ -81,6 +81,8 @@ function prepareBosh() {
 	echo "Failed to upload required stemcell $STEMCELL_NAME to bosh"
 	exit 1
      fi
+  else
+     echo "Stemcell found [ $STEMCELL_NAME ]"
   fi
 
 }
