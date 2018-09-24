@@ -11,8 +11,11 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
+
 export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.40"}
 export STEMCELL=${STEMCELL:-"ubuntu-trusty"}
+
+export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
 
 export VM_MEMORY=${VM_MEMORY:-8192}
 export VM_CPUS=${VM_CPUS:-4}
@@ -68,6 +71,10 @@ function targetBosh() {
 
 function prepareBosh() { 
 
+ for REQUIRED_STEMCELL in $REQUIRED_STEMCELLS; do
+
+  export STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
+  export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
   export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
   export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
   FOUND_STEMCELL=$( bosh stemcells | grep bosh-warden-boshlite-${STEMCELL}-go_agent | grep $STEMCELL_VERSION | wc -l)
@@ -82,8 +89,10 @@ function prepareBosh() {
 	exit 1
      fi
   else
-     echo "Stemcell found [ $STEMCELL_NAME ]"
+     echo "Stemcell found [$STEMCELL_NAME]/[$STEMCELL_VERSION]"
   fi
+
+ done
 
 }
 
