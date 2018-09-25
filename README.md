@@ -327,8 +327,6 @@ and providing the -z option to the solace_deploy.sh script (see next step.)
 
 This will deploy the Solace PubSub+ software message brokers to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
 
-_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of message brokers that you want to deploy._
-
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of PubSub+ instances that you want to deploy._
 
 **Example:** Deploy the default which is a single instance of a enterprise-shared Solace PubSub+ software message broker using a self-signed server certificate and evaluation edition.
