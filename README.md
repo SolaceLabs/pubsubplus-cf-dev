@@ -423,6 +423,37 @@ In the cli-tools vm you can run this script to set up the solace router uaa clie
 setup_tcp_routing.sh
 ~~~
 
+## How to take a snapshot of the BOSH-lite VM
+
+Taking a snapshot of the BOSH-lite VM can help you rollback the VM at a later time to this given snapshot.
+
+Examples of snapshots that can be usefull.
+
+~~~~ 
+bosh_lite_vm.sh -t bosh_with_cf
+~~~~ 
+
+After you deploy Solace PubSub+
+~~~~ 
+bosh_lite_vm.sh -t with_solace_pubsub
+~~~~ 
+
+## How to list available BOSH-lite VM snapshots
+
+~~~~ 
+bosh_lite_vm.sh -l
+~~~~ 
+
+## How to restore a snapshot of the BOSH-lite VM
+
+Supposed you did some testing and you would like to go back to a previous state that you captured as a snapshot.
+When you do this, the current state of the VM is lost, and the VM is restored to the state it was in for the given snapshot.
+
+~~~~ 
+bosh_lite_vm.sh -s
+bosh_lite_vm.sh -g with_solace_pubsub
+~~~~ 
+
 ## How to suspend and resume VMs
 
 The VMs we created can be suspended and resumed at a later time.
@@ -503,7 +534,7 @@ From the cli-tools vm:
 solace_delete_deployment.sh
 ~~~~
 
-* On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL if it was installed:
+* This will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL if it was installed:
 
 ~~~~
 bosh_lite_vm.sh -d
