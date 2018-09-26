@@ -366,14 +366,7 @@ You can go ahead download and test the [Solace Sample Apps](https://github.com/S
 
 ## How to login and access CF
 
-On Windows: 
-
-~~~~
-cf api https://api.local.pcfdev.io --skip-ssl-validation
-cf auth admin admin
-~~~~
-
-On Linux: 
+On Linux and WSL:
 
 This can be executed in the cli-tools vm or locally. 
 If it is ran locally it needs to run inside the solace-messaging-cf-dev/bin directory.
@@ -395,9 +388,6 @@ cf m
 ## Service Broker
 
 You can use your browser to examine the deployed service broker dashboard: 
-
-* On Windows (non-WSL), having PCF-Dev deployed service broker
-  * [ service broker dashboard ](http://solace-pubsub-broker.local.pcfdev.io/)
 
 * On Linux, Mac or WSL, having service broker deployed on CF-Deployment
   * [ service broker dashboard ](http://solace-pubsub-broker.bosh-lite.com/)
