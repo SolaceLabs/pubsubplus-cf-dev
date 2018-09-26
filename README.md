@@ -327,8 +327,6 @@ and providing the -z option to the solace_deploy.sh script (see next step.)
 
 This will deploy the Solace PubSub+ software message brokers to BOSH-lite and run an bosh errand to deploy the Solace Service Broker and add solace-pubsub as a service in Cloud Foundry.
 
-_If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of message brokers that you want to deploy._
-
 _If not sure what to pick just use the default with no parameters. Otherwise, please ensure that you have allocated enough memory to the BOSH-lite VM for the number and types of PubSub+ instances that you want to deploy._
 
 **Example:** Deploy the default which is a single instance of a enterprise-shared Solace PubSub+ software message broker using a self-signed server certificate and evaluation edition.
@@ -425,6 +423,37 @@ In the cli-tools vm you can run this script to set up the solace router uaa clie
 setup_tcp_routing.sh
 ~~~
 
+## How to take a snapshot of the BOSH-lite VM
+
+Taking a snapshot of the BOSH-lite VM can help you rollback the VM at a later time to this given snapshot.
+
+Examples of snapshots that can be usefull.
+
+~~~~ 
+bosh_lite_vm.sh -t bosh_with_cf
+~~~~ 
+
+After you deploy Solace PubSub+
+~~~~ 
+bosh_lite_vm.sh -t with_solace_pubsub
+~~~~ 
+
+## How to list available BOSH-lite VM snapshots
+
+~~~~ 
+bosh_lite_vm.sh -l
+~~~~ 
+
+## How to restore a snapshot of the BOSH-lite VM
+
+Supposed you did some testing and you would like to go back to a previous state that you captured as a snapshot.
+When you do this, the current state of the VM is lost, and the VM is restored to the state it was in for the given snapshot.
+
+~~~~ 
+bosh_lite_vm.sh -s
+bosh_lite_vm.sh -g with_solace_pubsub
+~~~~ 
+
 ## How to suspend and resume VMs
 
 The VMs we created can be suspended and resumed at a later time.
@@ -505,7 +534,7 @@ From the cli-tools vm:
 solace_delete_deployment.sh
 ~~~~
 
-* On Linux, this will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL if it was installed:
+* This will destroy the VM for BOSH-lite which also contains CF, and CF-MYSQL if it was installed:
 
 ~~~~
 bosh_lite_vm.sh -d
