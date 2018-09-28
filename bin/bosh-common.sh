@@ -69,7 +69,7 @@ function targetBosh() {
 }
 
 
-function prepareBosh() { 
+function loadStemcells() { 
 
  for REQUIRED_STEMCELL in $REQUIRED_STEMCELLS; do
 

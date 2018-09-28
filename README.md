@@ -533,7 +533,7 @@ export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-trusty:3541.10"
 export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:97"
 export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:97.17"
 echo $REQUIRED_STEMCELLS
-prepareBosh
+loadStemcells
 bosh stemcells
 ~~~~
 

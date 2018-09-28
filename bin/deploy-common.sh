@@ -84,7 +84,7 @@ function checkDeploymentRequirements() {
  check_cf_marketplace_access
 
  ## Check BOSH Stemcell is uploaded
- prepareBosh
+ loadStemcells
 
 }
 
