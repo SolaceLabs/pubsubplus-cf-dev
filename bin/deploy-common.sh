@@ -14,6 +14,7 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 export VMR_EDITION=${VMR_EDITION:-"evaluation"}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
+export BOSH_ENV_VARS_FILE=${BOSH_ENV_VARS_FILE:-$WORKSPACE/bosh-env-vars.yml}
 
 if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
@@ -78,6 +79,9 @@ function checkDeploymentRequirements() {
  else 
     update_cloud_config
  fi
+ 
+ ## Produce required BOSH ENV VARS
+ produceBOSHEnvVars > $BOSH_ENV_VARS_FILE
 
  ## Check CF Access and CF marketplace for p-mysql
 
@@ -293,6 +297,12 @@ export SOLACE_PUBSUB_RELEASE=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sed 's/\*/
 export TEMPLATE_VERSION=$( echo "$SOLACE_PUBSUB_RELEASE" | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
+export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("docker"))) | .version' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
+
+# echo "DOCKER_RELEASES_LIST [ $DOCKER_RELEASES_LIST ] DOCKER_RELEASES [ $DOCKER_RELEASES ] DOCKER_RELEASE [ $DOCKER_RELEASE ]"
+
 if [ ! -d "$TEMPLATE_DIR" ]; then
    echo "WARN: Unable to find template directory [$TEMPLATE_DIR] for Solace PubSub+ Release [$SOLACE_PUBSUB_RELEASE] from found release(s) [ $SOLACE_PUBSUB_RELEASES ], TEMPLATE VERSION [ $TEMPLATE_VERSION ]"
    exit 1
@@ -307,9 +317,10 @@ FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VA
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 
-CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=$CF_DEPLOYMENT "}
+CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=$CF_DEPLOYMENT -v docker_version=$DOCKER_RELEASE -v solace_pubsub_version=$SOLACE_PUBSUB_RELEASE "}
 
 MISC_VARS=${MISC_VARS:-""}
+
 
 ## If not defined and found in templates
 if [ -z "$RELEASE_VARS" ] && [ -f "$TEMPLATE_DIR/release-vars.yml" ]; then
@@ -344,5 +355,5 @@ if [ -f "$RELEASE_VARS_FILE" ]; then
    fi
 fi
 
-BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
+BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 

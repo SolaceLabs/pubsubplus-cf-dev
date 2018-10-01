@@ -591,3 +591,11 @@ function resetBOSHEnv() {
   unset BOSH_CLIENT_SECRET
   unset BOSH_CA_CERT
 }
+
+function produceBOSHEnvVars() {
+  echo "bosh_host: $BOSH_IP"
+  echo "bosh_admin_password: $BOSH_CLIENT_SECRET"
+  echo "bosh_disable_ssl_cert_verification: false"
+  echo "bosh_root_ca_cert: |"
+  sed 's/^/    /g' <<< "$BOSH_CA_CERT"
+}
