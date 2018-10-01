@@ -84,7 +84,7 @@ function checkDeploymentRequirements() {
  check_cf_marketplace_access
 
  ## Check BOSH Stemcell is uploaded
- prepareBosh
+ loadStemcells
 
 }
 
@@ -127,7 +127,6 @@ function showUsage() {
     echo "  -l <ldap_config.yml>      Provide LDAP Config file path"   
     echo "  -b                        Enable LDAP Management Authorization access" 
     echo "  -c                        Enable LDAP Application Authorization access" 
-    echo "  -w                        Make Windows deployment" 
     echo "  -k                        Keep Errand(s) Alive" 
     echo "  -m                        Use MySQL For PCF"
     echo "  -y                        Deploy highly available internal mysql database"
@@ -136,7 +135,7 @@ function showUsage() {
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ewkmyzh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -204,8 +203,6 @@ while getopts "t:a:nbcr:l:s:p:v:x:ewkmyzh" arg; do
         x)
             EXTRA_BOSH_PARAMS="$OPTARG"
             ;; 
-        w)  WINDOWS=true
-            ;;
         k)  KEEP_ERRAND_ALIVE=true
             ;;
         m)  USE_MYSQL_FOR_PCF=true
@@ -246,16 +243,6 @@ fi
 if [ -n "$SYSLOG_PATH" ]; then
    ENABLE_SYSLOG_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_syslog.yml"
    SYSLOG_VARS="-l $SYSLOG_PATH" 
-fi
-
-if [[ $WINDOWS == true ]]; then
-   MAKE_WINDOWS_DEPLOYMENT="-o $SCRIPTPATH/../operations/make_windows_deployment.yml" 
-   export SYSTEM_DOMAIN="local.pcfdev.io"
-   USE_CREDHUB=$(cat $VARS_FILE | grep "secure_service_credentials" | grep "true" | wc -l)
-   if [ "$USE_CREDHUB" == "1" ]; then
-     echo "Secure Service Credentials feature must be disabled when deploying on PCFDev" 
-     exit 1 
-   fi
 fi
 
 if [[ $KEEP_ERRAND_ALIVE == true ]]; then
@@ -300,13 +287,22 @@ fi
 
 checkSolaceReleases
 
-export SOLACE_PUBSUB_RELEASE=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("solace-pubsub")) and (.name | contains("solace-pubsub-broker") | not)) | .version' )
-export TEMPLATE_VERSION=$( echo $SOLACE_PUBSUB_RELEASE | awk -F\- '{ print $1 }' )
+export SOLACE_PUBSUB_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("solace-pubsub")) and (.name | contains("solace-pubsub-broker") | not)) | .version' )
+export SOLACE_PUBSUB_RELEASES=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export SOLACE_PUBSUB_RELEASE=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
+export TEMPLATE_VERSION=$( echo "$SOLACE_PUBSUB_RELEASE" | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
+
+if [ ! -d "$TEMPLATE_DIR" ]; then
+   echo "WARN: Unable to find template directory [$TEMPLATE_DIR] for Solace PubSub+ Release [$SOLACE_PUBSUB_RELEASE] from found release(s) [ $SOLACE_PUBSUB_RELEASES ], TEMPLATE VERSION [ $TEMPLATE_VERSION ]"
+   exit 1
+else
+   echo "Deployment using Solace PubSub+ Release [$SOLACE_PUBSUB_RELEASE] from found release(s) [ $SOLACE_PUBSUB_RELEASES ] , TEMPLATE VERSION [ $TEMPLATE_VERSION ], template directory [$TEMPLATE_DIR]"
+fi
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $MAKE_WINDOWS_DEPLOYMENT"}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS "}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
@@ -316,7 +312,8 @@ CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMA
 MISC_VARS=${MISC_VARS:-""}
 
 ## If not defined and found in templates
-if [ -z "$RELEASE_VARS" ] && [ -f $TEMPLATE_DIR/release-vars.yml ]; then
+if [ -z "$RELEASE_VARS" ] && [ -f "$TEMPLATE_DIR/release-vars.yml" ]; then
+   RELEASE_VARS_FILE=$TEMPLATE_DIR/release-vars.yml
    RELEASE_VARS=" -l $TEMPLATE_DIR/release-vars.yml"
 fi
 
@@ -324,8 +321,28 @@ if [ ! -z "$DEPLOYMENT_NAME" ]; then
    MISC_VARS="-v deployment_name=$DEPLOYMENT_NAME $MISC_VARS"
 fi
 
+if [ -z "$RELEASE_VARS" ]; then
+  RELEASE_VARS_FILE=$CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml
+  RELEASE_VARS=" -l $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml"
+fi
 # Accept if defined or default to the version from $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME
-RELEASE_VARS=${RELEASE_VARS:-" -l $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml"}
+
+## 
+# Handle stemcell loading based on release-vars contents
+##
+if [ -f "$RELEASE_VARS_FILE" ]; then
+   # Find it or accept the default
+   RELEASE_STEMCELL=$(bosh int $RELEASE_VARS_FILE --path /bosh_stemcell)
+   RELEASE_STEMCELL_VERSION=$(bosh int $RELEASE_VARS_FILE --path /bosh_stemcell_version)
+
+   ## Accept the default
+   RELEASE_STEMCELL=${RELEASE_STEMCELL:-$STEMCELL}
+   RELEASE_STEMCELL_VERSION=${RELEASE_STEMCELL_VERSION:-$STEMCELL_VERSION}
+
+   if [ ! "$RELEASE_STEMCELL" == "$STEMCELL" ] || [ ! "$RELEASE_STEMCELL_VERSION" == "$STEMCELL_VERSION" ]; then
+      export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS $RELEASE_STEMCELL:$RELEASE_STEMCELL_VERSION"
+   fi
+fi
 
 BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 

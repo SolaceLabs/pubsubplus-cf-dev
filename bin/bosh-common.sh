@@ -5,15 +5,17 @@ export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
 
 ######################################
 
-export BOSH_IP=${BOSH_IP:-"192.168.50.4"}
+export BOSH_IP=${BOSH_IP:-"192.168.50.6"}
 export BOSH_CMD="/usr/local/bin/bosh"
 export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.26"}
-export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
-export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.40"}
+export STEMCELL=${STEMCELL:-"ubuntu-trusty"}
+
+export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
 
 export VM_MEMORY=${VM_MEMORY:-8192}
 export VM_CPUS=${VM_CPUS:-4}
@@ -37,20 +39,7 @@ trap cleanupWorkTemp EXIT INT TERM HUP
 function targetBosh() {
 
   ## Setup to access target bosh-lite
-    
-  if [ ! -f $WORKSPACE/.env ] && [ "$BOSH_IP" == "192.168.50.4" ]; then
-     # Old bosh-lite
-     if [ ! -d $WORKSPACE/bosh-lite ]; then
-       (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
-     fi 
-
-     # bosh target $BOSH_IP alias as 'lite'
-     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
-  else
-     # New bosh-lite
-     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
-  fi
-
+  BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
   if [ $? -eq 0 ]; then
      # Login will rely on BOSH_* env vars..
      BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD log-in )
@@ -67,9 +56,15 @@ function targetBosh() {
 }
 
 
-function prepareBosh() { 
+function loadStemcells() { 
 
-  FOUND_STEMCELL=`bosh stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
+ for REQUIRED_STEMCELL in $REQUIRED_STEMCELLS; do
+
+  export STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
+  export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
+  export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
+  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+  FOUND_STEMCELL=$( bosh stemcells | grep bosh-warden-boshlite-${STEMCELL}-go_agent | grep $STEMCELL_VERSION | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
 	echo "Downloading required stemcell $STEMCELL_NAME"
@@ -80,7 +75,11 @@ function prepareBosh() {
 	echo "Failed to upload required stemcell $STEMCELL_NAME to bosh"
 	exit 1
      fi
+  else
+     echo "Stemcell found [$STEMCELL_NAME]/[$STEMCELL_VERSION]"
   fi
+
+ done
 
 }
 
@@ -455,7 +454,7 @@ fi
 
 check_bucc
 
-echo "Setting VM MEMORY to $VM_MEMORY, VM_CPUS to $VM_CPUS, VM_EPHEMERAL_DISK_SIZE to $VM_EPHEMERAL_DISK_SIZE"
+echo "Setting VM_MEMORY [ $VM_MEMORY ], VM_CPUS [ $VM_CPUS ], VM_EPHEMERAL_DISK_SIZE [ $VM_EPHEMERAL_DISK_SIZE ], VM_DISK_SIZE [ $VM_DISK_SIZE ]"
 sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
 sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
 sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
