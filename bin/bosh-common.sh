@@ -280,25 +280,29 @@ function deleteDeployment() {
 
 }
 
+function deleteBOSHRelease() {
+
+BOSH_RELEASE=$1
+MATCHING_RELEASES_LIST=$( bosh releases --json | jq -r ".Tables[].Rows[] | select((.name == \"$BOSH_RELEASE\")) | .version" )
+MATCHING_UNUSED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep -v "*" )
+MATCHING_UNUSED_RELEASES_COUNT=$( echo "$MATCHING_UNUSED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+MATCHING_USED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep "*" )
+MATCHING_USED_RELEASES_COUNT=$( echo "$MATCHING_USED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+echo "Found [ $MATCHING_UNUSED_RELEASES_COUNT : unused ] and [ $MATCHING_USED_RELEASES_COUNT : in-use ] release(s) for [ $BOSH_RELEASE ]"
+
+if [ "$MATCHING_UNUSED_RELEASES_COUNT" -gt "0" ]; then
+ for MATCHING_RELEASE_VERSION in $MATCHING_UNUSED_RELEASES; do
+   echo "Deleting [ $BOSH_RELEASE/$MATCHING_RELEASE_VERSION ]"
+   bosh -n delete-release $BOSH_RELEASE/$MATCHING_RELEASE_VERSION
+ done
+fi
+
+}
+
 function deleteSolaceReleases() {
-
- SOLACE_PUBSUB_RELEASE_FOUND_COUNT=`bosh releases | grep -v solace-pubsub-broker | grep solace-pubsub | wc -l`
- if [ "$SOLACE_PUBSUB_RELEASE_FOUND_COUNT" -gt "0" ]; then
-     # solace-pubsub
-     echo "Deleting release solace-pubsub"
-     bosh -n delete-release solace-pubsub
- else
-     echo "No solace-pubsub release found: $SOLACE_PUBSUB_RELEASE_FOUND_COUNT"
- fi
-
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub-broker | wc -l`
- if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
-     # solace-pubsub-broker
-     echo "Deleting release solace-pubsub-broker"
-     bosh -n delete-release solace-pubsub-broker
- else
-     echo "No solace-pubsub-broker release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
- fi
+  
+ deleteBOSHRelease solace-pubsub-broker
+ deleteBOSHRelease solace-pubsub
 
 }
 
