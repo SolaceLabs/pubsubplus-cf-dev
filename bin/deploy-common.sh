@@ -297,7 +297,7 @@ export SOLACE_PUBSUB_RELEASE=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sed 's/\*/
 export TEMPLATE_VERSION=$( echo "$SOLACE_PUBSUB_RELEASE" | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
-export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("docker"))) | .version' )
+export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
 export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
 export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
 
