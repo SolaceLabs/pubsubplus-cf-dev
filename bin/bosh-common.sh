@@ -266,11 +266,11 @@ function runErrand() {
  DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ] && [ ! -z $ERRAND_NAME ]; then
 
-  FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | .name " | grep "$ERRAND_NAME" | wc -l )
+  FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | select(.name == \"$ERRAND_NAME\") | .name " | grep "$ERRAND_NAME" | wc -l )
   if [ $FOUND_ERRAND -eq "1" ]; then
      bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME
   else
-     echo "Errand [$ERRAND_NAME] not found for deployment $SELECTED_DEPLOYMENT]"
+     echo "Errand [$ERRAND_NAME] not found for deployment [$SELECTED_DEPLOYMENT]"
   fi
 
  else
