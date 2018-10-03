@@ -83,6 +83,27 @@ function loadStemcells() {
 
 }
 
+function deleteAllOrphanedDisks() {
+
+ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | .disk_cid" | sed 's/\"//g' | wc -l )
+ORPHANED_DISKS=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | .disk_cid" | sed 's/\"//g' )
+
+if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
+
+ for DISK_ID in $ORPHANED_DISKS; do
+        echo "Will delete $DISK_ID"
+        bosh -n delete-disk $DISK_ID
+        echo
+        echo "Orphaned Disk $DISK_ID was deleted"
+        echo
+ done
+
+else
+   echo "no orphaned disks found: $ORPHANED_DISKS_COUNT"
+fi
+
+}
+
 function deleteOrphanedDisks() {
 
 SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
