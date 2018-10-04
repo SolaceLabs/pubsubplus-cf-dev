@@ -9,6 +9,7 @@ source $SCRIPTPATH/deploy-common.sh
 function cleanupAfterDeploy() {
  source $SCRIPTPATH/bosh-common.sh
  deleteOrphanedDisks
+ deleteAllOrphanedDisks
 }
 trap cleanupAfterDeploy EXIT INT TERM HUP
 

@@ -263,12 +263,14 @@ function runErrand() {
 
  SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
  ERRAND_NAME=$2
+ INSTANCE_NAME=${3:-"management/first"}
  DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ] && [ ! -z $ERRAND_NAME ]; then
 
   FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | select(.name == \"$ERRAND_NAME\") | .name " | grep "$ERRAND_NAME" | wc -l )
   if [ $FOUND_ERRAND -eq "1" ]; then
-     bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME
+     echo "Running [ bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME --instance=$INSTANCE_NAME --when-changed ]"
+     bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME --instance=$INSTANCE_NAME --when-changed
   else
      echo "Errand [$ERRAND_NAME] not found for deployment [$SELECTED_DEPLOYMENT]"
   fi
@@ -281,8 +283,8 @@ function runErrand() {
 
 function deleteSolaceDeployment() {
   SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
-  runErrand $SELECTED_DEPLOYMENT delete-all-service-instances
-  runErrand $SELECTED_DEPLOYMENT delete-all
+  runErrand $SELECTED_DEPLOYMENT delete-all-service-instances management/first
+  runErrand $SELECTED_DEPLOYMENT delete-all management/first
   deleteDeployment $SELECTED_DEPLOYMENT
   deleteOrphanedDisks $SELECTED_DEPLOYMENT
   deleteAllOrphanedDisks
