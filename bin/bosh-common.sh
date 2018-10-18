@@ -64,7 +64,7 @@ function loadStemcells() {
   export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
   export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
   export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
-  FOUND_STEMCELL=$( bosh stemcells | grep bosh-warden-boshlite-${STEMCELL}-go_agent | grep $STEMCELL_VERSION | wc -l)
+  FOUND_STEMCELL=$( bosh stemcells --json | jq ".Tables[].Rows[] | select(.os == \"$STEMCELL\")  | select ((.version == \"${STEMCELL_VERSION}\" ) or (.version==\"${STEMCELL_VERSION}*\")) | .name " | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
 	echo "Downloading required stemcell $STEMCELL_NAME"
@@ -592,20 +592,26 @@ function setup_bosh_lite_swap() {
 
  checkRequiredTools ssh-keygen ssh-keyscan
 
- check_bucc
+ if [ ! -z "$VM_SWAP" ] && [ "$VM_SWAP" -gt "0" ]; then
 
- echo
- echo "Adding swap of $VM_SWAP. You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
- echo
+   check_bucc
 
- echo "Adding $VM_SWAP of swap space"
- ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
- ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
- bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
- bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
- bucc ssh "sudo mkswap /var/vcap/store/swapfile"
- bucc ssh "sudo swapon /var/vcap/store/swapfile"
- bucc ssh "sudo swapon -s"
+   echo
+   echo "Adding swap space VM_SWAP [ $VM_SWAP ]"
+   echo "You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
+   echo
+
+   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
+   ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
+   bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
+   bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
+   bucc ssh "sudo mkswap /var/vcap/store/swapfile"
+   bucc ssh "sudo swapon /var/vcap/store/swapfile"
+   bucc ssh "sudo swapon -s"
+
+ else
+   echo "Not adding swap space VM_SWAP [ $VM_SWAP ]"
+ fi
 
 }
 
