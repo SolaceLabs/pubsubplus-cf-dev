@@ -17,6 +17,9 @@ starting_port: 7000
 # Increase security by hiding service instance credentials from VCAP services
 secure_service_credentials: false
 
+# Automatically manage application security groups
+application_security_groups: true
+
 # This is the password set for the "admin" user on the VMR
 vmr_admin_password: admin1
 ##
