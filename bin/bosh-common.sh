@@ -579,20 +579,24 @@ function setup_bosh_lite_swap() {
 
  checkRequiredTools ssh-keygen ssh-keyscan
 
- check_bucc
+ if [ ! -z "$VM_SWAP" ] && [ "$VM_SWAP" -gt "0" ]; then
 
- echo
- echo "Adding swap of $VM_SWAP. You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
- echo
+   check_bucc
 
- echo "Adding $VM_SWAP of swap space"
- ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
- ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
- bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
- bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
- bucc ssh "sudo mkswap /var/vcap/store/swapfile"
- bucc ssh "sudo swapon /var/vcap/store/swapfile"
- bucc ssh "sudo swapon -s"
+   echo
+   echo "Adding swap of $VM_SWAP. You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
+   echo
+
+   echo "Adding $VM_SWAP of swap space"
+   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
+   ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
+   bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
+   bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
+   bucc ssh "sudo mkswap /var/vcap/store/swapfile"
+   bucc ssh "sudo swapon /var/vcap/store/swapfile"
+   bucc ssh "sudo swapon -s"
+
+ fi
 
 }
 
