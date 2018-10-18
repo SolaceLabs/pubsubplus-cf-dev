@@ -64,7 +64,7 @@ function loadStemcells() {
   export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
   export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
   export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
-  FOUND_STEMCELL=$( bosh stemcells | grep bosh-warden-boshlite-${STEMCELL}-go_agent | grep $STEMCELL_VERSION | wc -l)
+  FOUND_STEMCELL=$( bosh stemcells --json | jq ".Tables[].Rows[] | select(.os == \"$STEMCELL\")  | select (.version == \"$STEMCELL_VERSION\") | .name " | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
 	echo "Downloading required stemcell $STEMCELL_NAME"
