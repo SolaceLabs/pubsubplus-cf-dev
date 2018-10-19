@@ -128,5 +128,6 @@ unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz
  cd ./solace_pubsub_broker/ 
  SOLACE_SERVICE_BROKER_VERSION=$(ls *.jar)
  echo " Found Solace Service Broker [ $SOLACE_SERVICE_BROKER_VERSION ]"
+ echo "solace_service_broker_jar: $SOLACE_SERVICE_BROKER_VERSION" > $WORKSPACE/releases/release-vars.yml
 )
 

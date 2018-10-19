@@ -94,7 +94,7 @@ function checkDeploymentRequirements() {
 
 function checkSolaceReleases() {
 
- SOLACE_PUBSUB_RELEASE_FOUND_COUNT=`bosh releases | grep -v solace-pubsub-broker | grep solace-pubsub | wc -l`
+ SOLACE_PUBSUB_RELEASE_FOUND_COUNT=$( bosh releases | grep -v solace-pubsub-broker | grep solace-pubsub | wc -l)
 
  if [ "$SOLACE_PUBSUB_RELEASE_FOUND_COUNT" -eq "0" ]; then
    echo "solace-pubsub release seem to be missing from bosh, please upload-release to bosh"
@@ -103,7 +103,7 @@ function checkSolaceReleases() {
    exit 1
  fi
 
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-pubsub-broker | wc -l`
+ SOLACE_MESSAGING_RELEASE_FOUND_COUNT=$( bosh releases | grep solace-pubsub-broker | wc -l)
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
    echo "solace-pubsub-broker release seem to be missing from bosh, please upload-release to bosh"
@@ -353,6 +353,11 @@ if [ -f "$RELEASE_VARS_FILE" ]; then
    if [ ! "$RELEASE_STEMCELL" == "$STEMCELL" ] || [ ! "$RELEASE_STEMCELL_VERSION" == "$STEMCELL_VERSION" ]; then
       export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS $RELEASE_STEMCELL:$RELEASE_STEMCELL_VERSION"
    fi
+fi
+
+## Handle addiotnal bosh release detected variables
+if [ -f "$WORKSPACE/releases/release-vars.yml" ]; then
+   RELEASE_VARS="$RELEASE_VARS -l $WORKSPACE/releases/release-vars.yml"
 fi
 
 BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
