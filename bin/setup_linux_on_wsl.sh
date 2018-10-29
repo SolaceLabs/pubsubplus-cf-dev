@@ -5,9 +5,18 @@ export CF_DEPLOYMENT_VERSION=v4.2.0
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
+SCRIPT_GIT_BRANCH="$(git rev-parse --abbrev-ref HEAD)"
+if [ "$SCRIPT_GIT_BRANCH" != "HEAD" ]; then
+    SCRIPT_GIT_REMOTE="$(git config --local --get branch.$SCRIPT_GIT_BRANCH.remote)"
+    SCRIPT_GIT_REPO_BASE="$(git config --local --get remote.$SCRIPT_GIT_REMOTE.url | sed -E 's/\/[A-Za-z0-9-]+\.git//g')"
+else
+    SCRIPT_GIT_REPO_BASE="https://github.com/SolaceLabs"
+fi
+
+
 export WIN_DRIVE=${WIN_DRIVE:-"/mnt/c"}
 export VIRTUALBOX_HOME=${VIRTUALBOX_HOME:-"$WIN_DRIVE/Program Files/Oracle/VirtualBox"}
-export GIT_REPO_BASE=${GIT_REPO_BASE:-"https://github.com/SolaceLabs"}
+export GIT_REPO_BASE=${GIT_REPO_BASE:-"$SCRIPT_GIT_REPO_BASE"}
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 export SETTINGS_FILE=${SETTINGS_FILE:-$HOME/.settings.sh}
 export REPOS_DIR=${REPOS_DIR:-$HOME/repos}
@@ -85,7 +94,7 @@ function installPrograms() {
 
 function getSettingsEnv() {
     echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev"
-    echo "export WORKSPACE=$HOME/workspace"
+    echo "export WORKSPACE=$WORKSPACE"
     echo "export PATH=\$PATH:$WORKSPACE/bucc/bin"
 }
 
