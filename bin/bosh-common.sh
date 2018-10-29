@@ -9,7 +9,6 @@ export BOSH_IP=${BOSH_IP:-"192.168.50.6"}
 export BOSH_CMD="/usr/local/bin/bosh"
 export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
-export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
 
 export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.40"}
@@ -297,7 +296,7 @@ function deleteDeployment() {
  DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
 
-  bosh -d $SELECTED_DEPLOYMENT delete-deployment
+  bosh -n -d $SELECTED_DEPLOYMENT delete-deployment
 
  else
      echo "Deployment [$SELECTED_DEPLOYMENT] not found: $DEPLOYMENT_FOUND_COUNT"
