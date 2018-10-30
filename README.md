@@ -139,7 +139,7 @@ There are two ways of running the script:
 #### Option 1: Directly through curl:
 
 ~~~
-curl -L https://github.com/SolaceLabs/solace-messaging-cf-dev/raw/master/bin/setup_bosh_on_wsl.sh | bash
+curl -L https://github.com/SolaceLabs/solace-messaging-cf-dev/raw/master/bin/setup_linux_on_wsl.sh | bash
 ~~~
 
 With this option, this project will automatically get cloned and git will check out the branch specified by the BRANCH environment variable if it is set.
@@ -152,7 +152,7 @@ cd
 mkdir repos
 cd repos
 git clone https://github.com/SolaceLabs/solace-messaging-cf-dev/
-solace-messaging-cf-dev/bin/setup_bosh_on_wsl.sh
+solace-messaging-cf-dev/bin/setup_linux_on_wsl.sh
 ~~~
 
 With this option, the script **will not** switch to the git branch specified by the BRANCH environment variable.
