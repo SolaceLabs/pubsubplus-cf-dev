@@ -10,11 +10,5 @@ confirmServiceBrokerRunning
 
 checkServiceBrokerServicePlanStats
 
-checkServiceBrokerRepoStats
-
-getServiceBrokerRouters
-
-showServiceBrokerRouterInventory
-
 showServiceBrokerVMRs
 
