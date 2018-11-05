@@ -64,7 +64,7 @@ function getServiceBrokerDetails() {
  if [ "$SB_FOUND" -eq "1" ]; then
   ## Capture a few details from the service broker
    export SB_APP=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | awk '{ print $1}'`
-   export SB_URL=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | grep $SB_APP | awk '{ print $6}'`
+   export SB_URL=`cf apps | grep -v Getting | grep solace-pubsub-broker | sort | tail -1  | grep $SB_APP | awk '{ print $6}' | sed 's/\,//g' `
    export SECURITY_USER_NAME=`cf env $SB_APP | grep SECURITY_USER_NAME | awk '{ print $2}'`
    export SECURITY_USER_PASSWORD=`cf env $SB_APP | grep SECURITY_USER_PASSWORD | awk '{ print $2}'`
    export VMR_SUPPORT_PASSWORD=`cf env $SB_APP | grep VMR_SUPPORT_PASSWORD | awk '{ print $2}'`
