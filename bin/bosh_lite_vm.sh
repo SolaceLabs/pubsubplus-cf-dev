@@ -23,14 +23,16 @@ function showUsage() {
     echo "  -c                   Creates the BOSH-lite VM"
     echo "  -d                   Destroys the BOSH-lite VM"
     echo "  -s                   Saves the state and suspends the BOSH-lite VM"
-    echo "  -r                   Resumes running the BOSH-lite VM assuming a previously saved state."
+    echo "  -p                   Poweron the BOSH-lite VM assuming a previously saved state."
     echo "  -n                   Recreates routes to support communications between host and BOSH-lite VM"
     echo "  -t <NAME>            Takes a snapshot of the BOSH-lite VM with the given NAME"
     echo "  -g <NAME>            Restores a snapshot of the BOSH-lite VM with the given NAME, the VM should be already Saved (-s)"
+    echo "  -x <NAME>            Deletes a snapshot of the BOSH-lite VM with the given NAME"
+    echo "  -r                   Rolls back to the current snapshot of the BOSH-lite VM, the VM should be already Saved (-s)"
     echo "  -l                   Lists available snapshot names of the BOSH-lite VM"
 }
 
-while getopts "hcdsrnt:g:l" arg; do
+while getopts "hcdsrnt:g:x:pl" arg; do
     case "${arg}" in
         c)
 	    ## Create the VM and do additional tasks
@@ -49,7 +51,7 @@ while getopts "hcdsrnt:g:l" arg; do
         s) 
 	    savestate_bosh_lite_vm
             ;; 
-        r)
+        p)
             resume_bosh_lite_vm
 	    ;;
         n)
@@ -62,6 +64,13 @@ while getopts "hcdsrnt:g:l" arg; do
         g)
             export SNAPSHOT_NAME=${OPTARG:-"INITIAL"}
 	    restore_bosh_lite_vm_snapshot $SNAPSHOT_NAME
+            ;;
+        x)
+            export SNAPSHOT_NAME=${OPTARG:-"INITIAL"}
+	    delete_bosh_lite_vm_snapshot $SNAPSHOT_NAME
+            ;;
+        r)
+	    restore_current_bosh_lite_vm_snapshot
             ;;
         l)
 	    list_bosh_lite_vm_snapshot

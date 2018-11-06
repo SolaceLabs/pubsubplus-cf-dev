@@ -392,6 +392,28 @@ fi
 
 }
 
+function delete_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Deleting snapshot of [$BOSH_VM] as $1"
+        vboxmanage snapshot $BOSH_VM delete $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
 function restore_bosh_lite_vm_snapshot() {
 
 checkRequiredTools vboxmanage
@@ -403,6 +425,28 @@ if [ -f $WORKSPACE/.boshvm ]; then
    if [[ $? -eq 0 ]]; then
         echo "Restoring snapshot of [$BOSH_VM] as $1"
         vboxmanage snapshot $BOSH_VM restore $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function restore_current_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Restoring current snapshot of [$BOSH_VM]"
+        vboxmanage snapshot $BOSH_VM restorecurrent
    else
         echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
         exit 1
