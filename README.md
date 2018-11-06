@@ -484,10 +484,10 @@ vagrant resume
 
 * On all platforms:
 
-The bosh created VM in virtualbox may be resumed if previously paused and saved by using [bosh_lite_vm.sh -s](bin/bosh_lite_vm.sh)
+The bosh created VM in virtualbox may be powered on if previously paused and saved by using [bosh_lite_vm.sh -s](bin/bosh_lite_vm.sh)
 
 ~~~~
-bosh_lite_vm.sh -r
+bosh_lite_vm.sh -p
 ~~~~
 
 Alternatively you can use the virtualbox GUI to the 'start' > 'headless start'. 
