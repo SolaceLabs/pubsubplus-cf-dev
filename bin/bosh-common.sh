@@ -2,6 +2,7 @@
 
 export DEPLOYMENT_NAME="solace_pubsub"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ######################################
 
@@ -21,6 +22,12 @@ export VM_CPUS=${VM_CPUS:-4}
 export VM_DISK_SIZE=${VM_DISK_SIZE:-"65_536"}
 export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
 export VM_SWAP=${VM_SWAP:-8192}
+
+export BUCC_HOME=${BUCC_HOME:-$SCRIPTPATH/../bucc}
+export BUCC_STATE_ROOT=${BUCC_STATE_ROOT:-$WORKSPACE/BOSH_LITE_VM/state}
+export BUCC_VARS_FILE=${BUCC_VARS_FILE:-$WORKSPACE/BOSH_LITE_VM/vars.yml}
+export BUCC_STATE_STORE=${BUCC_STATE_STORE:-$BUCC_STATE_ROOT/state.json}
+export BUCC_VARS_STORE=${BUCC_VARS_STORE:-$BUCC_STATE_ROOT/creds.yml}
 
 export TEMP_DIR=$(mktemp -d)
 
@@ -483,15 +490,31 @@ fi
 function check_bucc() {
 
 (
- cd $WORKSPACE
+ cd $SCRIPTPATH/..
  if [ ! -d bucc ]; then
   git clone https://github.com/starkandwayne/bucc.git
  else
   (cd bucc; git pull)
  fi
 )
+export PATH=$PATH:$BUCC_HOME/bin
 
-export PATH=$PATH:$WORKSPACE/bucc/bin
+if [ ! -d $WORKSPACE/BOSH_LITE_VM ]; then
+    mkdir $WORKSPACE/BOSH_LITE_VM
+    mkdir -p $BUCC_STATE_ROOT
+
+    # Migrate old state directory if found
+    if [ -d $WORKSPACE/bucc/state ]; then
+         mv $WORKSPACE/bucc/state/* $BUCC_STATE_ROOT
+         rmdir $WORKSPACE/bucc/state
+    fi
+
+    # Migrate old vars if found
+    if [ -f $WORKSPACE/bucc/vars.yml ]; then
+       mv $WORKSPACE/bucc/vars.yml $BUCC_VARS_FILE
+    fi
+
+fi
 
 }
 
@@ -513,12 +536,12 @@ fi
 check_bucc
 
 echo "Setting VM_MEMORY [ $VM_MEMORY ], VM_CPUS [ $VM_CPUS ], VM_EPHEMERAL_DISK_SIZE [ $VM_EPHEMERAL_DISK_SIZE ], VM_DISK_SIZE [ $VM_DISK_SIZE ]"
-sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
-sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
-sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
 
-echo "vm_disk_size: $VM_DISK_SIZE" >> $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
-cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
+echo "vm_disk_size: $VM_DISK_SIZE" >> $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
+cp -f $SCRIPTPATH/vm-size.yml $BUCC_HOME/ops/cpis/virtualbox/
 
 ## Capture running VMS before
 vboxmanage list runningvms > $TEMP_DIR/running_vms.before
@@ -559,10 +582,10 @@ checkRequiredTools vboxmanage
 
 check_bucc
 
-source <($WORKSPACE/bucc/bin/bucc env)
+source <($BUCC_HOME/bin/bucc env)
 
-if [ -d $WORKSPACE/bucc/state ] && [ -f $WORKSPACE/bucc/vars.yml ]; then
-   $WORKSPACE/bucc/bin/bucc down && $WORKSPACE/bucc/bin/bucc clean
+if [ -d $BUCC_STATE_ROOT ] && [ -f $BUCC_VARS_FILE ]; then
+   $BUCC_HOME/bin/bucc down && $BUCC_HOME/bin/bucc clean
 fi
 
 if [ -f $WORKSPACE/bosh_env.sh ]; then

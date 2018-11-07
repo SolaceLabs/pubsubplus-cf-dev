@@ -11,13 +11,19 @@ export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
 
+export BUCC_HOME=${BUCC_HOME:-$SOLACE_MESSAGING_CF_DEV/bucc}
+export BUCC_STATE_ROOT=${BUCC_STATE_ROOT:-$WORKSPACE/BOSH_LITE_VM/state}
+export BUCC_VARS_FILE=${BUCC_VARS_FILE:-$WORKSPACE/BOSH_LITE_VM/vars.yml}
+export BUCC_STATE_STORE=${BUCC_STATE_STORE:-$BUCC_STATE_ROOT/state.json}
+export BUCC_VARS_STORE=${BUCC_VARS_STORE:-$BUCC_STATE_ROOT/creds.yml}
+
 LOCKFILE=$HOME/.env.lck
 
-if [ -f $WORKSPACE/bucc/bin/bucc ]; then
+if [ -f $BUCC_HOME/bin/bucc ]; then
    ## Avoids concurrent writes
    (
      flock -x 200
-     $WORKSPACE/bucc/bin/bucc env > $WORKSPACE/.env
+     $BUCC_HOME/bin/bucc env > $WORKSPACE/.env
      flock -u 200
    ) 200>$LOCKFILE
 fi
