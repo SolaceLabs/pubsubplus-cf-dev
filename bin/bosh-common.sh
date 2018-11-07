@@ -593,6 +593,7 @@ echo "export BUCC_VARS_STORE=\${BUCC_VARS_STORE:-\$BUCC_STATE_ROOT/creds.yml}"
 
 function create_bosh_env_file() {
 
+check_bucc
 prepare_bosh_env > $BOSH_ENV_FILE
 echo "Prepared: $BOSH_ENV_FILE"
 echo "To use it \"source $BOSH_ENV_FILE\""
