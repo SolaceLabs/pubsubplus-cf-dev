@@ -568,12 +568,24 @@ if [[ $? -eq 0 ]]; then
    echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
 fi
 
-bucc env > $WORKSPACE/bosh_env.sh
-echo "export PATH=\$PATH:$SCRIPTPATH" >> $WORKSPACE/bosh_env.sh
+prepare_bosh_env > $WORKSPACE/bosh_env.sh
 
 source $WORKSPACE/bosh_env.sh
 echo "Updating runtime-config to activate bosh-dns" 
 bosh -n update-runtime-config $SCRIPTPATH/runtime-config.yml
+}
+
+function prepare_bosh_env() {
+
+bucc env 
+echo "export PATH=\$PATH:$SCRIPTPATH"
+echo "export WORKSPACE=$WORKSPACE"
+echo "export BUCC_HOME=\${BUCC_HOME:-$SCRIPTPATH/bucc}"
+echo "export BUCC_STATE_ROOT=\${BUCC_STATE_ROOT:-\$WORKSPACE/BOSH_LITE_VM/state}"
+echo "export BUCC_VARS_FILE=\${BUCC_VARS_FILE:-\$WORKSPACE/BOSH_LITE_VM/vars.yml}"
+echo "export BUCC_STATE_STORE=\${BUCC_STATE_STORE:-\$BUCC_STATE_ROOT/state.json}"
+echo "export BUCC_VARS_STORE=\${BUCC_VARS_STORE:-\$BUCC_STATE_ROOT/creds.yml}"
+
 }
 
 function bosh_lite_vm_additions() {
