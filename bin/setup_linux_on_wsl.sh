@@ -69,7 +69,7 @@ function cloneRepo() {
 function installBosh() {
     $REPOS_DIR/solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
     if [ ! -e /usr/local/bin/bosh ]; then
-        sudo cp $WORKSPACE/bucc/bin/bosh /usr/local/bin
+        sudo cp $REPOS_DIR/solace-messaging-cf-dev/bucc/bin/bosh /usr/local/bin
     fi
 }
 
@@ -95,7 +95,7 @@ function installPrograms() {
 function getSettingsEnv() {
     echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev"
     echo "export WORKSPACE=$WORKSPACE"
-    echo "export PATH=\$PATH:$WORKSPACE/bucc/bin"
+    echo "export PATH=\$PATH:\$SOLACE_MESSAGING_CF_DEV/bucc/bin"
 }
 
 function createSettingsFile() {
