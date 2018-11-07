@@ -29,6 +29,9 @@ export BUCC_VARS_FILE=${BUCC_VARS_FILE:-$WORKSPACE/BOSH_LITE_VM/vars.yml}
 export BUCC_STATE_STORE=${BUCC_STATE_STORE:-$BUCC_STATE_ROOT/state.json}
 export BUCC_VARS_STORE=${BUCC_VARS_STORE:-$BUCC_STATE_ROOT/creds.yml}
 
+export BOSH_ENV_FILE=${BOSH_ENV_FILE:-$WORKSPACE/bosh_env.sh}
+export DOT_BOSH_ENV_FILE=${DOT_BOSH_ENV_FILE:-$WORKSPACE/.env}
+
 export TEMP_DIR=$(mktemp -d)
 
 if [ ! -d $WORKSPACE ]; then
@@ -573,9 +576,9 @@ if [[ $? -eq 0 ]]; then
    echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
 fi
 
-prepare_bosh_env > $WORKSPACE/bosh_env.sh
+create_bosh_env_file
 
-source $WORKSPACE/bosh_env.sh
+source $BOSH_ENV_FILE
 echo "Updating runtime-config to activate bosh-dns" 
 bosh -n update-runtime-config $SCRIPTPATH/runtime-config.yml
 }
@@ -585,7 +588,7 @@ function prepare_bosh_env() {
 bucc env 
 echo "export PATH=\$PATH:$SCRIPTPATH"
 echo "export WORKSPACE=$WORKSPACE"
-echo "export BUCC_HOME=\${BUCC_HOME:-$SCRIPTPATH/bucc}"
+echo "export BUCC_HOME=\${BUCC_HOME:-$SCRIPTPATH/../bucc}"
 echo "export BUCC_STATE_ROOT=\${BUCC_STATE_ROOT:-\$WORKSPACE/BOSH_LITE_VM/state}"
 echo "export BUCC_VARS_FILE=\${BUCC_VARS_FILE:-\$WORKSPACE/BOSH_LITE_VM/vars.yml}"
 echo "export BUCC_STATE_STORE=\${BUCC_STATE_STORE:-\$BUCC_STATE_ROOT/state.json}"
@@ -593,9 +596,17 @@ echo "export BUCC_VARS_STORE=\${BUCC_VARS_STORE:-\$BUCC_STATE_ROOT/creds.yml}"
 
 }
 
+function create_bosh_env_file() {
+
+prepare_bosh_env > $BOSH_ENV_FILE
+echo "Prepared: $BOSH_ENV_FILE"
+echo "To use it \"source $BOSH_ENV_FILE\""
+
+}
+
 function bosh_lite_vm_additions() {
 
-source $WORKSPACE/bosh_env.sh
+source $BOSH_ENV_FILE
 setup_bosh_lite_routes
 setup_bosh_lite_swap
 
@@ -613,12 +624,12 @@ if [ -d $BUCC_STATE_ROOT ] && [ -f $BUCC_VARS_FILE ]; then
    $BUCC_HOME/bin/bucc down && $BUCC_HOME/bin/bucc clean
 fi
 
-if [ -f $WORKSPACE/bosh_env.sh ]; then
-   rm -f $WORKSPACE/bosh_env.sh
+if [ -f $BOSH_ENV_FILE ]; then
+   rm -f $BOSH_ENV_FILE
 fi
 
-if [ -f $WORKSPACE/.bosh_env ]; then
-   rm -f $WORKSPACE/.bosh_env
+if [ -f $DOT_BOSH_ENV_FILE ]; then
+   rm -f $DOT_BOSH_ENV_FILE
 fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then

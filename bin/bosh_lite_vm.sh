@@ -8,8 +8,10 @@ source $SCRIPTPATH/common.sh
 
 export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
-if [ -f $WORKSPACE/bosh_env.sh ]; then
- source $WORKSPACE/bosh_env.sh
+export BOSH_ENV_FILE=${BOSH_ENV_FILE:-$WORKSPACE/bosh_env.sh}
+
+if [ -f $BOSH_ENV_FILE ]; then
+ source $BOSH_ENV_FILE
 fi
 
 source $SCRIPTPATH/bosh-common.sh
@@ -21,6 +23,7 @@ function showUsage() {
     echo "OPTIONS"
     echo "  -h                   Show Command options "
     echo "  -c                   Creates the BOSH-lite VM"
+    echo "  -b                   Produces an environment variables file to supporting using BOSH cli with the BOSH-lite VM"
     echo "  -d                   Destroys the BOSH-lite VM"
     echo "  -s                   Saves the state and suspends the BOSH-lite VM"
     echo "  -p                   Poweron the BOSH-lite VM assuming a previously saved state."
@@ -32,15 +35,18 @@ function showUsage() {
     echo "  -l                   Lists available snapshot names of the BOSH-lite VM"
 }
 
-while getopts "hcdsrnt:g:x:pl" arg; do
+while getopts "hbcdsrnt:g:x:pl" arg; do
     case "${arg}" in
+        b) 
+	    create_bosh_env_file
+            ;;
         c)
 	    ## Create the VM and do additional tasks
 	    create_bosh_lite_vm
 	    bosh_lite_vm_additions
 
 	    echo
-	    echo "TIP: To access bosh you should \"source $WORKSPACE/bosh_env.sh\""
+	    echo "TIP: To access bosh you should \"source $BOSH_ENV_FILE\""
 	    echo
 	    echo "TIP: To deploy Cloud Foundry on bosh you should run \"$SCRIPTPATH/cf_deploy.sh\""
 	    echo
