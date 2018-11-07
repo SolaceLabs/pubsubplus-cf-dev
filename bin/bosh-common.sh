@@ -61,6 +61,14 @@ function targetBosh() {
   fi
 }
 
+function loadWorkspaceStemcells() {
+
+ for stemcell_file in $(ls $WORKSPACE/bosh-stemcell-*-warden-boshlite-*-go_agent.tgz); do 
+      echo "Loading $stemcell_file"
+      bosh upload-stemcell $stemcell_file
+ done
+
+}
 
 function loadStemcells() { 
 
