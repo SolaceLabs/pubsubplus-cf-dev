@@ -582,7 +582,6 @@ function prepare_bosh_env() {
 
 bucc env 
 echo "export PATH=\$PATH:$SCRIPTPATH"
-echo "export WORKSPACE=$WORKSPACE"
 echo "export BUCC_HOME=\${BUCC_HOME:-$SCRIPTPATH/../bucc}"
 echo "export BUCC_STATE_ROOT=\${BUCC_STATE_ROOT:-\$WORKSPACE/BOSH_LITE_VM/state}"
 echo "export BUCC_VARS_FILE=\${BUCC_VARS_FILE:-\$WORKSPACE/BOSH_LITE_VM/vars.yml}"
