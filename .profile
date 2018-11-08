@@ -17,22 +17,25 @@ export BUCC_VARS_FILE=${BUCC_VARS_FILE:-$WORKSPACE/BOSH_LITE_VM/vars.yml}
 export BUCC_STATE_STORE=${BUCC_STATE_STORE:-$BUCC_STATE_ROOT/state.json}
 export BUCC_VARS_STORE=${BUCC_VARS_STORE:-$BUCC_STATE_ROOT/creds.yml}
 
+export BOSH_ENV_FILE=${BOSH_ENV_FILE:-$WORKSPACE/bosh_env.sh}
+export DOT_BOSH_ENV_FILE=${DOT_BOSH_ENV_FILE:-$WORKSPACE/.env}
+
 LOCKFILE=$HOME/.env.lck
 
 if [ -f $BUCC_HOME/bin/bucc ]; then
    ## Avoids concurrent writes
    (
      flock -x 200
-     $BUCC_HOME/bin/bucc env > $WORKSPACE/.env
+     $BUCC_HOME/bin/bucc env > $DOT_BOSH_ENV_FILE
      flock -u 200
    ) 200>$LOCKFILE
 fi
 
-if [ -f $WORKSPACE/.env ]; then
+if [ -f $DOT_BOSH_ENV_FILE ]; then
    ## Avoids reads during writes
    exec 200>$LOCKFILE
    flock -x 200
-   source $WORKSPACE/.env
+   source $DOT_BOSH_ENV_FILE
    export BOSH_IP=$BOSH_ENVIRONMENT
    flock -u 200
 fi
