@@ -40,9 +40,12 @@ bosh -d cf deploy cf-deployment.yml \
 	-o operations/use-compiled-releases.yml \
 	-o $SCRIPTPATH/operations/trusted_certs.yml \
 	-o $SCRIPTPATH/operations/credhub.yml \
+	-o $SCRIPTPATH/operations/cf_smaller_mysql.yml \
 	--vars-store $WORKSPACE/deployment-vars.yml \
 	-l $SCRIPTPATH/cf_trusted-ca-cert-for-apps.yml \
-	-v system_domain=$SYSTEM_DOMAIN
+	-v system_domain=$SYSTEM_DOMAIN \
+        -v mysql_max_connections=500 \
+        -v mysql_innodb_buffer_pool_size=524288000
         
 if [ "$?" -ne "0" ]; then
   echo "ABORTING: cf-deployment was not successful"
