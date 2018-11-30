@@ -22,6 +22,8 @@ fi
 
 source $SCRIPTPATH/bosh-common.sh
 
+export DOCKER_RELEASE_VERSION=${DOCKER_RELEASE_VERSION:-"31.0.1"}
+
 function check_cf_deployment() {
 
  ## Check CF is deployed
@@ -70,6 +72,47 @@ function check_cf_marketplace_access() {
 
 }
 
+function checkRequiredReleases() {
+
+export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
+export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
+
+ if [ "$DOCKER_RELEASE_FOUND" -eq "0" ]; then
+   echo "Required docker release $DOCKER_RELEASE_VERSION seem to be missing from bosh."
+   echo 
+   exit 1
+ fi
+
+# echo "DOCKER_RELEASES_LIST [ $DOCKER_RELEASES_LIST ] DOCKER_RELEASES [ $DOCKER_RELEASES ] DOCKER_RELEASE [ $DOCKER_RELEASE ]"
+
+}
+
+function loadRequiredReleases() {
+
+export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
+if [ "$DOCKER_RELEASE_FOUND" -eq "0" ]; then
+   echo "Adding [ docker/$DOCKER_RELEASE_VERSION ]"
+   DOCKER_RELEASE_FILE="$WORKSPACE/docker-${DOCKER_RELEASE_VERSION}.tgz"
+   if [ ! -f $DOCKER_RELEASE_FILE ]; then
+     echo "Downloading [ docker/$DOCKER_RELEASE_VERSION ]"
+     curl -sL -o $DOCKER_RELEASE_FILE "https://bosh.io/d/github.com/cf-platform-eng/docker-boshrelease?v=${DOCKER_RELEASE_VERSION}"
+   fi
+
+   if [ -f $DOCKER_RELEASE_FILE ]; then
+      bosh upload-release $DOCKER_RELEASE_FILE
+   fi
+else
+  echo "Found [ docker/$DOCKER_RELEASE_VERSION ]"
+fi
+
+ checkRequiredReleases
+
+}
+
 function checkDeploymentRequirements() {
 
  ## Check only when the deployment is on BOSH-Lite by setup_bosh_lite_vm.sh
@@ -89,6 +132,9 @@ function checkDeploymentRequirements() {
 
  ## Check BOSH Stemcell is uploaded
  loadStemcells
+
+ ## Load other required releases
+ loadRequiredReleases
 
 }
 
@@ -111,7 +157,7 @@ function checkSolaceReleases() {
    echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
    exit 1
  fi
-
+ 
 }
 
 function showUsage() {
@@ -297,12 +343,6 @@ export SOLACE_PUBSUB_RELEASE=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sed 's/\*/
 export TEMPLATE_VERSION=$( echo "$SOLACE_PUBSUB_RELEASE" | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
-export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
-export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
-export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
-
-# echo "DOCKER_RELEASES_LIST [ $DOCKER_RELEASES_LIST ] DOCKER_RELEASES [ $DOCKER_RELEASES ] DOCKER_RELEASE [ $DOCKER_RELEASE ]"
-
 if [ ! -d "$TEMPLATE_DIR" ]; then
    echo "WARN: Unable to find template directory [$TEMPLATE_DIR] for Solace PubSub+ Release [$SOLACE_PUBSUB_RELEASE] from found release(s) [ $SOLACE_PUBSUB_RELEASES ], TEMPLATE VERSION [ $TEMPLATE_VERSION ]"
    exit 1
@@ -317,7 +357,7 @@ FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VA
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 
-CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=$CF_DEPLOYMENT -v docker_version=$DOCKER_RELEASE -v solace_pubsub_version=$SOLACE_PUBSUB_RELEASE "}
+CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v docker_version=$DOCKER_RELEASE_VERSION -v cf_deployment=$CF_DEPLOYMENT -v solace_pubsub_version=$SOLACE_PUBSUB_RELEASE "}
 
 MISC_VARS=${MISC_VARS:-""}
 
