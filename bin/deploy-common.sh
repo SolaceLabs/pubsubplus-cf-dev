@@ -135,12 +135,52 @@ function showUsage() {
     echo "  -m                        Use MySQL For PCF"
     echo "  -y                        Deploy highly available internal mysql database"
     echo "  -z                        Use external mysql database"
+    echo "  -0                        Disable standard-medium service plan"
+    echo "  -1                        Disable standard-medium-ha service plan"
+    echo "  -2                        Disable standard-plan-3 service plan"
+    echo "  -3                        Disable standard-plan-4 service plan"
+    echo "  -4                        Disable enterprise-shared service plan"
+    echo "  -5                        Disable enterprise-large service plan"
+    echo "  -6                        Disable enterprise-medium-ha service plan"
+    echo "  -7                        Disable enterprise-large-ha service plan"
+    echo "  -8                        Disable enterprise-plan-5 service plan"
+    echo "  -9                        Disable enterprise-plan-6 service plan"
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
+while getopts "0123456789:t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
     case "${arg}" in
+        0)
+            DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
+            ;;
+        1)
+            DISABLE_STANDARD_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium_ha.yml"
+            ;;
+        2)
+            DISABLE_STANDARD_PLAN_3_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_3.yml"
+            ;;
+        3)
+            DISABLE_STANDARD_PLAN_4_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_4.yml"
+            ;;
+        4)
+            DISABLE_ENTERPRISE_SHARED_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_shared.yml"
+            ;;
+        5)
+            DISABLE_ENTERPRISE_LARGE_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large.yml"
+            ;;
+        6)
+            DISABLE_ENTERPRISE_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_medium_ha.yml"
+            ;;
+        7)
+            DISABLE_ENTERPRISE_LARGE_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large_ha.yml"
+            ;;
+        8)
+            DISABLE_ENTERPRISE_PLAN_5_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
+            ;;
+        9)
+            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
+            ;;
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
 	    if [ ! -f $TLS_PATH ]; then
@@ -312,11 +352,12 @@ fi
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS "}
-FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS"}
+FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS"}
+
+SERVICE_PLAN_OPS=${SERVICE_PLAN_OPS:-"$DISABLE_STANDARD_MEDIUM_OPS $DISABLE_STANDARD_MEDIUM_HA_OPS $DISABLE_STANDARD_PLAN_3_OPS $DISABLE_STANDARD_PLAN_4_OPS $DISABLE_ENTERPRISE_SHARED_OPS $DISABLE_ENTERPRISE_LARGE_OPS $DISABLE_ENTERPRISE_MEDIUM_HA_OPS $DISABLE_ENTERPRISE_LARGE_HA_OPS $DISABLE_ENTERPRISE_PLAN_5_OPS $DISABLE_ENTERPRISE_PLAN_6_OPS"}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
-
 CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=$CF_DEPLOYMENT -v docker_version=$DOCKER_RELEASE -v solace_pubsub_version=$SOLACE_PUBSUB_RELEASE "}
 
 MISC_VARS=${MISC_VARS:-""}
@@ -360,5 +401,5 @@ if [ -f "$WORKSPACE/releases/release-vars.yml" ]; then
    RELEASE_VARS="$RELEASE_VARS -l $WORKSPACE/releases/release-vars.yml"
 fi
 
-BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
+BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $SERVICE_PLAN_OPS $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 
