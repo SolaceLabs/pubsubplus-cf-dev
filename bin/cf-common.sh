@@ -37,6 +37,15 @@ export UAA_ADMIN_CLIENT_SECRET=${UAA_ADMIN_CLIENT_SECRET:-"admin-client-secret"}
 
 export JAVA_BUILD_PACK_VERSION=${JAVA_BUILD_PACK_VERSION:-"3.13"}
 
+export CF_TEMP_DIR=$(mktemp -d)
+
+function cleanupCFTemp() {
+ if [ -d $CF_TEMP_DIR ]; then
+    rm -rf $CF_TEMP_DIR
+ fi
+}
+trap cleanupCFTemp EXIT INT TERM HUP
+
 ####################################### FUNCTIONS ###########################################
 
 function log() {
@@ -101,32 +110,36 @@ function lookupServiceBrokerDetails() {
 
 function lookupServiceBrokerVMRs() {
  
- INFO_DATA=$( curl -sX GET $SB_BASE/info )
- ROUTERS_DATA=$( echo $INFO_DATA | jq -c ".messageRouters")
+ HTTP_CODE=$( curl -w '%{http_code}' -sX GET $SB_BASE/info -o $CF_TEMP_DIR/sb_info )
+ if [ "$HTTP_CODE" -eq "200" ]; then
+  INFO_DATA=$( cat $CF_TEMP_DIR/sb_info )
 
- export ALL_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
- export SHARED_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "enterprise-shared"))'    | jq -c '.[] | .sshLink'))
- export LARGE_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "enterprise-large"))'     | jq -c '.[] | .sshLink'))
+  ROUTERS_DATA=$( echo $INFO_DATA | jq -c ".messageRouters")
 
- export MEDIUM_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export MEDIUM_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+  export ALL_LIST=$(formatVMRList $(echo $ROUTERS_DATA       | jq -c '.[] | .sshLink'))
+  export SHARED_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "enterprise-shared"))'    | jq -c '.[] | .sshLink'))
+  export LARGE_LIST=$(formatVMRList $(echo $ROUTERS_DATA     | jq -c 'map(select(.poolName == "enterprise-large"))'     | jq -c '.[] | .sshLink'))
 
- export LARGE_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "enterprise-large-ha"))'                        | jq -c '.[] | .sshLink'))
- export LARGE_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export LARGE_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export LARGE_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
+  export MEDIUM_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha"))' | jq -c '.[] | .sshLink'))
+  export MEDIUM_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+  export MEDIUM_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+  export MEDIUM_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+  export MEDIUM_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-medium-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
 
- export STANDARD_MEDIUM_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "standard-medium"))'    | jq -c '.[] | .sshLink'))
+  export LARGE_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA         | jq -c 'map(select(.poolName == "enterprise-large-ha"))'                        | jq -c '.[] | .sshLink'))
+  export LARGE_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+  export LARGE_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+  export LARGE_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+  export LARGE_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "enterprise-large-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))
 
- export STANDARD_MEDIUM_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "standard-medium-ha"))' | jq -c '.[] | .sshLink'))
- export STANDARD_MEDIUM_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "standard-medium-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
- export STANDARD_MEDIUM_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "standard-medium-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
- export STANDARD_MEDIUM_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "standard-medium-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
- export STANDARD_MEDIUM_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "standard-medium-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))  
+  export STANDARD_MEDIUM_LIST=$(formatVMRList $(echo $ROUTERS_DATA    | jq -c 'map(select(.poolName == "standard-medium"))'    | jq -c '.[] | .sshLink'))
+
+  export STANDARD_MEDIUM_HA_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "standard-medium-ha"))' | jq -c '.[] | .sshLink'))
+  export STANDARD_MEDIUM_HA_PAIRS_LIST=$(formatVMRList $(echo $ROUTERS_DATA   | jq -c 'map(select(.poolName == "standard-medium-ha" and .role != "monitor"))' | jq -c '.[] | .sshLink'))
+  export STANDARD_MEDIUM_HA_PRIMARY_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "standard-medium-ha" and .role == "primary"))' | jq -c '.[] | .sshLink'))
+  export STANDARD_MEDIUM_HA_BACKUP_LIST=$(formatVMRList $(echo $ROUTERS_DATA  | jq -c 'map(select(.poolName == "standard-medium-ha" and .role == "backup"))'  | jq -c '.[] | .sshLink'))
+  export STANDARD_MEDIUM_HA_MONITOR_LIST=$(formatVMRList $(echo $ROUTERS_DATA | jq -c 'map(select(.poolName == "standard-medium-ha" and .role == "monitor"))' | jq -c '.[] | .sshLink'))  
+ fi
 
 }
 
@@ -172,13 +185,19 @@ function checkServiceBrokerServicePlanStats() {
 
  printf "%35s\t\t%15s\t\t%15s\t\t%15s\t\t%15s\t\t%15s\n" "Plan" "VPNs" "Unused" "Unavailable" "Credentials" "Unused"
  for A_PLAN in $PLAN_LIST; do
-     export PLAN_STATS=$( curl -sX GET $SB_BASE/solace/status/services/solace-pubsub/plans/$A_PLAN -H "Content-Type: application/json;charset=UTF-8" )
-     showPlanStats $A_PLAN
+     HTTP_CODE=$( curl -w '%{http_code}' -sX GET $SB_BASE/solace/status/services/solace-pubsub/plans/$A_PLAN -H "Content-Type: application/json;charset=UTF-8" -o $CF_TEMP_DIR/sb_plan_${A_PLAN} )
+     if [ "$HTTP_CODE" -eq "200" ]; then
+       export PLAN_STATS=$( cat $CF_TEMP_DIR/sb_plan_${A_PLAN} )
+       showPlanStats $A_PLAN
+     fi
  done
 
- export PLAN_STATS=$( curl -sX GET $SB_BASE/solace/status -H "Content-Type: application/json;charset=UTF-8" )
- echo
- showPlanStats
+ HTTP_CODE=$( curl -w '%{http_code}' -sX GET $SB_BASE/solace/status -H "Content-Type: application/json;charset=UTF-8" -o $CF_TEMP_DIR/sb_status )
+ if [ "$HTTP_CODE" -eq "200" ]; then
+   export PLAN_STATS=$( cat $CF_TEMP_DIR/sb_status )
+   echo
+   showPlanStats
+ fi
 
 }
 

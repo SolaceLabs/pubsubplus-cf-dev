@@ -10,6 +10,6 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
-echo "Running Errand [ deploy-all ]"
-bosh -d solace_pubsub run-errand deploy-all --instance=management/first $@
+echo "Running Errand [ upgrade-all-service-instances ]"
+bosh -d solace_pubsub run-errand upgrade-all-service-instances --instance=management/first $@
 
