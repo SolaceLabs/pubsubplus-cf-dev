@@ -179,13 +179,14 @@ function showUsage() {
     echo "  -c                        Enable LDAP Application Authorization access" 
     echo "  -k                        Keep Errand(s) Alive" 
     echo "  -m                        Use MySQL For PCF"
+    echo "  -w                        Enable the web hook feature."
     echo "  -y                        Deploy highly available internal mysql database"
     echo "  -z                        Use external mysql database"
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
+while getopts "t:a:nbcr:l:s:p:v:x:ekmw:yzh" arg; do
     case "${arg}" in
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -257,6 +258,15 @@ while getopts "t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
             ;;
         m)  USE_MYSQL_FOR_PCF=true
             ;;
+        w) 
+            WEB_HOOK_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $WEB_HOOK_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;;
         y)  DEPLOY_HA_INTERNAL_MYSQL=true
             ;;
         z)  USE_EXTERNAL_MYSQL=true
@@ -326,6 +336,11 @@ if [ -n "$TCP_PATH" ]; then
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
+if [ -n "$WEB_HOOK_PATH" ]; then
+    ENABLE_WEB_HOOK_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_web_hook.yml"
+    WEB_HOOK_VARS="-l $WEB_HOOK_PATH"
+fi
+
 # Solace deployment defaults to internal MySQL (non ha) if no MySQL option is specified
 if [[ "$DEPLOY_HA_INTERNAL_MYSQL" == true ]]; then
     MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
@@ -352,8 +367,8 @@ fi
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS "}
-FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS"}
+FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS"}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 
