@@ -180,6 +180,7 @@ function showUsage() {
     echo "  -t <tls_config.yml>       Provide TLS Config file path"
     echo "  -v <vars.yml>             Provide vars.yml file path "
     echo "  -w <web_hook_config.yml>  Enable the web hook feature."
+    echo "  -x extra bosh params      Additional parameters to be passed to bosh"
     echo "  -y                        Deploy highly available internal mysql database"
     echo "  -z                        Use external mysql database"
     echo "  -0                        Disable standard-medium service plan"
@@ -192,11 +193,10 @@ function showUsage() {
     echo "  -7                        Disable enterprise-large-ha service plan"
     echo "  -8                        Disable enterprise-plan-5 service plan"
     echo "  -9                        Disable enterprise-plan-6 service plan"
-    echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "0123456789a:bcehkl:mnp:r:s:t:v:wx:yz" arg; do
+while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
     case "${arg}" in
         0)
             DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
@@ -280,7 +280,7 @@ while getopts "0123456789a:bcehkl:mnp:r:s:t:v:wx:yz" arg; do
             ;;
         s)
             starting_port="$OPTARG"
-	    ;;
+	        ;;
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
 	    if [ ! -f $TLS_PATH ]; then
@@ -289,6 +289,7 @@ while getopts "0123456789a:bcehkl:mnp:r:s:t:v:wx:yz" arg; do
 		       >&2 echo
 		       exit 1
             fi
+	        ;;
         v)
             VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
 	        if [ ! -f $VARS_FILE ]; then
