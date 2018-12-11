@@ -165,37 +165,68 @@ function showUsage() {
     echo "Usage: $CMD_NAME [OPTIONS]"
     echo
     echo "OPTIONS"
-    echo "  -h                        Show Command options "
-    echo "  -e                        Is Enterprise mode"
-    echo "  -s <starting_port>        Provide Starting Port "
-    echo "  -p <vmr_admin_password>   Provide VMR Admin Password "
-    echo "  -v <vars.yml>             Provide vars.yml file path "
-    echo "  -t <tls_config.yml>       Provide TLS Config file path"
-    echo "  -n                        Disable Service Broker TLS Certificate Validation"
     echo "  -a <syslog_config.yml>    Provide Syslog Config file path"
-    echo "  -r <tcp_config.yml>       Provide TCP Routes Config file path" 
-    echo "  -l <ldap_config.yml>      Provide LDAP Config file path"   
     echo "  -b                        Enable LDAP Management Authorization access" 
     echo "  -c                        Enable LDAP Application Authorization access" 
+    echo "  -e                        Is Enterprise mode"
+    echo "  -h                        Show Command options "
     echo "  -k                        Keep Errand(s) Alive" 
+    echo "  -l <ldap_config.yml>      Provide LDAP Config file path"   
     echo "  -m                        Use MySQL For PCF"
-    echo "  -w                        Enable the web hook feature."
+    echo "  -n                        Disable Service Broker TLS Certificate Validation"
+    echo "  -p <vmr_admin_password>   Provide VMR Admin Password "
+    echo "  -r <tcp_config.yml>       Provide TCP Routes Config file path" 
+    echo "  -s <starting_port>        Provide Starting Port "
+    echo "  -t <tls_config.yml>       Provide TLS Config file path"
+    echo "  -v <vars.yml>             Provide vars.yml file path "
+    echo "  -w <web_hook_config.yml>  Enable the web hook feature."
     echo "  -y                        Deploy highly available internal mysql database"
     echo "  -z                        Use external mysql database"
+    echo "  -0                        Disable standard-medium service plan"
+    echo "  -1                        Disable standard-medium-ha service plan"
+    echo "  -2                        Disable standard-plan-3 service plan"
+    echo "  -3                        Disable standard-plan-4 service plan"
+    echo "  -4                        Disable enterprise-shared service plan"
+    echo "  -5                        Disable enterprise-large service plan"
+    echo "  -6                        Disable enterprise-medium-ha service plan"
+    echo "  -7                        Disable enterprise-large-ha service plan"
+    echo "  -8                        Disable enterprise-plan-5 service plan"
+    echo "  -9                        Disable enterprise-plan-6 service plan"
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ekmw:yzh" arg; do
+while getopts "0123456789a:bcehkl:mnp:r:s:t:v:wx:yz" arg; do
     case "${arg}" in
-        t) 
-            TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $TLS_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
+        0)
+            DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
+            ;;
+        1)
+            DISABLE_STANDARD_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium_ha.yml"
+            ;;
+        2)
+            DISABLE_STANDARD_PLAN_3_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_3.yml"
+            ;;
+        3)
+            DISABLE_STANDARD_PLAN_4_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_4.yml"
+            ;;
+        4)
+            DISABLE_ENTERPRISE_SHARED_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_shared.yml"
+            ;;
+        5)
+            DISABLE_ENTERPRISE_LARGE_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large.yml"
+            ;;
+        6)
+            DISABLE_ENTERPRISE_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_medium_ha.yml"
+            ;;
+        7)
+            DISABLE_ENTERPRISE_LARGE_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large_ha.yml"
+            ;;
+        8)
+            DISABLE_ENTERPRISE_PLAN_5_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
+            ;;
+        9)
+            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
             ;;
         a)
             SYSLOG_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -206,74 +237,82 @@ while getopts "t:a:nbcr:l:s:p:v:x:ekmw:yzh" arg; do
 		       exit 1
             fi
             ;;
-        n) 
-            disablebrokertls=true
-            ;; 
         b) 
             mldap=true
             ;;
         c) 
             aldap=true
             ;;
-        r) 
-            TCP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $TCP_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;;
-        l) 
-            LDAP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $LDAP_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;; 
-        s)
-            starting_port="$OPTARG"
-	    ;;
-        p)
-            vmr_admin_password="${OPTARG}"
-            ;;
-        v)
-            VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $VARS_FILE ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;; 
         e) 
-	    VMR_EDITION="enterprise"
-            ;;
-        x)
-            EXTRA_BOSH_PARAMS="$OPTARG"
-            ;; 
-        k)  KEEP_ERRAND_ALIVE=true
-            ;;
-        m)  USE_MYSQL_FOR_PCF=true
-            ;;
-        w) 
-            WEB_HOOK_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $WEB_HOOK_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;;
-        y)  DEPLOY_HA_INTERNAL_MYSQL=true
-            ;;
-        z)  USE_EXTERNAL_MYSQL=true
+	        VMR_EDITION="enterprise"
             ;;
         h)
             showUsage
             exit 0
+            ;;
+        k)  KEEP_ERRAND_ALIVE=true
+            ;;
+        l) 
+            LDAP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $LDAP_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;; 
+        m)  USE_MYSQL_FOR_PCF=true
+            ;;
+        n) 
+            disablebrokertls=true
+            ;; 
+        p)
+            vmr_admin_password="${OPTARG}"
+            ;;
+        r) 
+            TCP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $TCP_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;;
+        s)
+            starting_port="$OPTARG"
+	    ;;
+        t) 
+            TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $TLS_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+        v)
+            VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $VARS_FILE ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;; 
+        w) 
+            WEB_HOOK_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $WEB_HOOK_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;;
+        x)
+            EXTRA_BOSH_PARAMS="$OPTARG"
+            ;; 
+        y)  DEPLOY_HA_INTERNAL_MYSQL=true
+            ;;
+        z)  USE_EXTERNAL_MYSQL=true
             ;;
        \?)
        >&2 echo
@@ -372,6 +411,8 @@ FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VA
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 
+SERVICE_PLAN_OPS=${SERVICE_PLAN_OPS:-"$DISABLE_STANDARD_MEDIUM_OPS $DISABLE_STANDARD_MEDIUM_HA_OPS $DISABLE_STANDARD_PLAN_3_OPS $DISABLE_STANDARD_PLAN_4_OPS $DISABLE_ENTERPRISE_SHARED_OPS $DISABLE_ENTERPRISE_LARGE_OPS $DISABLE_ENTERPRISE_MEDIUM_HA_OPS $DISABLE_ENTERPRISE_LARGE_HA_OPS $DISABLE_ENTERPRISE_PLAN_5_OPS $DISABLE_ENTERPRISE_PLAN_6_OPS"}
+
 CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v docker_version=$DOCKER_RELEASE_VERSION -v cf_deployment=$CF_DEPLOYMENT -v solace_pubsub_version=$SOLACE_PUBSUB_RELEASE "}
 
 MISC_VARS=${MISC_VARS:-""}
@@ -415,5 +456,5 @@ if [ -f "$WORKSPACE/releases/release-vars.yml" ]; then
    RELEASE_VARS="$RELEASE_VARS -l $WORKSPACE/releases/release-vars.yml"
 fi
 
-BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
+BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $SERVICE_PLAN_OPS $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 
