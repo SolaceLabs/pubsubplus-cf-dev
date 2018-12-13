@@ -690,6 +690,10 @@ function setup_bosh_lite_swap() {
    echo "You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
    echo
 
+   if [ ! -d ~/.ssh/ ]; then
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+   fi
    ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
    ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
    bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
