@@ -226,7 +226,7 @@ while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
             DISABLE_ENTERPRISE_PLAN_5_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
             ;;
         9)
-            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
+            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_6.yml"
             ;;
         a)
             SYSLOG_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
