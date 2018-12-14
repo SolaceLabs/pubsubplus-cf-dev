@@ -145,7 +145,6 @@ tcp_routes_config.disabled.tcp_route_enabled: 'not_allowed'
 # Web Hook
 # ------------------------------------
 web_hook_config: disabled
-web_hook_config.disabled.web_hook_enabled: 'not_allowed'
 
 # -----------------------------------
 # Web Hook
