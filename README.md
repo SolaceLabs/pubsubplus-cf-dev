@@ -428,6 +428,18 @@ After you deploy Solace PubSub+
 bosh_lite_vm.sh -t with_solace_pubsub
 ~~~~ 
 
+
+## How to delete a snapshot of the BOSH-lite VM
+
+This command will delete a snapshot that has the name that is entered 
+
+example:
+
+~~~~ 
+bosh_lite_vm.sh -x bosh_with_cf
+~~~~ 
+
+
 ## How to list available BOSH-lite VM snapshots
 
 ~~~~ 
@@ -442,6 +454,13 @@ When you do this, the current state of the VM is lost, and the VM is restored to
 ~~~~ 
 bosh_lite_vm.sh -s
 bosh_lite_vm.sh -g with_solace_pubsub
+~~~~ 
+
+## How to restore current snapshot of the BOSH-lite VM
+
+Rolls back to the current snapshot of the BOSH-lite VM, the VM should be already Saved
+~~~~ 
+bosh_lite_vm.sh -r
 ~~~~ 
 
 ## How to suspend and resume VMs
@@ -491,6 +510,13 @@ bosh_lite_vm.sh -p
 ~~~~
 
 Alternatively you can use the virtualbox GUI to the 'start' > 'headless start'. 
+
+## How to list all available BOSH VM commands
+
+View all possible Bosh VM commands with their descriptions
+~~~~ 
+bosh_lite_vm.sh -h
+~~~~ 
 
 ## Working with Solace PubSub+ in the BOSH deployment
 
