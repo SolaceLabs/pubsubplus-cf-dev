@@ -19,6 +19,16 @@
   path: /instance_groups/name=standard-medium-ha/jobs/name=route_registrar
 
 - type: replace
+  path: /instance_groups/name=solace-od-service-adapter/jobs/name=broker/properties/service_deployment/releases/name=solace-pubsub/jobs
+  value: [ containers, pubsub_common, pubsub_config, broker_agent ]
+
+- type: replace
+  path: /instance_groups/name=solace-od-service-adapter/jobs/name=register-broker/properties/cf/admin_password
+  value: admin
+- type: replace
+  path: /instance_groups/name=solace-od-service-adapter/jobs/name=broker/properties/cf/authentication/user_credentials/password
+  value: admin
+- type: replace
   path: /instance_groups/name=deploy-all/properties/cf/admin_password?
   value: admin
 - type: replace

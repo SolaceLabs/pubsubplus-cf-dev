@@ -34,7 +34,7 @@ This project and its tools will support a deployment on Linux, Mac and the Windo
 
 Any instructions given for Linux will work on Mac and the WSL.
 
-This guide will provide different steps for deploying on Windows than Linux ( Mac ).
+This guide will provide different steps for deploying on Windows than on Linux or Mac.
 
 <a name="hardware-requirements"></a>
 # Hardware Requirements
@@ -58,7 +58,7 @@ Directly on your computer, you must have or get the following:
 
 * Install latest [Git](https://git-scm.com/downloads) (version 2.7.1+)
 * Install latest [Virtual Box](https://www.virtualbox.org/wiki/Downloads) (version 5.2.6+)
-* Unless you are installing on WSL, you will also need the latest [Vagrant](https://www.vagrantup.com/downloads.htm) (version 2.0.1+)
+* Unless you are installing on WSL, you will also need the latest [Vagrant](https://www.vagrantup.com/downloads.html) (version 2.0.1+)
 * Shell access, use your preferred shell.
  
 If you are installing this in a VM you will need to ensure that:
@@ -157,7 +157,7 @@ solace-messaging-cf-dev/bin/setup_linux_on_wsl.sh
 
 With this option, the script **will not** switch to the git branch specified by the BRANCH environment variable.
 
-Once that is complete then you can deploy Solace as per [these instructions.](#solace-messaging-deployment). Note that it is not necessary to use the cli-tools vagrant virtual machine - the commands should work fine running under WSL.
+Once that is complete then you can deploy Solace as per [these instructions](#solace-pubsub-deployment). Note that it is not necessary to use the cli-tools vagrant virtual machine - the commands should work fine running under WSL.
 
 <a name="installation-on-linux"></a>
 # Installation on Linux
@@ -193,7 +193,7 @@ _Mac host with 16GB of RAM, using:_
 <a name="installation-steps-on-linux"></a>
 # Installation Steps on Linux
 
-These steps are also applicable on a Mac.
+These steps are also applicable to Macs.
 
 ### Installation on Linux - Step 1 - Clone this project and start up its cli-tools vm
 
@@ -280,7 +280,7 @@ The goal of the deployment steps is to install Solace PubSub+ into the running C
 
 Please download the Solace Pivotal Tile and keep it around for later use. 
 
-For my example I have downloaded version 2.0.0 and placed it in:
+For example, downloaded version 2.0.0 and placed it in:
 
 ~~~~
 solace-messaging-cf-dev/workspace/solace-pubsub-2.0.0.pivotal
@@ -428,6 +428,18 @@ After you deploy Solace PubSub+
 bosh_lite_vm.sh -t with_solace_pubsub
 ~~~~ 
 
+
+## How to delete a snapshot of the BOSH-lite VM
+
+This command will delete a snapshot that has the name that is entered 
+
+example:
+
+~~~~ 
+bosh_lite_vm.sh -x bosh_with_cf
+~~~~ 
+
+
 ## How to list available BOSH-lite VM snapshots
 
 ~~~~ 
@@ -442,6 +454,13 @@ When you do this, the current state of the VM is lost, and the VM is restored to
 ~~~~ 
 bosh_lite_vm.sh -s
 bosh_lite_vm.sh -g with_solace_pubsub
+~~~~ 
+
+## How to restore current snapshot of the BOSH-lite VM
+
+Rolls back to the current snapshot of the BOSH-lite VM, the VM should be already Saved
+~~~~ 
+bosh_lite_vm.sh -r
 ~~~~ 
 
 ## How to suspend and resume VMs
@@ -491,6 +510,13 @@ bosh_lite_vm.sh -p
 ~~~~
 
 Alternatively you can use the virtualbox GUI to the 'start' > 'headless start'. 
+
+## How to list all available BOSH VM commands
+
+View all possible Bosh VM commands with their descriptions
+~~~~ 
+bosh_lite_vm.sh -h
+~~~~ 
 
 ## Working with Solace PubSub+ in the BOSH deployment
 
@@ -574,4 +600,5 @@ cd solace-messaging-cf-dev
 cd cli-tools
 vagrant destroy
 ~~~~
+
 

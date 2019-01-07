@@ -68,6 +68,11 @@ if [ -f $SCRIPTPATH/apply_open_security_groups.sh ]; then
   $SCRIPTPATH/apply_open_security_groups.sh
 fi
 
+## This is for development. Open up security groups to support credhub access.
+if [ -f $SCRIPTPATH/apply_credhub_security_groups.sh ]; then
+  $SCRIPTPATH/apply_credhub_security_groups.sh
+fi
+
 echo "Setup environment for TCP Routes" 
 $SCRIPTPATH/setup_tcp_routing.sh
 

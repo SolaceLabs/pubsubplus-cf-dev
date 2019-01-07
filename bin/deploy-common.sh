@@ -14,12 +14,15 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 export VMR_EDITION=${VMR_EDITION:-"evaluation"}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
+export BOSH_ENV_VARS_FILE=${BOSH_ENV_VARS_FILE:-$WORKSPACE/bosh-env-vars.yml}
 
 if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
 source $SCRIPTPATH/bosh-common.sh
+
+export DOCKER_RELEASE_VERSION=${DOCKER_RELEASE_VERSION:-"31.0.1"}
 
 function check_cf_deployment() {
 
@@ -69,6 +72,47 @@ function check_cf_marketplace_access() {
 
 }
 
+function checkRequiredReleases() {
+
+export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
+export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
+
+ if [ "$DOCKER_RELEASE_FOUND" -eq "0" ]; then
+   echo "Required docker release $DOCKER_RELEASE_VERSION seem to be missing from bosh."
+   echo 
+   exit 1
+ fi
+
+# echo "DOCKER_RELEASES_LIST [ $DOCKER_RELEASES_LIST ] DOCKER_RELEASES [ $DOCKER_RELEASES ] DOCKER_RELEASE [ $DOCKER_RELEASE ]"
+
+}
+
+function loadRequiredReleases() {
+
+export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
+if [ "$DOCKER_RELEASE_FOUND" -eq "0" ]; then
+   echo "Adding [ docker/$DOCKER_RELEASE_VERSION ]"
+   DOCKER_RELEASE_FILE="$WORKSPACE/docker-${DOCKER_RELEASE_VERSION}.tgz"
+   if [ ! -f $DOCKER_RELEASE_FILE ]; then
+     echo "Downloading [ docker/$DOCKER_RELEASE_VERSION ]"
+     curl -sL -o $DOCKER_RELEASE_FILE "https://bosh.io/d/github.com/cf-platform-eng/docker-boshrelease?v=${DOCKER_RELEASE_VERSION}"
+   fi
+
+   if [ -f $DOCKER_RELEASE_FILE ]; then
+      bosh upload-release $DOCKER_RELEASE_FILE
+   fi
+else
+  echo "Found [ docker/$DOCKER_RELEASE_VERSION ]"
+fi
+
+ checkRequiredReleases
+
+}
+
 function checkDeploymentRequirements() {
 
  ## Check only when the deployment is on BOSH-Lite by setup_bosh_lite_vm.sh
@@ -78,6 +122,9 @@ function checkDeploymentRequirements() {
  else 
     update_cloud_config
  fi
+ 
+ ## Produce required BOSH ENV VARS
+ produceBOSHEnvVars > $BOSH_ENV_VARS_FILE
 
  ## Check CF Access and CF marketplace for p-mysql
 
@@ -85,6 +132,9 @@ function checkDeploymentRequirements() {
 
  ## Check BOSH Stemcell is uploaded
  loadStemcells
+
+ ## Load other required releases
+ loadRequiredReleases
 
 }
 
@@ -107,7 +157,7 @@ function checkSolaceReleases() {
    echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
    exit 1
  fi
-
+ 
 }
 
 function showUsage() {
@@ -115,36 +165,68 @@ function showUsage() {
     echo "Usage: $CMD_NAME [OPTIONS]"
     echo
     echo "OPTIONS"
-    echo "  -h                        Show Command options "
-    echo "  -e                        Is Enterprise mode"
-    echo "  -s <starting_port>        Provide Starting Port "
-    echo "  -p <vmr_admin_password>   Provide VMR Admin Password "
-    echo "  -v <vars.yml>             Provide vars.yml file path "
-    echo "  -t <tls_config.yml>       Provide TLS Config file path"
-    echo "  -n                        Disable Service Broker TLS Certificate Validation"
     echo "  -a <syslog_config.yml>    Provide Syslog Config file path"
-    echo "  -r <tcp_config.yml>       Provide TCP Routes Config file path" 
-    echo "  -l <ldap_config.yml>      Provide LDAP Config file path"   
     echo "  -b                        Enable LDAP Management Authorization access" 
     echo "  -c                        Enable LDAP Application Authorization access" 
+    echo "  -e                        Is Enterprise mode"
+    echo "  -h                        Show Command options "
     echo "  -k                        Keep Errand(s) Alive" 
+    echo "  -l <ldap_config.yml>      Provide LDAP Config file path"   
     echo "  -m                        Use MySQL For PCF"
+    echo "  -n                        Disable Service Broker TLS Certificate Validation"
+    echo "  -p <vmr_admin_password>   Provide VMR Admin Password "
+    echo "  -r <tcp_config.yml>       Provide TCP Routes Config file path" 
+    echo "  -s <starting_port>        Provide Starting Port "
+    echo "  -t <tls_config.yml>       Provide TLS Config file path"
+    echo "  -v <vars.yml>             Provide vars.yml file path "
+    echo "  -w <web_hook_config.yml>  Enable the web hook feature."
+    echo "  -x extra bosh params      Additional parameters to be passed to bosh"
     echo "  -y                        Deploy highly available internal mysql database"
     echo "  -z                        Use external mysql database"
-    echo "  -x extra bosh params      Additional parameters to be passed to bosh"
+    echo "  -0                        Disable standard-medium service plan"
+    echo "  -1                        Disable standard-medium-ha service plan"
+    echo "  -2                        Disable standard-plan-3 service plan"
+    echo "  -3                        Disable standard-plan-4 service plan"
+    echo "  -4                        Disable enterprise-shared service plan"
+    echo "  -5                        Disable enterprise-large service plan"
+    echo "  -6                        Disable enterprise-medium-ha service plan"
+    echo "  -7                        Disable enterprise-large-ha service plan"
+    echo "  -8                        Disable enterprise-plan-5 service plan"
+    echo "  -9                        Disable enterprise-plan-6 service plan"
 }
 
 
-while getopts "t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
+while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
     case "${arg}" in
-        t) 
-            TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $TLS_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
+        0)
+            DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
+            ;;
+        1)
+            DISABLE_STANDARD_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium_ha.yml"
+            ;;
+        2)
+            DISABLE_STANDARD_PLAN_3_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_3.yml"
+            ;;
+        3)
+            DISABLE_STANDARD_PLAN_4_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_4.yml"
+            ;;
+        4)
+            DISABLE_ENTERPRISE_SHARED_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_shared.yml"
+            ;;
+        5)
+            DISABLE_ENTERPRISE_LARGE_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large.yml"
+            ;;
+        6)
+            DISABLE_ENTERPRISE_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_medium_ha.yml"
+            ;;
+        7)
+            DISABLE_ENTERPRISE_LARGE_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large_ha.yml"
+            ;;
+        8)
+            DISABLE_ENTERPRISE_PLAN_5_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
+            ;;
+        9)
+            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_6.yml"
             ;;
         a)
             SYSLOG_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -155,65 +237,83 @@ while getopts "t:a:nbcr:l:s:p:v:x:ekmyzh" arg; do
 		       exit 1
             fi
             ;;
-        n) 
-            disablebrokertls=true
-            ;; 
         b) 
             mldap=true
             ;;
         c) 
             aldap=true
             ;;
-        r) 
-            TCP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $TCP_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;;
-        l) 
-            LDAP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $LDAP_PATH ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;; 
-        s)
-            starting_port="$OPTARG"
-	    ;;
-        p)
-            vmr_admin_password="${OPTARG}"
-            ;;
-        v)
-            VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
-	    if [ ! -f $VARS_FILE ]; then
-		       >&2 echo
-       		       >&2 echo "File not found: $OPTARG" >&2
-		       >&2 echo
-		       exit 1
-            fi
-            ;; 
         e) 
-	    VMR_EDITION="enterprise"
-            ;;
-        x)
-            EXTRA_BOSH_PARAMS="$OPTARG"
-            ;; 
-        k)  KEEP_ERRAND_ALIVE=true
-            ;;
-        m)  USE_MYSQL_FOR_PCF=true
-            ;;
-        y)  DEPLOY_HA_INTERNAL_MYSQL=true
-            ;;
-        z)  USE_EXTERNAL_MYSQL=true
+	        VMR_EDITION="enterprise"
             ;;
         h)
             showUsage
             exit 0
+            ;;
+        k)  KEEP_ERRAND_ALIVE=true
+            ;;
+        l) 
+            LDAP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $LDAP_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;; 
+        m)  USE_MYSQL_FOR_PCF=true
+            ;;
+        n) 
+            disablebrokertls=true
+            ;; 
+        p)
+            vmr_admin_password="${OPTARG}"
+            ;;
+        r) 
+            TCP_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $TCP_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;;
+        s)
+            starting_port="$OPTARG"
+	        ;;
+        t) 
+            TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $TLS_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+	        ;;
+        v)
+            VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $VARS_FILE ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;; 
+        w) 
+            WEB_HOOK_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	        if [ ! -f $WEB_HOOK_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+            ;;
+        x)
+            EXTRA_BOSH_PARAMS="$OPTARG"
+            ;; 
+        y)  DEPLOY_HA_INTERNAL_MYSQL=true
+            ;;
+        z)  USE_EXTERNAL_MYSQL=true
             ;;
        \?)
        >&2 echo
@@ -276,6 +376,11 @@ if [ -n "$TCP_PATH" ]; then
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
+if [ -n "$WEB_HOOK_PATH" ]; then
+    ENABLE_WEB_HOOK_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_web_hook.yml"
+    WEB_HOOK_VARS="-l $WEB_HOOK_PATH"
+fi
+
 # Solace deployment defaults to internal MySQL (non ha) if no MySQL option is specified
 if [[ "$DEPLOY_HA_INTERNAL_MYSQL" == true ]]; then
     MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
@@ -302,14 +407,17 @@ fi
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS "}
-FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS "}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS"}
+FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS"}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 
-CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v cf_deployment=$CF_DEPLOYMENT "}
+SERVICE_PLAN_OPS=${SERVICE_PLAN_OPS:-"$DISABLE_STANDARD_MEDIUM_OPS $DISABLE_STANDARD_MEDIUM_HA_OPS $DISABLE_STANDARD_PLAN_3_OPS $DISABLE_STANDARD_PLAN_4_OPS $DISABLE_ENTERPRISE_SHARED_OPS $DISABLE_ENTERPRISE_LARGE_OPS $DISABLE_ENTERPRISE_MEDIUM_HA_OPS $DISABLE_ENTERPRISE_LARGE_HA_OPS $DISABLE_ENTERPRISE_PLAN_5_OPS $DISABLE_ENTERPRISE_PLAN_6_OPS"}
+
+CMD_VARS=${CMD_VARS:="-v system_domain=$SYSTEM_DOMAIN -v app_domain=$SYSTEM_DOMAIN -v docker_version=$DOCKER_RELEASE_VERSION -v cf_deployment=$CF_DEPLOYMENT -v solace_pubsub_version=$SOLACE_PUBSUB_RELEASE "}
 
 MISC_VARS=${MISC_VARS:-""}
+
 
 ## If not defined and found in templates
 if [ -z "$RELEASE_VARS" ] && [ -f "$TEMPLATE_DIR/release-vars.yml" ]; then
@@ -349,5 +457,5 @@ if [ -f "$WORKSPACE/releases/release-vars.yml" ]; then
    RELEASE_VARS="$RELEASE_VARS -l $WORKSPACE/releases/release-vars.yml"
 fi
 
-BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $VARS_STORE $CMD_VARS -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
+BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $SERVICE_PLAN_OPS $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 

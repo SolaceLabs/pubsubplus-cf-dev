@@ -142,6 +142,22 @@ tcp_routes_config.disabled.tcp_route_enabled: 'not_allowed'
 #tcp_routes_config.enabled.rest_tls_tcp_route_enabled: enabled_by_default
 
 # -----------------------------------
+# Web Hook
+# ------------------------------------
+web_hook_config: disabled
+
+# -----------------------------------
+# Web Hook
+# ------------------------------------
+#web_hook_config: enabled
+#web_hook_config.enabled.web_hook_credentials:
+#  identity: 
+#  password: 
+#web_hook_config.enabled.web_hook_host: test-app
+#web_hook_config.enabled.web_hook_port: 8080
+#web_hook_config.enabled.web_hook_path: /service-lifecycle
+
+# -----------------------------------
 # Secure Service Instance Credentials
 # ------------------------------------
 secure_service_credentials: false

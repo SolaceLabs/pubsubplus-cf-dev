@@ -12,8 +12,8 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
 
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"3586.40"}
-export STEMCELL=${STEMCELL:-"ubuntu-trusty"}
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"97.32"}
+export STEMCELL=${STEMCELL:-"ubuntu-xenial"}
 
 export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
 
@@ -280,14 +280,16 @@ function runErrand() {
 
  SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
  ERRAND_NAME=$2
+ INSTANCE_NAME=${3:-"management/first"}
  DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
  if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ] && [ ! -z $ERRAND_NAME ]; then
 
-  FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | .name " | grep "$ERRAND_NAME" | wc -l )
+  FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | select(.name == \"$ERRAND_NAME\") | .name " | grep "$ERRAND_NAME" | wc -l )
   if [ $FOUND_ERRAND -eq "1" ]; then
-     bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME
+     echo "Running [ bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME --instance=$INSTANCE_NAME --when-changed ]"
+     bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME --instance=$INSTANCE_NAME --when-changed
   else
-     echo "Errand [$ERRAND_NAME] not found for deployment $SELECTED_DEPLOYMENT]"
+     echo "Errand [$ERRAND_NAME] not found for deployment [$SELECTED_DEPLOYMENT]"
   fi
 
  else
@@ -298,9 +300,11 @@ function runErrand() {
 
 function deleteSolaceDeployment() {
   SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
-  runErrand $SELECTED_DEPLOYMENT delete-all
+  runErrand $SELECTED_DEPLOYMENT delete-all-service-instances management/first
+  runErrand $SELECTED_DEPLOYMENT delete-all management/first
   deleteDeployment $SELECTED_DEPLOYMENT
   deleteOrphanedDisks $SELECTED_DEPLOYMENT
+  deleteAllOrphanedDisks
 }
 
 function deleteDeployment() {
@@ -341,6 +345,7 @@ function deleteSolaceReleases() {
   
  deleteBOSHRelease solace-pubsub-broker
  deleteBOSHRelease solace-pubsub
+ deleteBOSHRelease solace-service-adapter
 
 }
 
@@ -685,6 +690,10 @@ function setup_bosh_lite_swap() {
    echo "You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
    echo
 
+   if [ ! -d ~/.ssh/ ]; then
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+   fi
    ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
    ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
    bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
@@ -708,4 +717,12 @@ function resetBOSHEnv() {
   unset BOSH_ENVIRONMENT
   unset BOSH_CLIENT_SECRET
   unset BOSH_CA_CERT
+}
+
+function produceBOSHEnvVars() {
+  echo "bosh_host: $BOSH_IP"
+  echo "bosh_admin_password: $BOSH_CLIENT_SECRET"
+  echo "bosh_disable_ssl_cert_verification: false"
+  echo "bosh_root_ca_cert: |"
+  sed 's/^/    /g' <<< "$BOSH_CA_CERT"
 }
