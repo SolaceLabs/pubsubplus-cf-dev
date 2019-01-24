@@ -8,7 +8,7 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
-export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v1.25.0"}
+export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v4.2.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
@@ -30,7 +30,7 @@ fi
 
 cd $WORKSPACE/cf-deployment
 
-prepareBosh
+loadStemcells
 
 echo "Loading cloud-config iaas-support/bosh-lite/cloud-config.yml"
 bosh update-cloud-config $SCRIPTPATH/../cf-solace-messaging-deployment/iaas-support/bosh-lite/cloud-config.yml
@@ -38,11 +38,19 @@ bosh update-cloud-config $SCRIPTPATH/../cf-solace-messaging-deployment/iaas-supp
 bosh -d cf deploy cf-deployment.yml \
 	-o operations/bosh-lite.yml \
 	-o operations/use-compiled-releases.yml \
-	-o operations/use-trusted-ca-cert-for-apps.yml \
+	-o $SCRIPTPATH/operations/trusted_certs.yml \
+	-o $SCRIPTPATH/operations/credhub.yml \
+	-o $SCRIPTPATH/operations/cf_smaller_mysql.yml \
 	--vars-store $WORKSPACE/deployment-vars.yml \
-        -l $SCRIPTPATH/cf_trusted-ca-cert-for-apps.yml \
-	-v system_domain=$SYSTEM_DOMAIN
+	-l $SCRIPTPATH/cf_trusted-ca-cert-for-apps.yml \
+	-v system_domain=$SYSTEM_DOMAIN \
+        -v mysql_max_connections=500 \
+        -v mysql_innodb_buffer_pool_size=524288000
         
+if [ "$?" -ne "0" ]; then
+  echo "ABORTING: cf-deployment was not successful"
+  exit 1
+fi
 
 if [ -f $SCRIPTPATH/cf_env.sh ]; then
   $SCRIPTPATH/cf_env.sh 
@@ -59,6 +67,14 @@ fi
 if [ -f $SCRIPTPATH/apply_open_security_groups.sh ]; then
   $SCRIPTPATH/apply_open_security_groups.sh
 fi
+
+## This is for development. Open up security groups to support credhub access.
+if [ -f $SCRIPTPATH/apply_credhub_security_groups.sh ]; then
+  $SCRIPTPATH/apply_credhub_security_groups.sh
+fi
+
+echo "Setup environment for TCP Routes" 
+$SCRIPTPATH/setup_tcp_routing.sh
 
 echo
 echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""

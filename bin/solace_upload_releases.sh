@@ -11,9 +11,10 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
 fi
 
 source $SCRIPTPATH/bosh-common.sh
-prepareBosh
 
-for RELEASE_FILE in `ls $WORKSPACE/releases/*.tgz`; do
+loadStemcells
+
+for RELEASE_FILE in $(ls $WORKSPACE/releases/*.tgz); do
   RELEASE=$(basename $RELEASE_FILE)
   echo "Uploading release $RELEASE"
   bosh upload-release $RELEASE_FILE

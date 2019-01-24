@@ -1,25 +1,36 @@
 #!/bin/bash
 
-export DEPLOYMENT_NAME="solace_messaging"
+export DEPLOYMENT_NAME="solace_pubsub"
 export LOG_FILE=${LOG_FILE:-"$WORKSPACE/bosh_deploy.log"}
+export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 ######################################
 
-export BOSH_IP=${BOSH_IP:-"192.168.50.4"}
+export BOSH_IP=${BOSH_IP:-"192.168.50.6"}
 export BOSH_CMD="/usr/local/bin/bosh"
 export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
-export BOSH_NON_INTERACTIVE${BOSH_NON_INTERACTIVE:-true}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"3541.10"}
-export STEMCELL_NAME="bosh-stemcell-$STEMCELL_VERSION-warden-boshlite-ubuntu-trusty-go_agent.tgz"
-export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"97.32"}
+export STEMCELL=${STEMCELL:-"ubuntu-xenial"}
+
+export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
 
 export VM_MEMORY=${VM_MEMORY:-8192}
 export VM_CPUS=${VM_CPUS:-4}
 export VM_DISK_SIZE=${VM_DISK_SIZE:-"65_536"}
 export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
 export VM_SWAP=${VM_SWAP:-8192}
+
+export BUCC_HOME=${BUCC_HOME:-$SCRIPTPATH/../bucc}
+export BUCC_STATE_ROOT=${BUCC_STATE_ROOT:-$WORKSPACE/BOSH_LITE_VM/state}
+export BUCC_VARS_FILE=${BUCC_VARS_FILE:-$WORKSPACE/BOSH_LITE_VM/vars.yml}
+export BUCC_STATE_STORE=${BUCC_STATE_STORE:-$BUCC_STATE_ROOT/state.json}
+export BUCC_VARS_STORE=${BUCC_VARS_STORE:-$BUCC_STATE_ROOT/creds.yml}
+
+export BOSH_ENV_FILE=${BOSH_ENV_FILE:-$WORKSPACE/bosh_env.sh}
+export DOT_BOSH_ENV_FILE=${DOT_BOSH_ENV_FILE:-$WORKSPACE/.env}
 
 export TEMP_DIR=$(mktemp -d)
 
@@ -37,20 +48,7 @@ trap cleanupWorkTemp EXIT INT TERM HUP
 function targetBosh() {
 
   ## Setup to access target bosh-lite
-    
-  if [ ! -f $WORKSPACE/.env ] && [ "$BOSH_IP" == "192.168.50.4" ]; then
-     # Old bosh-lite
-     if [ ! -d $WORKSPACE/bosh-lite ]; then
-       (cd $WORKSPACE; git clone https://github.com/cloudfoundry/bosh-lite.git)
-     fi 
-
-     # bosh target $BOSH_IP alias as 'lite'
-     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP --ca-cert=$WORKSPACE/bosh-lite/ca/certs/ca.crt --client=admin --client-secret=admin  )
-  else
-     # New bosh-lite
-     BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
-  fi
-
+  BOSH_TARGET_LOG=$( $BOSH_CMD alias-env lite -e $BOSH_IP )
   if [ $? -eq 0 ]; then
      # Login will rely on BOSH_* env vars..
      BOSH_LOGIN_LOG=$( BOSH_CLIENT=$BOSH_CLIENT BOSH_CLIENT_SECRET=$BOSH_CLIENT_SECRET $BOSH_CMD log-in )
@@ -66,10 +64,24 @@ function targetBosh() {
   fi
 }
 
+function loadWorkspaceStemcells() {
 
-function prepareBosh() { 
+ for stemcell_file in $(ls $WORKSPACE/bosh-stemcell-*-warden-boshlite-*-go_agent.tgz); do 
+      echo "Loading $stemcell_file"
+      bosh upload-stemcell $stemcell_file
+ done
 
-  FOUND_STEMCELL=`bosh stemcells | grep bosh-warden-boshlite-ubuntu-trusty-go_agent | grep $STEMCELL_VERSION | wc -l`
+}
+
+function loadStemcells() { 
+
+ for REQUIRED_STEMCELL in $REQUIRED_STEMCELLS; do
+
+  export STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
+  export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
+  export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
+  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+  FOUND_STEMCELL=$( bosh stemcells --json | jq ".Tables[].Rows[] | select(.os == \"$STEMCELL\")  | select ((.version == \"${STEMCELL_VERSION}\" ) or (.version==\"${STEMCELL_VERSION}*\")) | .name " | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
 	echo "Downloading required stemcell $STEMCELL_NAME"
@@ -80,14 +92,41 @@ function prepareBosh() {
 	echo "Failed to upload required stemcell $STEMCELL_NAME to bosh"
 	exit 1
      fi
+  else
+     echo "Stemcell found [$STEMCELL_NAME]/[$STEMCELL_VERSION]"
   fi
+
+ done
+
+}
+
+function deleteAllOrphanedDisks() {
+
+ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | .disk_cid" | sed 's/\"//g' | wc -l )
+ORPHANED_DISKS=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | .disk_cid" | sed 's/\"//g' )
+
+if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
+
+ for DISK_ID in $ORPHANED_DISKS; do
+        echo "Will delete $DISK_ID"
+        bosh -n delete-disk $DISK_ID
+        echo
+        echo "Orphaned Disk $DISK_ID was deleted"
+        echo
+ done
+
+else
+   echo "no orphaned disks found: $ORPHANED_DISKS_COUNT"
+fi
 
 }
 
 function deleteOrphanedDisks() {
 
-ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' | wc -l )
-ORPHANED_DISKS=$( bosh disks --orphaned --json | jq '.Tables[].Rows[] | select(.deployment | contains("solace_messaging")) | .disk_cid' | sed 's/\"//g' )
+SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+
+ORPHANED_DISKS_COUNT=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | select(.deployment | contains(\"$SELECTED_DEPLOYMENT\")) | .disk_cid" | sed 's/\"//g' | wc -l )
+ORPHANED_DISKS=$( bosh disks --orphaned --json | jq ".Tables[].Rows[] | select(.deployment | contains(\"$SELECTED_DEPLOYMENT\")) | .disk_cid" | sed 's/\"//g' )
 
 
 if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
@@ -101,7 +140,7 @@ if [ "$ORPHANED_DISKS_COUNT" -gt "0" ]; then
  done
 
 else
-   echo "No orphaned disks found: $ORPHANED_DISKS_COUNT"
+   echo "Deployment [$SELECTED_DEPLOYMENT] - no orphaned disks found: $ORPHANED_DISKS_COUNT"
 fi
 
 }
@@ -117,8 +156,8 @@ function shutdownVMRJobs() {
  echo "Looking for VM job $VM_JOB" 
  VM_FOUND_COUNT=`$BOSH_CMD vms | grep $VM_JOB | wc -l`
  VM_RUNNING_FOUND_COUNT=`$BOSH_CMD vms --json | jq '.Tables[].Rows[] | select(.process_state=="running") | .instance' | grep $VM_JOB |  wc -l`
- DEPLOYMENT_FOUND_COUNT=`$BOSH_CMD deployments | grep $DEPLOYMENT_NAME | wc -l`
- RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
+ DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$DEPLOYMENT_NAME\$" | wc -l )
+ RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep -v solace-pubsub-broker | grep solace-pubsub | wc -l`
 
  if [ "$VM_RUNNING_FOUND_COUNT" -eq "1" ]; then
 
@@ -140,37 +179,37 @@ function shutdownVMRJobs() {
 }
 
 function getReleaseNameAndVersion() {
-    SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-vmr-*.tgz"
-    for f in $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER; do
+    SOLACE_PUBSUB_BOSH_RELEASE_FILE_MATCHER=`ls $WORKSPACE/releases/solace-pubsub-*.tgz | grep -v solace-pubsub-broker`
+    for f in $SOLACE_PUBSUB_BOSH_RELEASE_FILE_MATCHER; do
       if ! [ -e "$f" ]; then
-        echo "Could not find solace-vmr bosh release file: $SOLACE_VMR_BOSH_RELEASE_FILE_MATCHER"
+        echo "Could not find solace-pubsub bosh release file: $SOLACE_PUBSUB_BOSH_RELEASE_FILE_MATCHER"
         exit 1
       fi
 
-      export SOLACE_VMR_BOSH_RELEASE_FILE="$f"
+      export SOLACE_PUBSUB_BOSH_RELEASE_FILE="$f"
       break
     done
-    export SOLACE_VMR_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' )
-    export SOLACE_VMR_BOSH_RELEASE_VERSION=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-    export SOLACE_VMR_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_VMR_BOSH_RELEASE_FILE | sed 's/solace-vmr-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
-    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_FULL $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL"
-    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION $SOLACE_VMR_BOSH_RELEASE_VERSION"
-    echo "Determined SOLACE_VMR_BOSH_RELEASE_VERSION_DEV $SOLACE_VMR_BOSH_RELEASE_VERSION_DEV"
+    export SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_PUBSUB_BOSH_RELEASE_FILE | sed 's/solace-pubsub-//g' | sed 's/.tgz//g' )
+    export SOLACE_PUBSUB_BOSH_RELEASE_VERSION=$(basename $SOLACE_PUBSUB_BOSH_RELEASE_FILE | sed 's/solace-pubsub-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    export SOLACE_PUBSUB_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_PUBSUB_BOSH_RELEASE_FILE | sed 's/solace-pubsub-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
+    echo "Determined SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL $SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL"
+    echo "Determined SOLACE_PUBSUB_BOSH_RELEASE_VERSION $SOLACE_PUBSUB_BOSH_RELEASE_VERSION"
+    echo "Determined SOLACE_PUBSUB_BOSH_RELEASE_VERSION_DEV $SOLACE_PUBSUB_BOSH_RELEASE_VERSION_DEV"
 
 
-    SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-messaging-*.tgz"
+    SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER="$WORKSPACE/releases/solace-pubsub-broker-*.tgz"
     for f in $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER; do
       if ! [ -e "$f" ]; then
-        echo "Could not find solace-messaging bosh release file: $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER"
+        echo "Could not find solace-pubsub-broker bosh release file: $SOLACE_MESSAGING_BOSH_RELEASE_FILE_MATCHER"
         exit 1
       fi
 
       export SOLACE_MESSAGING_BOSH_RELEASE_FILE="$f"
       break
     done
-    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' )
-    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
-    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-messaging-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-pubsub-broker-//g' | sed 's/.tgz//g' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-pubsub-broker-//g' | sed 's/.tgz//g' | awk -F\- '{ print $1 }' )
+    export SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV=$(basename $SOLACE_MESSAGING_BOSH_RELEASE_FILE | sed 's/solace-pubsub-broker-//g' | sed 's/.tgz//g' | awk -F\- '{ print $2 }' )
     echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL"
     echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION $SOLACE_MESSAGING_BOSH_RELEASE_VERSION"
     echo "Determined SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_DEV"
@@ -181,18 +220,18 @@ function uploadReleases() {
 
 echo "in function uploadReleases. SOLACE_MESSAGING_BOSH_RELEASE_FILE: $SOLACE_MESSAGING_BOSH_RELEASE_FILE"
 
-SOLACE_MESSAGING_BOSH_RELEASE_FILE=${SOLACE_MESSAGING_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-messaging-*.tgz | tail -1`}
-SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-messaging | wc -l`
+SOLACE_MESSAGING_BOSH_RELEASE_FILE=${SOLACE_MESSAGING_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-pubsub-broker-*.tgz | tail -1`}
+SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-pubsub-broker | wc -l`
 
 if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
-  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-messaging | awk '{ print $4 }'`
+  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-pubsub-broker | awk '{ print $4 }'`
   # remove trailing '*'
   UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
-  echo "Determined solace-messaging uploaded version $UPLOADED_RELEASE_VERSION"
+  echo "Determined solace-pubsub-broker uploaded version $UPLOADED_RELEASE_VERSION"
  fi
 
  if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ] || \
@@ -201,76 +240,112 @@ if [ -f $SOLACE_MESSAGING_BOSH_RELEASE_FILE ]; then
 
   $BOSH_CMD upload-release $SOLACE_MESSAGING_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "A solace-messaging release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
+  echo "A solace-pubsub-broker release with version greater than or equal to $SOLACE_MESSAGING_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
 fi
 
-SOLACE_VMR_BOSH_RELEASE_FILE=${SOLACE_VMR_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-vmr-*.tgz | tail -1`}
-RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep solace-vmr | wc -l`
+SOLACE_PUBSUB_BOSH_RELEASE_FILE=${SOLACE_PUBSUB_BOSH_RELEASE_FILE:-`ls $WORKSPACE/releases/solace-pubsub-*.tgz | grep -v solace-pubsub-broker | tail -1`}
+RELEASE_FOUND_COUNT=`$BOSH_CMD releases | grep -v solace-pubsub-broker | grep solace-pubsub | wc -l`
 
-echo "in function uploadReleases. SOLACE_VMR_BOSH_RELEASE_FILE: $SOLACE_VMR_BOSH_RELEASE_FILE"
+echo "in function uploadReleases. SOLACE_PUBSUB_BOSH_RELEASE_FILE: $SOLACE_PUBSUB_BOSH_RELEASE_FILE"
 
-if [ -f $SOLACE_VMR_BOSH_RELEASE_FILE ]; then
+if [ -f $SOLACE_PUBSUB_BOSH_RELEASE_FILE ]; then
 
  targetBosh
 
  if [ "$RELEASE_FOUND_COUNT" -gt "0" ]; then
-  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep solace-vmr | awk '{ print $4 }'`
+  UPLOADED_RELEASE_VERSION=`$BOSH_CMD releases | grep -v solace-broker-pubsub | grep solace-pubsub | awk '{ print $4 }'`
   # remove trailing '*'
   UPLOADED_RELEASE_VERSION="${UPLOADED_RELEASE_VERSION%\*}"
  fi
 
  if [ "$RELEASE_FOUND_COUNT" -eq "0" ] || \
-    [ "$SOLACE_VMR_BOSH_RELEASE_VERSION_FULL" '>' "$UPLOADED_RELEASE_VERSION" ]; then
-  echo "Will upload release $SOLACE_VMR_BOSH_RELEASE_FILE"
+    [ "$SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL" '>' "$UPLOADED_RELEASE_VERSION" ]; then
+  echo "Will upload release $SOLACE_PUBSUB_BOSH_RELEASE_FILE"
 
-  $BOSH_CMD upload-release $SOLACE_VMR_BOSH_RELEASE_FILE | tee -a $LOG_FILE
+  $BOSH_CMD upload-release $SOLACE_PUBSUB_BOSH_RELEASE_FILE | tee -a $LOG_FILE
  else
-  echo "A solace-vmr release with version greater than or equal to $SOLACE_VMR_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
+  echo "A solace-pubsub release with version greater than or equal to $SOLACE_PUBSUB_BOSH_RELEASE_VERSION_FULL already exists. Skipping release upload..."
  fi
 
 else
- >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-vmr-*.tgz"
+ >&2 echo "Could not locate a release file in $WORKSPACE/releases/solace-pubsub-*.tgz"
  exit 1
 fi
 
 }
 
-function deleteSolaceDeployment() {
+function runErrand() {
 
- SOLACE_DEPLOYMENT_FOUND_COUNT=`bosh deployments | grep solace_messaging | wc -l`
- if [ "$SOLACE_DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
+ SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+ ERRAND_NAME=$2
+ INSTANCE_NAME=${3:-"management/first"}
+ DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
+ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ] && [ ! -z $ERRAND_NAME ]; then
 
-  bosh -d solace_messaging run-errand delete-all
-
-  bosh -d solace_messaging delete-deployment
+  FOUND_ERRAND=$( bosh -d $SELECTED_DEPLOYMENT errands --json | jq ".Tables[].Rows[] | select(.name == \"$ERRAND_NAME\") | .name " | grep "$ERRAND_NAME" | wc -l )
+  if [ $FOUND_ERRAND -eq "1" ]; then
+     echo "Running [ bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME --instance=$INSTANCE_NAME --when-changed ]"
+     bosh -d $SELECTED_DEPLOYMENT run-errand $ERRAND_NAME --instance=$INSTANCE_NAME --when-changed
+  else
+     echo "Errand [$ERRAND_NAME] not found for deployment [$SELECTED_DEPLOYMENT]"
+  fi
 
  else
-     echo "No solace messaging deployment found: $SOLACE_DEPLOYMENT_FOUND_COUNT"
+     echo "Deployment [$SELECTED_DEPLOYMENT] not found: $DEPLOYMENT_FOUND_COUNT, or missing required errand name [$ERRAND_NAME]"
  fi
 
 }
 
+function deleteSolaceDeployment() {
+  SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+  runErrand $SELECTED_DEPLOYMENT delete-all-service-instances management/first
+  runErrand $SELECTED_DEPLOYMENT delete-all management/first
+  deleteDeployment $SELECTED_DEPLOYMENT
+  deleteOrphanedDisks $SELECTED_DEPLOYMENT
+  deleteAllOrphanedDisks
+}
+
+function deleteDeployment() {
+
+ SELECTED_DEPLOYMENT=${1:-$DEPLOYMENT_NAME}
+
+ DEPLOYMENT_FOUND_COUNT=$(bosh deployments --json | jq '.Tables[].Rows[] | .name ' | sed 's/\"//g' | grep "^$SELECTED_DEPLOYMENT\$" | wc -l )
+ if [ "$DEPLOYMENT_FOUND_COUNT" -eq "1" ]; then
+
+  bosh -n -d $SELECTED_DEPLOYMENT delete-deployment
+
+ else
+     echo "Deployment [$SELECTED_DEPLOYMENT] not found: $DEPLOYMENT_FOUND_COUNT"
+ fi
+
+}
+
+function deleteBOSHRelease() {
+
+BOSH_RELEASE=$1
+MATCHING_RELEASES_LIST=$( bosh releases --json | jq -r ".Tables[].Rows[] | select((.name == \"$BOSH_RELEASE\")) | .version" )
+MATCHING_UNUSED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep -v "*" )
+MATCHING_UNUSED_RELEASES_COUNT=$( echo "$MATCHING_UNUSED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+MATCHING_USED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep "*" )
+MATCHING_USED_RELEASES_COUNT=$( echo "$MATCHING_USED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+echo "Found [ $MATCHING_UNUSED_RELEASES_COUNT : unused ] and [ $MATCHING_USED_RELEASES_COUNT : in-use ] release(s) for [ $BOSH_RELEASE ]"
+
+if [ "$MATCHING_UNUSED_RELEASES_COUNT" -gt "0" ]; then
+ for MATCHING_RELEASE_VERSION in $MATCHING_UNUSED_RELEASES; do
+   echo "Deleting [ $BOSH_RELEASE/$MATCHING_RELEASE_VERSION ]"
+   bosh -n delete-release $BOSH_RELEASE/$MATCHING_RELEASE_VERSION
+ done
+fi
+
+}
+
 function deleteSolaceReleases() {
-
- SOLACE_VMR_RELEASE_FOUND_COUNT=`bosh releases | grep solace-vmr | wc -l`
- if [ "$SOLACE_VMR_RELEASE_FOUND_COUNT" -gt "0" ]; then
-     # solace-vmr
-     echo "Deleting release solace-vmr"
-     bosh -n delete-release solace-vmr
- else
-     echo "No solace-vmr release found: $SOLACE_VMR_RELEASE_FOUND_COUNT"
- fi
-
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=`bosh releases | grep solace-messaging | wc -l`
- if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -gt "0" ]; then
-     # solace-messaging
-     echo "Deleting release solace-messaging"
-     bosh -n delete-release solace-messaging
- else
-     echo "No solace-messaging release found: $SOLACE_MESSAGING_RELEASE_FOUND_COUNT"
- fi
+  
+ deleteBOSHRelease solace-pubsub-broker
+ deleteBOSHRelease solace-pubsub
+ deleteBOSHRelease solace-service-adapter
 
 }
 
@@ -318,18 +393,144 @@ fi
 
 }
 
+function take_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Taking snapshot of [$BOSH_VM] as $1"
+        vboxmanage snapshot $BOSH_VM take $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function delete_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Deleting snapshot of [$BOSH_VM] as $1"
+        vboxmanage snapshot $BOSH_VM delete $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function restore_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Restoring snapshot of [$BOSH_VM] as $1"
+        vboxmanage snapshot $BOSH_VM restore $1
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function restore_current_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Restoring current snapshot of [$BOSH_VM]"
+        vboxmanage snapshot $BOSH_VM restorecurrent
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
+function list_bosh_lite_vm_snapshot() {
+
+checkRequiredTools vboxmanage
+
+if [ -f $WORKSPACE/.boshvm ]; then
+   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
+   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+   if [[ $? -eq 0 ]]; then
+        echo "Listing snapshot of [$BOSH_VM]"
+        vboxmanage snapshot $BOSH_VM list
+   else
+        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+        exit 1
+   fi
+else
+  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
+  exit 1
+fi
+
+}
+
 function check_bucc() {
 
 (
- cd $WORKSPACE
+ cd $SCRIPTPATH/..
  if [ ! -d bucc ]; then
   git clone https://github.com/starkandwayne/bucc.git
  else
   (cd bucc; git pull)
  fi
 )
+export PATH=$PATH:$BUCC_HOME/bin
 
-export PATH=$PATH:$WORKSPACE/bucc/bin
+if [ ! -d $WORKSPACE/BOSH_LITE_VM ]; then
+    mkdir $WORKSPACE/BOSH_LITE_VM
+    mkdir -p $BUCC_STATE_ROOT
+
+    # Migrate old state directory if found
+    if [ -d $WORKSPACE/bucc/state ]; then
+         mv $WORKSPACE/bucc/state/* $BUCC_STATE_ROOT
+         rmdir $WORKSPACE/bucc/state
+    fi
+
+    # Migrate old vars if found
+    if [ -f $WORKSPACE/bucc/vars.yml ]; then
+       mv $WORKSPACE/bucc/vars.yml $BUCC_VARS_FILE
+    fi
+
+fi
 
 }
 
@@ -350,18 +551,18 @@ fi
 
 check_bucc
 
-echo "Setting VM MEMORY to $VM_MEMORY, VM_CPUS to $VM_CPUS, VM_EPHEMERAL_DISK_SIZE to $VM_EPHEMERAL_DISK_SIZE"
-sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
-sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
-sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
+echo "Setting VM_MEMORY [ $VM_MEMORY ], VM_CPUS [ $VM_CPUS ], VM_EPHEMERAL_DISK_SIZE [ $VM_EPHEMERAL_DISK_SIZE ], VM_DISK_SIZE [ $VM_DISK_SIZE ]"
+sed -i "/vm_memory:/c\vm_memory: $VM_MEMORY" $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_cpus:/c\vm_cpus: $VM_CPUS" $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
+sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
 
-echo "vm_disk_size: $VM_DISK_SIZE" >> $WORKSPACE/bucc/ops/cpis/virtualbox/vars.tmpl
-cp -f $SCRIPTPATH/vm-size.yml $WORKSPACE/bucc/ops/cpis/virtualbox/
+echo "vm_disk_size: $VM_DISK_SIZE" >> $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
+cp -f $SCRIPTPATH/vm-size.yml $BUCC_HOME/ops/cpis/virtualbox/
 
 ## Capture running VMS before
 vboxmanage list runningvms > $TEMP_DIR/running_vms.before
 
-bucc up --cpi virtualbox --lite --debug | tee $WORKSPACE/bucc_up.log
+bucc up --cpi virtualbox --lite --debug 
 
 ## Capture running VMS after
 vboxmanage list runningvms > $TEMP_DIR/running_vms.after
@@ -375,14 +576,37 @@ if [[ $? -eq 0 ]]; then
    echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
 fi
 
-bucc env > $WORKSPACE/bosh_env.sh
-echo "export PATH=\$PATH:$SCRIPTPATH" >> $WORKSPACE/bosh_env.sh
+create_bosh_env_file
+
+source $BOSH_ENV_FILE
+echo "Updating runtime-config to activate bosh-dns" 
+bosh -n update-runtime-config $SCRIPTPATH/runtime-config.yml
+}
+
+function prepare_bosh_env() {
+
+bucc env 
+echo "export PATH=\$PATH:$SCRIPTPATH"
+echo "export BUCC_HOME=\${BUCC_HOME:-$SCRIPTPATH/../bucc}"
+echo "export BUCC_STATE_ROOT=\${BUCC_STATE_ROOT:-\$WORKSPACE/BOSH_LITE_VM/state}"
+echo "export BUCC_VARS_FILE=\${BUCC_VARS_FILE:-\$WORKSPACE/BOSH_LITE_VM/vars.yml}"
+echo "export BUCC_STATE_STORE=\${BUCC_STATE_STORE:-\$BUCC_STATE_ROOT/state.json}"
+echo "export BUCC_VARS_STORE=\${BUCC_VARS_STORE:-\$BUCC_STATE_ROOT/creds.yml}"
+
+}
+
+function create_bosh_env_file() {
+
+check_bucc
+prepare_bosh_env > $BOSH_ENV_FILE
+echo "Prepared: $BOSH_ENV_FILE"
+echo "To use it \"source $BOSH_ENV_FILE\""
 
 }
 
 function bosh_lite_vm_additions() {
 
-source $WORKSPACE/bosh_env.sh
+source $BOSH_ENV_FILE
 setup_bosh_lite_routes
 setup_bosh_lite_swap
 
@@ -394,18 +618,18 @@ checkRequiredTools vboxmanage
 
 check_bucc
 
-source <($WORKSPACE/bucc/bin/bucc env)
+source <($BUCC_HOME/bin/bucc env)
 
-if [ -d $WORKSPACE/bucc/state ] && [ -f $WORKSPACE/bucc/vars.yml ]; then
-   $WORKSPACE/bucc/bin/bucc down && $WORKSPACE/bucc/bin/bucc clean
+if [ -d $BUCC_STATE_ROOT ] && [ -f $BUCC_VARS_FILE ]; then
+   $BUCC_HOME/bin/bucc down && $BUCC_HOME/bin/bucc clean
 fi
 
-if [ -f $WORKSPACE/bosh_env.sh ]; then
-   rm -f $WORKSPACE/bosh_env.sh
+if [ -f $BOSH_ENV_FILE ]; then
+   rm -f $BOSH_ENV_FILE
 fi
 
-if [ -f $WORKSPACE/.bosh_env ]; then
-   rm -f $WORKSPACE/.bosh_env
+if [ -f $DOT_BOSH_ENV_FILE ]; then
+   rm -f $DOT_BOSH_ENV_FILE
 fi
 
 if [ -f $WORKSPACE/deployment-vars.yml ]; then
@@ -457,20 +681,48 @@ function setup_bosh_lite_swap() {
 
  checkRequiredTools ssh-keygen ssh-keyscan
 
- check_bucc
+ if [ ! -z "$VM_SWAP" ] && [ "$VM_SWAP" -gt "0" ]; then
 
- echo
- echo "Adding swap of $VM_SWAP. You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
- echo
+   check_bucc
 
- echo "Adding $VM_SWAP of swap space"
- ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
- ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
- bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
- bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
- bucc ssh "sudo mkswap /var/vcap/store/swapfile"
- bucc ssh "sudo swapon /var/vcap/store/swapfile"
- bucc ssh "sudo swapon -s"
+   echo
+   echo "Adding swap space VM_SWAP [ $VM_SWAP ]"
+   echo "You may need to accept the authenticity of host $BOSH_GW_HOST when requested"
+   echo
+
+   if [ ! -d ~/.ssh/ ]; then
+      mkdir -p ~/.ssh
+      chmod 700 ~/.ssh
+   fi
+   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
+   ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
+   bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
+   bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
+   bucc ssh "sudo mkswap /var/vcap/store/swapfile"
+   bucc ssh "sudo swapon /var/vcap/store/swapfile"
+   bucc ssh "sudo swapon -s"
+
+ else
+   echo "Not adding swap space VM_SWAP [ $VM_SWAP ]"
+ fi
 
 }
 
+
+function resetBOSHEnv() {
+  unset BOSH_GW_HOST
+  unset BOSH_GW_PRIVATE_KEY
+  unset BOSH_GW_USER
+  unset BOSH_CLIENT
+  unset BOSH_ENVIRONMENT
+  unset BOSH_CLIENT_SECRET
+  unset BOSH_CA_CERT
+}
+
+function produceBOSHEnvVars() {
+  echo "bosh_host: $BOSH_IP"
+  echo "bosh_admin_password: $BOSH_CLIENT_SECRET"
+  echo "bosh_disable_ssl_cert_verification: false"
+  echo "bosh_root_ca_cert: |"
+  sed 's/^/    /g' <<< "$BOSH_CA_CERT"
+}

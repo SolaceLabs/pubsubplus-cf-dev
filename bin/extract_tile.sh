@@ -8,7 +8,7 @@ source $SCRIPTPATH/common.sh
 
 export CMD_NAME=`basename $0`
 
-export BASIC_USAGE_PARAMS="-t solace-messaging*.pivotal "
+export BASIC_USAGE_PARAMS="-t solace-pubsub*.pivotal "
 
 export TEMP_DIR=$(mktemp -d)
 
@@ -90,7 +90,7 @@ fi
 
 ## Derived values
 
-export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-messaging-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
+export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-pubsub-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
 export TEMPLATE_VERSION=$( echo $TILE_VERSION | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
@@ -119,4 +119,15 @@ if [ -d $WORKSPACE/releases ]; then
 fi
 
 unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz 
+
+## Extract and show the Solace Service Broker version. 
+(
+ cd $TEMP_DIR
+ tar -xzf $WORKSPACE/releases/solace-pubsub-broker-$TILE_VERSION.tgz
+ tar -xzf packages/solace_pubsub_broker.tgz 
+ cd ./solace_pubsub_broker/ 
+ SOLACE_SERVICE_BROKER_VERSION=$(ls *.jar)
+ echo " Found Solace Service Broker [ $SOLACE_SERVICE_BROKER_VERSION ]"
+ echo "solace_service_broker_jar: $SOLACE_SERVICE_BROKER_VERSION" > $WORKSPACE/releases/release-vars.yml
+)
 
