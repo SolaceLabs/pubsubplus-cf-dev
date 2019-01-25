@@ -22,6 +22,11 @@ application_security_groups: true
 
 # This is the password set for the "admin" user on the VMR
 vmr_admin_password: admin1
+
+# These are the current and previous keys used to encrypt password columns in the service broker db.
+db_encryption_key:
+db_encryption_key_prev:
+
 ##
 # Control populating each plan with VMRs
 # Note that the "HA" Plans need to be provided in groups of 3
