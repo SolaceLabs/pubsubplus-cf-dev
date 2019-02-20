@@ -78,6 +78,10 @@ vmr_admin_password:
 
 management_access_auth_scheme: vmr_internal
 
+# These are the current and previous keys used to encrypt password columns in the service broker db.
+db_encryption_key:
+db_encryption_key_prev:
+
 # ------------------------
 # LDAP Settings
 # ------------------------
