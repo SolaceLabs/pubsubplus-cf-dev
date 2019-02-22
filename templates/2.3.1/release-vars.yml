@@ -3,4 +3,4 @@ bosh_stemcell: "ubuntu-xenial"
 bosh_stemcell_version: "97.32"
 solace_service_broker_jar: solace-service-broker-0.0.1223.jar
 solace_service_broker_name: solace-service-broker-0.0.1223
-cf_mysql_version: "36.16.0"
+cf_mysql_version: "36.18.0"
