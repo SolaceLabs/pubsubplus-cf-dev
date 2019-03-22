@@ -1,5 +1,6 @@
 solace_load_version: soltr_9.0.1.7
 bosh_stemcell: "ubuntu-xenial"
 bosh_stemcell_version: "97.32"
-solace_service_broker_jar: solace-service-broker-0.0.1223.jar
-cf_mysql_version: "36.16.0"
+solace_service_broker_jar: solace-service-broker-0.0.1270.jar
+solace_service_broker_name: solace-service-broker-0.0.1270
+cf_mysql_version: "36.18.0"
