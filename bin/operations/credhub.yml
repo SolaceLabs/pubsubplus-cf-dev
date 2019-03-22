@@ -6,3 +6,20 @@
   value:         
     credhub:
       shared: true
+- type: replace
+  path: /instance_groups/name=uaa/jobs/name=uaa/properties/uaa/clients/services_credhub_client?
+  value: 
+    authorities: credhub.read,credhub.write
+    authorized-grant-types: client_credentials
+    secret: "((uaa_services_credhub_client_secret))"
+- type: replace
+  path: /instance_groups/name=credhub/jobs/name=credhub/properties/credhub/authorization/permissions/-
+  value: 
+    path: /c/*
+    actors: ["uaa-client:services_credhub_client"]
+    operations: [read, write, delete, read_acl, write_acl]
+- type: replace
+  path: /variables/-
+  value: 
+    name: uaa_services_credhub_client_secret
+    type: password
