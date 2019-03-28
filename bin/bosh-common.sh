@@ -327,9 +327,9 @@ function deleteBOSHRelease() {
 BOSH_RELEASE=$1
 MATCHING_RELEASES_LIST=$( bosh releases --json | jq -r ".Tables[].Rows[] | select((.name == \"$BOSH_RELEASE\")) | .version" )
 MATCHING_UNUSED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep -v "*" )
-MATCHING_UNUSED_RELEASES_COUNT=$( echo "$MATCHING_UNUSED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+MATCHING_UNUSED_RELEASES_COUNT=$( echo "$MATCHING_UNUSED_RELEASES" | awk -v RS="" -v OFS=',' '$1=$1' | wc -l )
 MATCHING_USED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep "*" )
-MATCHING_USED_RELEASES_COUNT=$( echo "$MATCHING_USED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+MATCHING_USED_RELEASES_COUNT=$( echo "$MATCHING_USED_RELEASES" | awk -v RS="" -v OFS=',' '$1=$1' | wc -l )
 echo "Found [ $MATCHING_UNUSED_RELEASES_COUNT : unused ] and [ $MATCHING_USED_RELEASES_COUNT : in-use ] release(s) for [ $BOSH_RELEASE ]"
 
 if [ "$MATCHING_UNUSED_RELEASES_COUNT" -gt "0" ]; then
