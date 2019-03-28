@@ -75,7 +75,7 @@ function check_cf_marketplace_access() {
 function checkRequiredReleases() {
 
 export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
-export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -v RS="" -v OFS=',' '$1=$1' )
 export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
 export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
 
@@ -92,7 +92,7 @@ export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELE
 function loadRequiredReleases() {
 
 export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
-export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -v RS="" -v OFS=',' '$1=$1' )
 export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
 if [ "$DOCKER_RELEASE_FOUND" -eq "0" ]; then
    echo "Adding [ docker/$DOCKER_RELEASE_VERSION ]"
@@ -393,7 +393,7 @@ fi
 checkSolaceReleases
 
 export SOLACE_PUBSUB_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("solace-pubsub")) and (.name | contains("solace-pubsub-broker") | not)) | .version' )
-export SOLACE_PUBSUB_RELEASES=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export SOLACE_PUBSUB_RELEASES=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sort | sed 's/\*//g' | awk -v RS="" -v OFS=',' '$1=$1' )
 export SOLACE_PUBSUB_RELEASE=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
 export TEMPLATE_VERSION=$( echo "$SOLACE_PUBSUB_RELEASE" | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
