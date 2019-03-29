@@ -17,11 +17,11 @@ export STEMCELL=${STEMCELL:-"ubuntu-xenial"}
 
 export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
 
-export VM_MEMORY=${VM_MEMORY:-8192}
-export VM_CPUS=${VM_CPUS:-4}
+export VM_MEMORY=${VM_MEMORY:-10240}
+export VM_CPUS=${VM_CPUS:-6}
 export VM_DISK_SIZE=${VM_DISK_SIZE:-"65_536"}
 export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
-export VM_SWAP=${VM_SWAP:-8192}
+export VM_SWAP=${VM_SWAP:-10240}
 
 export BUCC_HOME=${BUCC_HOME:-$SCRIPTPATH/../bucc}
 export BUCC_STATE_ROOT=${BUCC_STATE_ROOT:-$WORKSPACE/BOSH_LITE_VM/state}
@@ -62,6 +62,22 @@ function targetBosh() {
      export BOSH_ACCESS=0
      echo $BOSH_TARGET_LOG
   fi
+}
+
+function loadWorkspaceReleases() {
+
+ for REQUIRED_STEMCELL in $REQUIRED_STEMCELLS; do
+
+  STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
+  STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
+
+  for release in $(ls $WORKSPACE/*-*-$STEMCELL-$STEMCELL_VERSION-*.tgz | grep -v "bosh-stemcell" | grep -v "go_agent" ); do 
+      echo "Loading release matching stemcell $STEMCELL/$STEMCELL_VERSION: $release"
+      bosh upload-release $release
+  done
+
+ done
+
 }
 
 function loadWorkspaceStemcells() {
