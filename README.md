@@ -499,6 +499,37 @@ bosh_lite_vm.sh -s
 
 Alternatively you can use the virtualbox GUI to 'pause' and 'close' > 'save state'. 
 
+### Powering down all VMS
+
+You can power down the VMS when you want to discard their current state. 
+This is a lot faster than saving a new snapshot if you don't need to.
+You should only do this when you have a snapshot that you saved.
+
+To power off the VMS:
+
+~~~~ 
+bosh_lite_vm.sh -o
+~~~~ 
+
+Then restore a previous snapshot with
+
+~~~~ 
+bosh_lite_vm.sh -r
+~~~~ 
+
+or
+
+~~~~ 
+bosh_lite_vm.sh -g <snapshot>
+~~~~ 
+
+and then power on with
+
+~~~~ 
+bosh_lite_vm.sh -p
+~~~~ 
+
+
 ### Resuming all VMS
 
 * On Linux: 

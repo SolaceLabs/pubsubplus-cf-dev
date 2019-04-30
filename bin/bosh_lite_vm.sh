@@ -30,7 +30,7 @@ function showUsage() {
     echo "  -h                   Show Command options "
     echo "  -n                   Recreates routes to support communications between host and BOSH-lite VM"
     echo "  -l                   Lists available snapshot names of the BOSH-lite VM"
-    echo "  -o                   Powers down the BOSH-lite VM"
+    echo "  -o                   Powers down the BOSH-lite VM WITHOUT SAVING STATE. You should have an existing snapshot you can restore."
     echo "  -p                   Poweron the BOSH-lite VM assuming a previously saved state."
     echo "  -r                   Rolls back to the current snapshot of the BOSH-lite VM, the VM should be already Saved (-s)"
     echo "  -s                   Saves the state and suspends the BOSH-lite VM"
