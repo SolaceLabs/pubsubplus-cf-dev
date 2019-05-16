@@ -178,6 +178,7 @@ function showUsage() {
     echo "  -r <tcp_config.yml>       Provide TCP Routes Config file path" 
     echo "  -s <starting_port>        Provide Starting Port "
     echo "  -t <tls_config.yml>       Provide TLS Config file path"
+    echo "  -u <monitor_user_config.yml>  Provide Monitor User Config file path"
     echo "  -v <vars.yml>             Provide vars.yml file path "
     echo "  -w <web_hook_config.yml>  Enable the web hook feature."
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
@@ -196,7 +197,7 @@ function showUsage() {
 }
 
 
-while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
+while getopts "0123456789a:bcehkl:mnp:r:s:t:u:v:w:x:yz" arg; do
     case "${arg}" in
         0)
             DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
@@ -290,6 +291,15 @@ while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
 		       exit 1
             fi
 	        ;;
+        u) 
+            MONITOR_USER_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $MONITOR_USER_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+	        ;;
         v)
             VARS_FILE=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
 	        if [ ! -f $VARS_FILE ]; then
@@ -367,6 +377,11 @@ if [ -n "$TLS_PATH" ]; then
    TLS_VARS="-l $TLS_PATH" 
 fi 
 
+if [ -n "$MONITOR_USER_PATH" ]; then 
+   ENABLE_MONITOR_USER_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_monitor_user.yml"
+   MONITOR_USER_VARS="-l $MONITOR_USER_PATH" 
+fi 
+
 if [[ $aldap == true ]]; then
    ENABLE_APPLICATION_ACCESS_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml" 
 fi 
@@ -407,8 +422,8 @@ fi
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS"}
-FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS"}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS $ENABLE_MONITOR_USER_OPS"}
+FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS $MONITOR_USER_VARS"}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 

@@ -155,6 +155,15 @@ git clone https://github.com/SolaceLabs/solace-messaging-cf-dev/
 solace-messaging-cf-dev/bin/setup_linux_on_wsl.sh
 ~~~
 
+The script allows for command line arguments to select which part of the installation is run.
+Multiple steps can be selected together (example: -pbc). By default, the script runs all of the
+installation steps.
+~~~
+-p Runs pre install commands that are necessary for BOSH and CF
+-b Installs BOSH
+-c Installs CF ontop of BOSH
+~~~
+
 With this option, the script **will not** switch to the git branch specified by the BRANCH environment variable.
 
 Once that is complete then you can deploy Solace as per [these instructions](#solace-pubsub-deployment). Note that it is not necessary to use the cli-tools vagrant virtual machine - the commands should work fine running under WSL.
@@ -489,6 +498,37 @@ bosh_lite_vm.sh -s
 ~~~~ 
 
 Alternatively you can use the virtualbox GUI to 'pause' and 'close' > 'save state'. 
+
+### Powering down all VMS
+
+You can power down the VMS when you want to discard their current state. 
+This is a lot faster than saving a new snapshot if you don't need to.
+You should only do this when you have a snapshot that you saved.
+
+To power off the VMS:
+
+~~~~ 
+bosh_lite_vm.sh -o
+~~~~ 
+
+Then restore a previous snapshot with
+
+~~~~ 
+bosh_lite_vm.sh -r
+~~~~ 
+
+or
+
+~~~~ 
+bosh_lite_vm.sh -g <snapshot>
+~~~~ 
+
+and then power on with
+
+~~~~ 
+bosh_lite_vm.sh -p
+~~~~ 
+
 
 ### Resuming all VMS
 
