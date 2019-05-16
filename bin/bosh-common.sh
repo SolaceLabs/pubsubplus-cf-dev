@@ -12,7 +12,7 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
 
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"97.32"}
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"170.69"}
 export STEMCELL=${STEMCELL:-"ubuntu-xenial"}
 
 export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
@@ -96,7 +96,7 @@ function loadStemcells() {
   export STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
   export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
   export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
-  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/$STEMCELL_VERSION/$STEMCELL_NAME"
   FOUND_STEMCELL=$( bosh stemcells --json | jq ".Tables[].Rows[] | select(.os == \"$STEMCELL\")  | select ((.version == \"${STEMCELL_VERSION}\" ) or (.version==\"${STEMCELL_VERSION}*\")) | .name " | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
