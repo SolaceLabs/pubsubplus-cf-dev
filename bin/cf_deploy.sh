@@ -8,12 +8,12 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
-export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v6.1.0"}
+export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v9.0.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
 ## Add CF required stemcells for version v4.2.0
-export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-trusty:3586.40"
+export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:315.13"
 
 if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
@@ -43,7 +43,6 @@ bosh -d cf deploy cf-deployment.yml \
 	-o operations/use-compiled-releases.yml \
 	-o $SCRIPTPATH/operations/trusted_certs.yml \
 	-o $SCRIPTPATH/operations/credhub.yml \
-	-o $SCRIPTPATH/operations/cf_smaller_mysql.yml \
 	--vars-store $WORKSPACE/deployment-vars.yml \
 	-l $SCRIPTPATH/cf_trusted-ca-cert-for-apps.yml \
 	-v system_domain=$SYSTEM_DOMAIN \
