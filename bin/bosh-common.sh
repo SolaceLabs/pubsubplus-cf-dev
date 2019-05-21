@@ -398,6 +398,7 @@ function savestate_bosh_lite_vm() {
 
 function resume_bosh_lite_vm() {
     bosh_lite_vm_common "Starting" "vboxmanage startvm \$BOSH_VM --type headless"
+    bosh_lite_vm_syncdatetime
 }
 
 function restore_bosh_lite_vm_snapshot() {
@@ -642,4 +643,13 @@ function produceBOSHEnvVars() {
   echo "bosh_disable_ssl_cert_verification: false"
   echo "bosh_root_ca_cert: |"
   sed 's/^/    /g' <<< "$BOSH_CA_CERT"
+}
+
+function bosh_lite_vm_syncdatetime() {
+
+ DATE_STR=$( date +"%Y/%m/%d" )
+ TIME_STR=$( date +"%H:%M:%S" )
+ echo "Setting date and time of bosh-lite vm  [ $DATE_STR $TIME_STR ]"
+ bucc ssh "sudo date --set $DATE_STR; sudo date --set $TIME_STR; date"
+
 }
