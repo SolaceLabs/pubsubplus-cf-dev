@@ -647,8 +647,8 @@ function produceBOSHEnvVars() {
 
 function bosh_lite_vm_syncdatetime() {
 
- DATE_STR=$( date +"%Y/%m/%d" )
- TIME_STR=$( date +"%H:%M:%S" )
+ DATE_STR=$( date -u +"%Y/%m/%d" )
+ TIME_STR=$( date -u +"%H:%M:%S" )
  echo "Setting date and time of bosh-lite vm  [ $DATE_STR $TIME_STR ]"
  bucc ssh "sudo date --set $DATE_STR; sudo date --set $TIME_STR; date"
 
