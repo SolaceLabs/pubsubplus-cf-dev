@@ -1,7 +1,6 @@
 #!/bin/bash
-set -x
+# set -x
 
-export CF_DEPLOYMENT_VERSION=v4.2.0
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
