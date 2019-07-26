@@ -1,4 +1,4 @@
-solace_load_version: soltr_100.0mqtt_oauth.0.259
+solace_load_version: soltr_9.2.0.7
 bosh_stemcell: "ubuntu-xenial"
 bosh_stemcell_version: "97.74"
 solace_service_broker_jar: solace-service-broker-0.0.1223.jar
