@@ -652,5 +652,9 @@ function bosh_lite_vm_syncdatetime() {
  TIME_STR=$( date -u +"%H:%M:%S" )
  echo "Setting date and time of bosh-lite vm  [ $DATE_STR $TIME_STR ]"
  bucc ssh "sudo date --set $DATE_STR; sudo date --set $TIME_STR; date"
+ if [[ $? -ne 0 ]]; then
+    sleep 5
+    bucc ssh "sudo date --set $DATE_STR; sudo date --set $TIME_STR; date"
+ fi
 
 }
