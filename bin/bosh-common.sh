@@ -613,8 +613,9 @@ function setup_bosh_lite_swap() {
       mkdir -p ~/.ssh
       chmod 700 ~/.ssh
    fi
-   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
-   ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
+   BOSH_HOSTNAME=$(basename $BOSH_ENVIRONMENT | cut -d ':' -f1)
+   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_HOSTNAME
+   ssh-keyscan -H $BOSH_HOSTNAME >> ~/.ssh/known_hosts
    bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
    bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
    bucc ssh "sudo mkswap /var/vcap/store/swapfile"
