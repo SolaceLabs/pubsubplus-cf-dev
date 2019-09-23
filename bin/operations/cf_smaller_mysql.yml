@@ -1,12 +1,12 @@
 ---
 - type: replace
-  path: /instance_groups/name=database/jobs/name=mysql/properties/cf_mysql/mysql/max_connections?
+  path: /instance_groups/name=database/jobs/name=pxc-mysql/properties/engine_config/max_connections?
   value: ((mysql_max_connections))
 
 - type: replace
-  path: /instance_groups/name=database/jobs/name=mysql/properties/cf_mysql/mysql/innodb_buffer_pool_size?
+  path: /instance_groups/name=database/jobs/name=pxc-mysql/properties/engine_config/innodb_buffer_pool_size?
   value: ((mysql_innodb_buffer_pool_size))
 
 #- type: replace
-#  path: /instance_groups/name=database/jobs/name=mysql/properties/cf_mysql/mysql/innodb_buffer_pool_size_percent?
+#  path: /instance_groups/name=database/jobs/name=pxc-mysql/properties/engine_config/innodb_buffer_pool_size_percent?
 #  value: ((mysql_innodb_buffer_pool_size_percent))
