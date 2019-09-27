@@ -80,5 +80,5 @@ echo "Setup environment for TCP Routes"
 $SCRIPTPATH/setup_tcp_routing.sh
 
 echo
-echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""
+echo "TIP: To access this deployment you can run \"$SCRIPTPATH/cf_env.sh\""
 echo
