@@ -363,6 +363,7 @@ function deleteSolaceReleases() {
  deleteBOSHRelease solace-pubsub
  deleteBOSHRelease solace-service-adapter
  deleteBOSHRelease solace-bosh-dns-aliases
+ deleteBOSHRelease solace-route-registrar
 
 }
 
