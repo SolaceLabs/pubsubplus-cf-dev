@@ -12,7 +12,7 @@ export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v12.0.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
-## Add CF required stemcells for version v4.2.0
+## Add CF required stemcells for version $CF_DEPLOYMENT_VERSION
 export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:456.22"
 
 if [ ! -d $WORKSPACE ]; then
