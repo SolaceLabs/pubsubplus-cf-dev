@@ -1,8 +1,3 @@
-##
-# Default testing plan, for production deployment please choose a High availability Plan.
-##
-mysql_plan: 100mb
-
 # CF Space and Org in which solace messaging service broker to be installed.
 solace_broker_cf_organization: solace
 solace_broker_cf_space: solace-broker
@@ -20,6 +15,16 @@ secure_service_credentials: false
 # Automatically manage application security groups
 application_security_groups: true
 
+# User controlled upgrades
+user_controlled_upgrade_on_demand_instances: false
+
+# On demand upgrade task timer
+on_demand_upgrade_task_timer: 0,15,30,45 * * * *
+
+## Controls the parallel execution of on demand broker upgrade tasks with BOSH
+on_demand_upgrade_canaries: 1
+on_demand_upgrade_max_in_flight: 3
+
 # This is the password set for the "admin" user on the VMR
 vmr_admin_password: admin1
 
@@ -35,13 +40,35 @@ shared_plan_instances: 1
 large_plan_instances: 0 
 medium_ha_plan_instances: 0
 large_ha_plan_instances: 0 
-enterprise_plan_5_instances: 0
-enterprise_plan_6_instances: 0
+enterprise_plan_5_instances: 0 
+enterprise_plan_6_instances: 0 
 standard_medium_plan_instances: 0
 standard_medium_ha_plan_instances: 0
 standard_plan_3_instances: 0
 standard_plan_4_instances: 0
 
+# Fill those when using MySQL For PCF tile
+mysql_for_pcf_service_name: p-mysql
+mysql_for_pcf_service_plan: 100mb
+
+# Fill those when using an external MySQL
+mysql_external_hostname: my_db.us-east-1.rds.amazonaws.com
+mysql_external_port: 3306
+mysql_external_dbname: solace
+mysql_external_user: solace_mysql_user
+mysql_external_password: solace_db_mysql_password
+
+
+## The name of the solace pubsub+ service in the marketplace
+solace_service_name: solace-pubsub
+
+# Whether the solace service is shareable across orgs and spaces or not
+is_shareable: true
+
+# Whether client certificate validation is enabled
+enable_client_certificates: true
+
+## The definition of the plans available for the solace pubsub+ service
 plans:
   standard_medium:
     name: standard-medium
@@ -49,67 +76,73 @@ plans:
     point_form_description: [ must be, an array ]
     isHA: false
     maxVpns: 1
-    quota: 10
+    quota: 1
   standard_medium_ha:
     name: standard-medium-ha
     description: "This is a standard-medium-ha service"
     point_form_description: [ must be, an array ]
     isHA: true
     maxVpns: 1
-    quota: 10
+    quota: 1
   standard_plan_3:
     name: standard-plan-3
     description: "This is a standard service"
     point_form_description: [ must be, an array ]
     isHA: false
     maxVpns: 1
-    quota: 10
+    quota: 1
   standard_plan_4:
     name: standard-plan-4
     description: "This is a highly available standard service"
     point_form_description: [ must be, an array ]
     isHA: true
     maxVpns: 1
-    quota: 10
+    quota: 1
   enterprise_shared:
     name: enterprise-shared
     description: "This is an enterprise-shared service"
     point_form_description: [ must be, an array ]
     isHA: false
     maxVpns: 5
-    quota: 10
+    productKey: ""
+    quota: 1
   enterprise_large:
     name: enterprise-large
     description: "This is an enterprise-large service"
     point_form_description: [ must be, an array ]
     isHA: false
-    maxVpns: 2
-    quota: 10
+    maxVpns: 1
+    productKey: ""
+    quota: 1
   enterprise_medium_ha:
     name: enterprise-medium-ha
     description: "This is an enterprise-medium-ha service"
     point_form_description: [ must be, an array ]
     isHA: true
-    maxVpns: 2
-    quota: 10
+    maxVpns: 1
+    productKey: ""
+    quota: 1
   enterprise_large_ha:
     name: enterprise-large-ha
     description: "This is an enterprise-large-ha service"
     point_form_description: [ must be, an array ]
     isHA: true
-    maxVpns: 2
-    quota: 10
+    maxVpns: 1
+    productKey: ""
+    quota: 1
   enterprise_plan_5:
     name: enterprise-plan-5
     description: "This is an enterprise service"
     point_form_description: [ must be, an array ]
     isHA: false
-    maxVpns: 2
-    quota: 10
+    maxVpns: 1
+    productKey: ""
+    quota: 1
   enterprise_plan_6:
     name: enterprise-plan-6
     description: "This is an enterprise service"
     point_form_description: [ must be, an array ]
     isHA: true
-    maxVpns: 2
-    quota: 10
+    maxVpns: 1
+    productKey: ""
+    quota: 1
