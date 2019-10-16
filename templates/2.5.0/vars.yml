@@ -20,6 +20,16 @@ secure_service_credentials: false
 # Automatically manage application security groups
 application_security_groups: true
 
+# User controlled upgrades
+user_controlled_upgrade_on_demand_instances: false
+
+# On demand upgrade task timer
+on_demand_upgrade_task_timer: 0,15,30,45 * * * *
+
+## Controls the parallel execution of on demand broker upgrade tasks with BOSH
+on_demand_upgrade_canaries: 1
+on_demand_upgrade_max_in_flight: 3
+
 # This is the password set for the "admin" user on the VMR
 vmr_admin_password: admin1
 
