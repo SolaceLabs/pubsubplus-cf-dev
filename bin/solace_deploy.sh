@@ -24,9 +24,13 @@ echo
 ( cd $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME; $BOSH_CMD )
 
 [[ $? -eq 0 ]] && { 
+  [[ ! -z "$SKIP_DEPLOY_ALL" ]] || {
   $SCRIPTPATH/solace_add_service_broker.sh $ERRAND_PARAMS
+  }
   [[ $? -eq 0 ]] && { 
+    [[ ! -z "$SKIP_UPGRADE" ]] || {
     $SCRIPTPATH/solace_upgrade_service_instances.sh $ERRAND_PARAMS
+    }
     [[ $? -eq 0 ]] && { 
         [[ ! -z "$SKIP_TEST" ]] || {
            $SCRIPTPATH/solace_deployment_tests.sh $ERRAND_PARAMS
