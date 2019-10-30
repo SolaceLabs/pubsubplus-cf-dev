@@ -10,5 +10,5 @@ BOSH_CMD="bosh interpolate solace-deployment.yml $BOSH_PARAMS"
 # To stderr avoiding stdout to allow saving bosh interpolate output
 echo $BOSH_CMD 1>&2
 
-( cd $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME; $BOSH_CMD )
+( cd $CF_PUBSUBPLUS_DEPLOYMENT_HOME; $BOSH_CMD )
 

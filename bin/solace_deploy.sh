@@ -21,7 +21,7 @@ echo
 echo $BOSH_CMD
 echo
 
-( cd $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME; $BOSH_CMD )
+( cd $CF_PUBSUBPLUS_DEPLOYMENT_HOME; $BOSH_CMD )
 
 [[ $? -eq 0 ]] && { 
   [[ ! -z "$SKIP_DEPLOY_ALL" ]] || {
