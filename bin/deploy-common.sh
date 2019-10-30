@@ -3,7 +3,7 @@
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 export WORKSPACE=${WORKSPACE:-$SCRIPTPATH/../workspace}
-export CF_SOLACE_MESSAGING_DEPLOYMENT_HOME=${CF_SOLACE_MESSAGING_DEPLOYMENT_HOME:-"$( cd $SCRIPTPATH/../cf-solace-messaging-deployment && pwd )"}
+export CF_PUBSUBPLUS_DEPLOYMENT_HOME=${CF_PUBSUBPLUS_DEPLOYMENT_HOME:-"$( cd $SCRIPTPATH/../cf-pubsubplus-deployment && pwd )"}
 
 export CF_DEPLOYMENT=${CF_DEPLOYMENT:="cf"}
 export CF_MYSQL_DEPLOYMENT=${CF_MYSQL_DEPLOYMENT:="cf-mysql"}
@@ -40,7 +40,7 @@ function check_cf_deployment() {
 function update_cloud_config() { 
 
  ## Upload Cloud Config to BOSH if windows deployment
- bosh update-cloud-config $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/iaas-support/bosh-lite/cloud-config.yml
+ bosh update-cloud-config $CF_PUBSUBPLUS_DEPLOYMENT_HOME/iaas-support/bosh-lite/cloud-config.yml
 
 }
 
@@ -149,9 +149,9 @@ function checkSolaceReleases() {
    exit 1
  fi
 
- SOLACE_MESSAGING_RELEASE_FOUND_COUNT=$( bosh releases | grep solace-pubsub-broker | wc -l)
+ PUBSUBPLUS_RELEASE_FOUND_COUNT=$( bosh releases | grep solace-pubsub-broker | wc -l)
 
- if [ "$SOLACE_MESSAGING_RELEASE_FOUND_COUNT" -eq "0" ]; then
+ if [ "$PUBSUBPLUS_RELEASE_FOUND_COUNT" -eq "0" ]; then
    echo "solace-pubsub-broker release seem to be missing from bosh, please upload-release to bosh"
    echo 
    echo "TIP: To upload solace bosh releases use \"$SCRIPTPATH/solace_upload_releases.sh\" "
@@ -201,34 +201,34 @@ function showUsage() {
 while getopts "0123456789a:bcehkl:mno:p:r:s:t:u:v:w:x:yz" arg; do
     case "${arg}" in
         0)
-            DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
+            DISABLE_STANDARD_MEDIUM_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
             ;;
         1)
-            DISABLE_STANDARD_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium_ha.yml"
+            DISABLE_STANDARD_MEDIUM_HA_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_standard_medium_ha.yml"
             ;;
         2)
-            DISABLE_STANDARD_PLAN_3_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_3.yml"
+            DISABLE_STANDARD_PLAN_3_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_standard_plan_3.yml"
             ;;
         3)
-            DISABLE_STANDARD_PLAN_4_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_plan_4.yml"
+            DISABLE_STANDARD_PLAN_4_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_standard_plan_4.yml"
             ;;
         4)
-            DISABLE_ENTERPRISE_SHARED_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_shared.yml"
+            DISABLE_ENTERPRISE_SHARED_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_enterprise_shared.yml"
             ;;
         5)
-            DISABLE_ENTERPRISE_LARGE_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large.yml"
+            DISABLE_ENTERPRISE_LARGE_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_enterprise_large.yml"
             ;;
         6)
-            DISABLE_ENTERPRISE_MEDIUM_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_medium_ha.yml"
+            DISABLE_ENTERPRISE_MEDIUM_HA_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_enterprise_medium_ha.yml"
             ;;
         7)
-            DISABLE_ENTERPRISE_LARGE_HA_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_large_ha.yml"
+            DISABLE_ENTERPRISE_LARGE_HA_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_enterprise_large_ha.yml"
             ;;
         8)
-            DISABLE_ENTERPRISE_PLAN_5_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
+            DISABLE_ENTERPRISE_PLAN_5_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_enterprise_plan_5.yml"
             ;;
         9)
-            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_enterprise_plan_6.yml"
+            DISABLE_ENTERPRISE_PLAN_6_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_enterprise_plan_6.yml"
             ;;
         a)
             SYSLOG_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
@@ -347,7 +347,7 @@ done
 
 if [ -z "$VARS_FILE" ]; then
    if [ ! -f $WORKSPACE/vars.yml ]; then
-     cp $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/vars.yml $WORKSPACE
+     cp $CF_PUBSUBPLUS_DEPLOYMENT_HOME/vars.yml $WORKSPACE
    fi
    VARS_FILE=$WORKSPACE/vars.yml
 fi
@@ -361,7 +361,7 @@ if [ -n "$starting_port" ]; then
 fi
 
 if [ -n "$SYSLOG_PATH" ]; then
-   ENABLE_SYSLOG_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_syslog.yml"
+   ENABLE_SYSLOG_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_syslog.yml"
    SYSLOG_VARS="-l $SYSLOG_PATH" 
 fi
 
@@ -370,54 +370,54 @@ if [[ $KEEP_ERRAND_ALIVE == true ]]; then
 fi
 
 if [ -n "$LDAP_PATH" ]; then 
-   ENABLE_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_ldap.yml" 
+   ENABLE_LDAP_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_ldap.yml" 
    LDAP_VARS="-l $LDAP_PATH"
 fi 
 
 if [[ $mldap == true ]]; then 
-   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_management_access_ldap.yml"
+   ENABLE_MANAGEMENT_ACCESS_LDAP_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/set_management_access_ldap.yml"
 fi 
 
 if [[ $disablebrokertls == true ]]; then 
-   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_service_broker_certificate_validation.yml"
+   DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/disable_service_broker_certificate_validation.yml"
 fi
 
 if [ -n "$TLS_PATH" ]; then 
-   SET_SOLACE_VMR_CERT_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_solace_vmr_cert.yml"
+   SET_SOLACE_VMR_CERT_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/set_solace_vmr_cert.yml"
    TLS_VARS="-l $TLS_PATH" 
 fi 
 
 if [ -n "$MONITOR_USER_PATH" ]; then 
-   ENABLE_MONITOR_USER_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_monitor_user.yml"
+   ENABLE_MONITOR_USER_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_monitor_user.yml"
    MONITOR_USER_VARS="-l $MONITOR_USER_PATH" 
 fi 
 
 if [[ $aldap == true ]]; then
-   ENABLE_APPLICATION_ACCESS_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml" 
+   ENABLE_APPLICATION_ACCESS_LDAP_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml" 
 fi 
 
 if [ -n "$OAUTH_PATH" ]; then 
-   ENABLE_OAUTH_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_oauth.yml" 
+   ENABLE_OAUTH_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_oauth.yml" 
    OAUTH_VARS="-l $OAUTH_PATH"
 fi 
 
 if [ -n "$TCP_PATH" ]; then
-    ENABLE_TCP_ROUTES_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_tcp_routes.yml"
+    ENABLE_TCP_ROUTES_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_tcp_routes.yml"
     TCP_ROUTES_VARS="-l $TCP_PATH"
 fi
 
 if [ -n "$WEB_HOOK_PATH" ]; then
-    ENABLE_WEB_HOOK_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_web_hook.yml"
+    ENABLE_WEB_HOOK_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_web_hook.yml"
     WEB_HOOK_VARS="-l $WEB_HOOK_PATH"
 fi
 
 # Solace deployment defaults to internal MySQL (non ha) if no MySQL option is specified
 if [[ "$DEPLOY_HA_INTERNAL_MYSQL" == true ]]; then
-    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
+    MYSQL_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/internal_mysql_ha.yml"
 elif [[ "$USE_MYSQL_FOR_PCF" == true ]]; then
-    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/mysql_for_pcf.yml"
+    MYSQL_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/mysql_for_pcf.yml"
 elif [[ "$USE_EXTERNAL_MYSQL" == true ]]; then
-    MYSQL_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/external_mysql.yml "
+    MYSQL_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/external_mysql.yml "
 fi
 
 checkSolaceReleases
@@ -435,7 +435,7 @@ else
    echo "Deployment using Solace PubSub+ Release [$SOLACE_PUBSUB_RELEASE] from found release(s) [ $SOLACE_PUBSUB_RELEASES ] , TEMPLATE VERSION [ $TEMPLATE_VERSION ], template directory [$TEMPLATE_DIR]"
 fi
 
-OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
+OPS_BASE=${OPS_BASE:-" -o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
 FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS $ENABLE_MONITOR_USER_OPS $ENABLE_OAUTH_OPS"}
 FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS $MONITOR_USER_VARS $OAUTH_VARS"}
@@ -460,10 +460,10 @@ if [ ! -z "$DEPLOYMENT_NAME" ]; then
 fi
 
 if [ -z "$RELEASE_VARS" ]; then
-  RELEASE_VARS_FILE=$CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml
-  RELEASE_VARS=" -l $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/release-vars.yml"
+  RELEASE_VARS_FILE=$CF_PUBSUBPLUS_DEPLOYMENT_HOME/release-vars.yml
+  RELEASE_VARS=" -l $CF_PUBSUBPLUS_DEPLOYMENT_HOME/release-vars.yml"
 fi
-# Accept if defined or default to the version from $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME
+# Accept if defined or default to the version from $CF_PUBSUBPLUS_DEPLOYMENT_HOME
 
 ## 
 # Handle stemcell loading based on release-vars contents
@@ -487,5 +487,5 @@ if [ -f "$WORKSPACE/releases/release-vars.yml" ]; then
    RELEASE_VARS="$RELEASE_VARS -l $WORKSPACE/releases/release-vars.yml"
 fi
 
-BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $SERVICE_PLAN_OPS $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
+BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $SERVICE_PLAN_OPS $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 
