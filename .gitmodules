@@ -1,4 +1,4 @@
-[submodule "cf-solace-messaging-deployment"]
-	path = cf-solace-messaging-deployment
-	url = git@github.com:SolaceDev/cf-solace-messaging-deployment.git
+[submodule "cf-pubsubplus-deployment"]
+	path = cf-pubsubplus-deployment
+	url = git@github.com:SolaceDev/cf-pubsubplus-deployment.git
 	branch = dev
