@@ -120,8 +120,17 @@ fi
 
 unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz 
 
-## Extract and show the Solace Service Broker version. 
+## Extract and show the Solace Service Broker version and the solace pubsub+ load version.
 (
+ cd $TEMP_DIR
+ tar -xzf $WORKSPACE/releases/solace-pubsub-$TILE_VERSION.tgz
+ tar -xzf packages/pubsub_image.tgz
+ tar -xzf soltr_docker/soltr-docker.tgz manifest.json
+ ## Standard edition is always in there, use that to find the version.
+ STANDARD_VERSION=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-standard" )
+ SOLTR_VERSION=$( echo $STANDARD_VERSION | awk -F\: '{ print $2 }' )
+ rm -rf packages
+ rm -rf jobs
  cd $TEMP_DIR
  tar -xzf $WORKSPACE/releases/solace-pubsub-broker-$TILE_VERSION.tgz
  tar -xzf packages/solace_pubsub_broker.tgz 
@@ -131,5 +140,6 @@ unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz
  echo " Found Solace Service Broker [ $SOLACE_SERVICE_BROKER_VERSION ]"
  echo "solace_service_broker_jar: $SOLACE_SERVICE_BROKER_VERSION" > $WORKSPACE/releases/release-vars.yml
  echo "solace_service_broker_name: $SOLACE_SERVICE_BROKER_NAME" >> $WORKSPACE/releases/release-vars.yml
+ echo "solace_load_version: soltr_${SOLTR_VERSION}" >> $WORKSPACE/releases/release-vars.yml
 )
 

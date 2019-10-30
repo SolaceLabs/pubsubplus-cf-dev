@@ -8,12 +8,12 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
-export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v4.2.0"}
+export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v12.0.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
-## Add CF required stemcells for version v4.2.0
-export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-trusty:3586.40"
+## Add CF required stemcells for version $CF_DEPLOYMENT_VERSION
+export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:456.22"
 
 if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
@@ -80,5 +80,5 @@ echo "Setup environment for TCP Routes"
 $SCRIPTPATH/setup_tcp_routing.sh
 
 echo
-echo "TIP: To deploy CF-MYSQL on bosh you should run \"$SCRIPTPATH/cf_mysql_deploy.sh\""
+echo "TIP: To access this deployment you can run \"$SCRIPTPATH/cf_env.sh\""
 echo

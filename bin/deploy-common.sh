@@ -75,7 +75,7 @@ function check_cf_marketplace_access() {
 function checkRequiredReleases() {
 
 export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
-export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -v RS="" -v OFS=',' '$1=$1' )
 export DOCKER_RELEASE=$( echo "$DOCKER_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
 export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
 
@@ -92,7 +92,7 @@ export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELE
 function loadRequiredReleases() {
 
 export DOCKER_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name == "docker")) | .version' )
-export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export DOCKER_RELEASES=$( echo "$DOCKER_RELEASES_LIST" | sort | sed 's/\*//g' | awk -v RS="" -v OFS=',' '$1=$1' )
 export DOCKER_RELEASE_FOUND=$( echo "$DOCKER_RELEASES_LIST" | grep "$DOCKER_RELEASE_VERSION" | sed 's/\*//g' | wc -l )
 if [ "$DOCKER_RELEASE_FOUND" -eq "0" ]; then
    echo "Adding [ docker/$DOCKER_RELEASE_VERSION ]"
@@ -174,10 +174,12 @@ function showUsage() {
     echo "  -l <ldap_config.yml>      Provide LDAP Config file path"   
     echo "  -m                        Use MySQL For PCF"
     echo "  -n                        Disable Service Broker TLS Certificate Validation"
+    echo "  -o <oauth_config.yml>     Enable OAUTH authentication"
     echo "  -p <vmr_admin_password>   Provide VMR Admin Password "
     echo "  -r <tcp_config.yml>       Provide TCP Routes Config file path" 
     echo "  -s <starting_port>        Provide Starting Port "
     echo "  -t <tls_config.yml>       Provide TLS Config file path"
+    echo "  -u <monitor_user_config.yml>  Provide Monitor User Config file path"
     echo "  -v <vars.yml>             Provide vars.yml file path "
     echo "  -w <web_hook_config.yml>  Enable the web hook feature."
     echo "  -x extra bosh params      Additional parameters to be passed to bosh"
@@ -196,7 +198,7 @@ function showUsage() {
 }
 
 
-while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
+while getopts "0123456789a:bcehkl:mno:p:r:s:t:u:v:w:x:yz" arg; do
     case "${arg}" in
         0)
             DISABLE_STANDARD_MEDIUM_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/disable_standard_medium.yml"
@@ -266,6 +268,15 @@ while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
         n) 
             disablebrokertls=true
             ;; 
+        o) 
+            OAUTH_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $OAUTH_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+	        ;;
         p)
             vmr_admin_password="${OPTARG}"
             ;;
@@ -284,6 +295,15 @@ while getopts "0123456789a:bcehkl:mnp:r:s:t:v:w:x:yz" arg; do
         t) 
             TLS_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
 	    if [ ! -f $TLS_PATH ]; then
+		       >&2 echo
+       		       >&2 echo "File not found: $OPTARG" >&2
+		       >&2 echo
+		       exit 1
+            fi
+	        ;;
+        u) 
+            MONITOR_USER_PATH=$( echo $(cd $(dirname "$OPTARG") && pwd -P)/$(basename "$OPTARG") )
+	    if [ ! -f $MONITOR_USER_PATH ]; then
 		       >&2 echo
        		       >&2 echo "File not found: $OPTARG" >&2
 		       >&2 echo
@@ -367,8 +387,18 @@ if [ -n "$TLS_PATH" ]; then
    TLS_VARS="-l $TLS_PATH" 
 fi 
 
+if [ -n "$MONITOR_USER_PATH" ]; then 
+   ENABLE_MONITOR_USER_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_monitor_user.yml"
+   MONITOR_USER_VARS="-l $MONITOR_USER_PATH" 
+fi 
+
 if [[ $aldap == true ]]; then
    ENABLE_APPLICATION_ACCESS_LDAP_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_application_access_ldap.yml" 
+fi 
+
+if [ -n "$OAUTH_PATH" ]; then 
+   ENABLE_OAUTH_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_oauth.yml" 
+   OAUTH_VARS="-l $OAUTH_PATH"
 fi 
 
 if [ -n "$TCP_PATH" ]; then
@@ -393,7 +423,7 @@ fi
 checkSolaceReleases
 
 export SOLACE_PUBSUB_RELEASES_LIST=$( bosh releases --json | jq -r '.Tables[].Rows[] | select((.name | contains("solace-pubsub")) and (.name | contains("solace-pubsub-broker") | not)) | .version' )
-export SOLACE_PUBSUB_RELEASES=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sort | sed 's/\*//g' | awk -vRS="" -vOFS=',' '$1=$1' )
+export SOLACE_PUBSUB_RELEASES=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sort | sed 's/\*//g' | awk -v RS="" -v OFS=',' '$1=$1' )
 export SOLACE_PUBSUB_RELEASE=$( echo "$SOLACE_PUBSUB_RELEASES_LIST" | sed 's/\*//g' | sort | tail -1 )
 export TEMPLATE_VERSION=$( echo "$SOLACE_PUBSUB_RELEASE" | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
@@ -407,8 +437,8 @@ fi
 
 OPS_BASE=${OPS_BASE:-" -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/set_plan_inventory.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/bosh_lite.yml -o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_global_access_to_plans.yml"}
 
-FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS"}
-FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS"}
+FEATURES_OPS=${FEATURES_OPS:-"$ENABLE_LDAP_OPS $ENABLE_SYSLOG_OPS $ENABLE_MANAGEMENT_ACCESS_LDAP_OPS $ENABLE_APPLICATION_ACCESS_LDAP_OPS $SET_SOLACE_VMR_CERT_OPS $DISABLE_SERVICE_BROKER_CERTIFICATE_VALIDATION_OPS $ENABLE_TCP_ROUTES_OPS $ENABLE_WEB_HOOK_OPS $ENABLE_MONITOR_USER_OPS $ENABLE_OAUTH_OPS"}
+FEATURES_VARS=${FEATURES_VARS:-"$TLS_VARS $TCP_ROUTES_VARS $SYSLOG_VARS $LDAP_VARS $WEB_HOOK_VARS $MONITOR_USER_VARS $OAUTH_VARS"}
 
 VARS_STORE=${VARS_STORE:-"--vars-store $WORKSPACE/deployment-vars.yml "}
 

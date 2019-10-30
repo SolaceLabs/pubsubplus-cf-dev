@@ -1,7 +1,6 @@
 #!/bin/bash
-set -x
+# set -x
 
-export CF_DEPLOYMENT_VERSION=v4.2.0
 export SCRIPT="$( basename "${BASH_SOURCE[0]}" )"
 export SCRIPTPATH="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
@@ -119,23 +118,72 @@ function alterProfile() {
     fi
 }
 
+pre_install=0
+bosh_lite=0
+cloudfoundry=0
+
 function setupLinuxOnWsl() {
 
     cd
-    setupLinks
-    installPrograms
     set -e
-    cloneRepo
-    installBosh
-    deployCf
-    createSettingsFile
+    if [ $pre_install == 1 ]; then
+        setupLinks
+        installPrograms
+        cloneRepo
+    fi
+    if [ $bosh_lite == 1 ]; then
+        installBosh
+    fi
+    if [ $cloudfoundry == 1 ]; then
+        deployCf
+        createSettingsFile
+        alterProfile
+    fi
     set +e
-    alterProfile
+}
+
+function show_help() {
+    echo "-p Runs pre install commands that are necessary for BOSH and CF"
+    echo "-b Installs BOSH"
+    echo "-c Installs CF ontop of BOSH"
+}
+
+function parseCommandLineArguments() {
+    
+    if [ $# -eq 0 ]; then
+        pre_install=1
+        bosh_lite=1
+        cloudfoundry=1
+        return 0
+    fi
+    
+    # A POSIX variable
+    OPTIND=1         # Reset in case getopts has been used previously in the shell.
+
+    while getopts "h?pbc" opt; do
+	case "$opt" in
+	h|\?)
+	    show_help
+	    exit 0
+	    ;;
+	p)  pre_install=1
+	    ;;
+        b)  bosh_lite=1
+            ;;
+        c)  cloudfoundry=1
+            ;;
+	esac
+    done
+
+    shift $((OPTIND-1))
+
+    [ "${1:-}" = "--" ] && shift
+
 }
 
 
 #### 
-
+parseCommandLineArguments $@
 setupLinuxOnWsl | tee $SETUP_LOG_FILE
 
 echo "Setup log file: $SETUP_LOG_FILE"

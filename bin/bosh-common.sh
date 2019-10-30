@@ -12,16 +12,16 @@ export BOSH_CLIENT=${BOSH_CLIENT:-admin}
 export BOSH_CLIENT_SECRET=${BOSH_CLIENT_SECRET:-admin}
 export BOSH_ENVIRONMENT=${BOSH_ENVIRONMENT:-"lite"}
 
-export STEMCELL_VERSION=${STEMCELL_VERSION:-"97.32"}
+export STEMCELL_VERSION=${STEMCELL_VERSION:-"456.27"}
 export STEMCELL=${STEMCELL:-"ubuntu-xenial"}
 
 export REQUIRED_STEMCELLS=${REQUIRED_STEMCELLS:-"$STEMCELL:$STEMCELL_VERSION"}
 
-export VM_MEMORY=${VM_MEMORY:-8192}
-export VM_CPUS=${VM_CPUS:-4}
-export VM_DISK_SIZE=${VM_DISK_SIZE:-"65_536"}
+export VM_MEMORY=${VM_MEMORY:-10240}
+export VM_CPUS=${VM_CPUS:-6}
+export VM_DISK_SIZE=${VM_DISK_SIZE:-"92_160"}
 export VM_EPHEMERAL_DISK_SIZE=${VM_EPHEMERAL_DISK_SIZE:-"32_768"}
-export VM_SWAP=${VM_SWAP:-8192}
+export VM_SWAP=${VM_SWAP:-10240}
 
 export BUCC_HOME=${BUCC_HOME:-$SCRIPTPATH/../bucc}
 export BUCC_STATE_ROOT=${BUCC_STATE_ROOT:-$WORKSPACE/BOSH_LITE_VM/state}
@@ -64,6 +64,22 @@ function targetBosh() {
   fi
 }
 
+function loadWorkspaceReleases() {
+
+ for REQUIRED_STEMCELL in $REQUIRED_STEMCELLS; do
+
+  STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
+  STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
+
+  for release in $(ls $WORKSPACE/*-*-$STEMCELL-$STEMCELL_VERSION-*.tgz | grep -v "bosh-stemcell" | grep -v "go_agent" ); do 
+      echo "Loading release matching stemcell $STEMCELL/$STEMCELL_VERSION: $release"
+      bosh upload-release $release
+  done
+
+ done
+
+}
+
 function loadWorkspaceStemcells() {
 
  for stemcell_file in $(ls $WORKSPACE/bosh-stemcell-*-warden-boshlite-*-go_agent.tgz); do 
@@ -80,7 +96,7 @@ function loadStemcells() {
   export STEMCELL=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $1 }' )
   export STEMCELL_VERSION=$( echo "$REQUIRED_STEMCELL" | awk -F\: '{ print $2 }' )
   export STEMCELL_NAME="bosh-stemcell-${STEMCELL_VERSION}-warden-boshlite-${STEMCELL}-go_agent.tgz"
-  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/warden/$STEMCELL_NAME"
+  export STEMCELL_URL="https://s3.amazonaws.com/bosh-core-stemcells/$STEMCELL_VERSION/$STEMCELL_NAME"
   FOUND_STEMCELL=$( bosh stemcells --json | jq ".Tables[].Rows[] | select(.os == \"$STEMCELL\")  | select ((.version == \"${STEMCELL_VERSION}\" ) or (.version==\"${STEMCELL_VERSION}*\")) | .name " | wc -l)
   if [ "$FOUND_STEMCELL" -eq "0" ]; then
      if [ ! -f $WORKSPACE/$STEMCELL_NAME ]; then
@@ -327,9 +343,9 @@ function deleteBOSHRelease() {
 BOSH_RELEASE=$1
 MATCHING_RELEASES_LIST=$( bosh releases --json | jq -r ".Tables[].Rows[] | select((.name == \"$BOSH_RELEASE\")) | .version" )
 MATCHING_UNUSED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep -v "*" )
-MATCHING_UNUSED_RELEASES_COUNT=$( echo "$MATCHING_UNUSED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+MATCHING_UNUSED_RELEASES_COUNT=$( echo "$MATCHING_UNUSED_RELEASES" | awk -v RS="" -v OFS=',' '$1=$1' | wc -l )
 MATCHING_USED_RELEASES=$( echo "$MATCHING_RELEASES_LIST" | grep "*" )
-MATCHING_USED_RELEASES_COUNT=$( echo "$MATCHING_USED_RELEASES" | awk -vRS="" -vOFS=',' '$1=$1' | wc -l )
+MATCHING_USED_RELEASES_COUNT=$( echo "$MATCHING_USED_RELEASES" | awk -v RS="" -v OFS=',' '$1=$1' | wc -l )
 echo "Found [ $MATCHING_UNUSED_RELEASES_COUNT : unused ] and [ $MATCHING_USED_RELEASES_COUNT : in-use ] release(s) for [ $BOSH_RELEASE ]"
 
 if [ "$MATCHING_UNUSED_RELEASES_COUNT" -gt "0" ]; then
@@ -346,161 +362,100 @@ function deleteSolaceReleases() {
  deleteBOSHRelease solace-pubsub-broker
  deleteBOSHRelease solace-pubsub
  deleteBOSHRelease solace-service-adapter
+ deleteBOSHRelease solace-bosh-dns-aliases
+ deleteBOSHRelease solace-route-registrar
 
 }
 
-function resume_bosh_lite_vm() {
+function find_bosh_vmid() {
 
-checkRequiredTools vboxmanage
-
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-        echo "Starting [$BOSH_VM]"
-        vboxmanage startvm $BOSH_VM --type headless
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
+ if [ -f $BUCC_STATE_STORE ]; then
+   export BOSH_VM=$( cat $BUCC_STATE_STORE | jq '.current_vm_cid' | sed 's/\"//g' )
+   if [ ! -z "$BOSH_VM" ] && [ ! -e $WORKSPACE/.boshvm ]; then
+      echo $BOSH_VM > $WORKSPACE/.boshvm
    fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
+ else
+    echo "Missing $BUCC_STATE_STORE - Unable to find the BOSH-lite VM ID."
+    exit 1
+ fi
 
 }
 
-function savestate_bosh_lite_vm() {
+function test_bosh_vm_present() {
 
-checkRequiredTools vboxmanage
+ checkRequiredTools vboxmanage
 
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+ find_bosh_vmid
 
-   if [[ $? -eq 0 ]]; then
-        echo "Saving the state of [$BOSH_VM]"
-        vboxmanage controlvm $BOSH_VM savestate
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
-   fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
+ vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+
+ if [[ $? -ne 0 ]]; then
+      echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
+      exit 1
+ fi
 
 }
 
-function take_bosh_lite_vm_snapshot() {
+function test_bosh_vm_not_present() {
 
-checkRequiredTools vboxmanage
+ if [ -f $BUCC_STATE_STORE ]; then
+   export BOSH_VM=$( cat $BUCC_STATE_STORE | jq '.current_vm_cid' | sed 's/\"//g' )
+   if [ ! -z "$BOSH_VM" ]; then
 
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
+    vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
 
-   if [[ $? -eq 0 ]]; then
-        echo "Taking snapshot of [$BOSH_VM] as $1"
-        vboxmanage snapshot $BOSH_VM take $1
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
+    if [[ $? -eq 0 ]]; then
+ 	echo "Exiting $SCRIPT: $1 [$BOSH_VM]"
+ 	exit 1
+    fi
+    unset BOSH_VM
    fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
+
+ fi
+
+}
+
+
+function bosh_lite_vm_command() {
+
+test_bosh_vm_present
+
+echo $1 [$BOSH_VM]
+eval $2
 
 }
 
 function delete_bosh_lite_vm_snapshot() {
+    bosh_lite_vm_command "Deleting snapshot $1 of" "vboxmanage snapshot \$BOSH_VM delete $1"
+}
 
-checkRequiredTools vboxmanage
+function savestate_bosh_lite_vm() {
+    bosh_lite_vm_command "Saving the state of" "vboxmanage controlvm \$BOSH_VM savestate"
+}
 
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-        echo "Deleting snapshot of [$BOSH_VM] as $1"
-        vboxmanage snapshot $BOSH_VM delete $1
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
-   fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
-
+function resume_bosh_lite_vm() {
+    bosh_lite_vm_command "Starting" "vboxmanage startvm \$BOSH_VM --type headless"
+    bosh_lite_vm_syncdatetime
 }
 
 function restore_bosh_lite_vm_snapshot() {
+    bosh_lite_vm_command "Restoring snapshot as $1 of" "vboxmanage snapshot \$BOSH_VM restore $1"
+}
 
-checkRequiredTools vboxmanage
-
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-        echo "Restoring snapshot of [$BOSH_VM] as $1"
-        vboxmanage snapshot $BOSH_VM restore $1
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
-   fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
-
+function take_bosh_lite_vm_snapshot() {
+    bosh_lite_vm_command "Taking snapshot as $1 of" "vboxmanage snapshot \$BOSH_VM take $1"
 }
 
 function restore_current_bosh_lite_vm_snapshot() {
-
-checkRequiredTools vboxmanage
-
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-        echo "Restoring current snapshot of [$BOSH_VM]"
-        vboxmanage snapshot $BOSH_VM restorecurrent
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
-   fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
-
+    bosh_lite_vm_command "Restoring current snapshot of" "vboxmanage snapshot \$BOSH_VM restorecurrent"
 }
 
 function list_bosh_lite_vm_snapshot() {
+    bosh_lite_vm_command "Listing snapshot of " "vboxmanage snapshot \$BOSH_VM list"
+}
 
-checkRequiredTools vboxmanage
-
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-        echo "Listing snapshot of [$BOSH_VM]"
-        vboxmanage snapshot $BOSH_VM list
-   else
-        echo "Exiting $SCRIPT: There seems to be no existing BOSH-lite VM [$BOSH_VM]"
-        exit 1
-   fi
-else
-  echo "Exiting $SCRIPT: cannot detect BOSH-lite VM, $WORKSPACE/.boshvm was not found"
-  exit 1
-fi
-
+function poweroff() {
+    bosh_lite_vm_command "Powering off" "vboxmanage controlvm \$BOSH_VM poweroff"
 }
 
 function check_bucc() {
@@ -538,16 +493,7 @@ function create_bosh_lite_vm() {
 
 checkRequiredTools vboxmanage
 
-if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-	echo "Exiting $SCRIPT: You seem to already have an existing BOSH-lite VM [$BOSH_VM]"
-	exit 1
-   fi
-   unset BOSH_VM
-fi
+test_bosh_vm_not_present "You seem to already have an existing BOSH-lite VM"
 
 check_bucc
 
@@ -559,22 +505,9 @@ sed -i "/vm_ephemeral_disk:/c\vm_ephemeral_disk: $VM_EPHEMERAL_DISK_SIZE" $BUCC_
 echo "vm_disk_size: $VM_DISK_SIZE" >> $BUCC_HOME/ops/cpis/virtualbox/vars.tmpl
 cp -f $SCRIPTPATH/vm-size.yml $BUCC_HOME/ops/cpis/virtualbox/
 
-## Capture running VMS before
-vboxmanage list runningvms > $TEMP_DIR/running_vms.before
-
 bucc up --cpi virtualbox --lite --debug 
 
-## Capture running VMS after
-vboxmanage list runningvms > $TEMP_DIR/running_vms.after
-
-BOSH_VM=$( diff --changed-group-format='%>' --unchanged-group-format='' $TEMP_DIR/running_vms.before $TEMP_DIR/running_vms.after | awk '{ print $1 }' | sed 's/\"//g' )
-
-vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-if [[ $? -eq 0 ]]; then
-   echo $BOSH_VM > $WORKSPACE/.boshvm
-   echo "Running BOSH-lite VM is [$BOSH_VM] : Saved to $WORKSPACE/.boshvm"
-fi
+test_bosh_vm_present
 
 create_bosh_env_file
 
@@ -621,8 +554,11 @@ check_bucc
 source <($BUCC_HOME/bin/bucc env)
 
 if [ -d $BUCC_STATE_ROOT ] && [ -f $BUCC_VARS_FILE ]; then
+   find_bosh_vmid
    $BUCC_HOME/bin/bucc down && $BUCC_HOME/bin/bucc clean
 fi
+
+test_bosh_vm_not_present "BOSH-lite VM seems to be still running?"
 
 if [ -f $BOSH_ENV_FILE ]; then
    rm -f $BOSH_ENV_FILE
@@ -637,13 +573,6 @@ if [ -f $WORKSPACE/deployment-vars.yml ]; then
 fi
 
 if [ -f $WORKSPACE/.boshvm ]; then
-   export BOSH_VM=$( cat $WORKSPACE/.boshvm )
-   vboxmanage showvminfo $BOSH_VM &> $TEMP_DIR/showvminfo
-
-   if [[ $? -eq 0 ]]; then
-        echo "Exiting $SCRIPT: The BOSH-lite VM [$BOSH_VM] is still running?"
-        exit 1
-   fi
    rm -f $WORKSPACE/.boshvm
    unset BOSH_VM
 fi
@@ -694,8 +623,9 @@ function setup_bosh_lite_swap() {
       mkdir -p ~/.ssh
       chmod 700 ~/.ssh
    fi
-   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_ENVIRONMENT
-   ssh-keyscan -H $BOSH_ENVIRONMENT >> ~/.ssh/known_hosts
+   BOSH_HOSTNAME=$(basename $BOSH_ENVIRONMENT | cut -d ':' -f1)
+   ssh-keygen -f ~/.ssh/known_hosts -R $BOSH_HOSTNAME
+   ssh-keyscan -H $BOSH_HOSTNAME >> ~/.ssh/known_hosts
    bucc ssh "sudo fallocate -l ${VM_SWAP}M /var/vcap/store/swapfile"
    bucc ssh "sudo chmod 600 /var/vcap/store/swapfile"
    bucc ssh "sudo mkswap /var/vcap/store/swapfile"
@@ -725,4 +655,17 @@ function produceBOSHEnvVars() {
   echo "bosh_disable_ssl_cert_verification: false"
   echo "bosh_root_ca_cert: |"
   sed 's/^/    /g' <<< "$BOSH_CA_CERT"
+}
+
+function bosh_lite_vm_syncdatetime() {
+
+ DATE_STR=$( date -u +"%Y/%m/%d" )
+ TIME_STR=$( date -u +"%H:%M:%S" )
+ echo "Setting date and time of bosh-lite vm  [ $DATE_STR $TIME_STR ]"
+ bucc ssh "sudo date --set $DATE_STR; sudo date --set $TIME_STR; date"
+ if [[ $? -ne 0 ]]; then
+    sleep 5
+    bucc ssh "sudo date --set $DATE_STR; sudo date --set $TIME_STR; date"
+ fi
+
 }
