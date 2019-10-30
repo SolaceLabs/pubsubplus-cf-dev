@@ -1,4 +1,4 @@
-# SOLACE-PUBSUBPLUS-CF-DEV
+PUBSUBPLUS-CF-DEV
 
 This project provides instructions and tools that support local development and testing of Solace PubSub+ for Cloud Foundry.
 
