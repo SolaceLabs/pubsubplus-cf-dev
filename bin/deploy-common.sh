@@ -401,6 +401,11 @@ if [ -n "$OAUTH_PATH" ]; then
    OAUTH_VARS="-l $OAUTH_PATH"
 fi 
 
+if [ -n "$OAUTH_PATH" ]; then 
+   ENABLE_OAUTH_OPS="-o $CF_SOLACE_MESSAGING_DEPLOYMENT_HOME/operations/enable_oauth.yml" 
+   OAUTH_VARS="-l $OAUTH_PATH"
+fi 
+
 if [ -n "$TCP_PATH" ]; then
     ENABLE_TCP_ROUTES_OPS="-o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/enable_tcp_routes.yml"
     TCP_ROUTES_VARS="-l $TCP_PATH"

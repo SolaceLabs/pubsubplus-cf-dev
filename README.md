@@ -164,6 +164,15 @@ installation steps.
 -c Installs CF ontop of BOSH
 ~~~
 
+The script allows for command line arguments to select which part of the installation is run.
+Multiple steps can be selected together (example: -pbc). By default, the script runs all of the
+installation steps.
+~~~
+-p Runs pre install commands that are necessary for BOSH and CF
+-b Installs BOSH
+-c Installs CF ontop of BOSH
+~~~
+
 With this option, the script **will not** switch to the git branch specified by the BRANCH environment variable.
 
 Once that is complete then you can deploy Solace as per [these instructions](#solace-pubsub-deployment). Note that it is not necessary to use the cli-tools vagrant virtual machine - the commands should work fine running under WSL.
