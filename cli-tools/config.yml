@@ -1,7 +1,7 @@
 box_name: "ubuntu/xenial64"
 #box_url:
-host_name: solace-messaging-cf-dev.cli-tools
-vm.name: solace-messaging-cf-dev.cli-tools
+host_name: pubsubplus-cf-dev.cli-tools
+vm.name: pubsubplus-cf-dev.cli-tools
 vm.ram: 512
 
 # It is possible to use a hostonly-network instead of a bridged network when
