@@ -7,7 +7,7 @@ sudo apt-get -y install ruby ruby-dev
 # Installing ruby following instructions from https://tecadmin.net/install-ruby-on-rails-on-ubuntu/
 echo "Installing rvm (ruby version manager)"
 sudo apt-get -y install gnupg2
-gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
+sudo gpg2 --keyserver hkp://pool.sks-keyservers.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3 7D2BAF1CF37B13E2069D6956105BD0E739499BDB
 curl -sSL https://get.rvm.io | bash -s stable
 source /home/vagrant/.rvm/scripts/rvm
 source /home/vagrant/.rvm/scripts/rvm || source /etc/profile.d/rvm.sh
@@ -70,15 +70,15 @@ sudo gem install cf-uaac
 
 
 echo '' >> .profile
-if [ -n "$SOLACE_MESSAGING_CF_DEV_REPO" ]; then
-	echo "export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO}" >> .profile
+if [ -n "$PUBSUBPLUS_CF_DEV_REPO" ]; then
+	echo "export PUBSUBPLUS_CF_DEV_REPO=${PUBSUBPLUS_CF_DEV_REPO}" >> .profile
 else
-	echo 'export SOLACE_MESSAGING_CF_DEV_REPO=${SOLACE_MESSAGING_CF_DEV_REPO:-"https://github.com/SolaceLabs/solace-messaging-cf-dev.git"}' >> .profile
+	echo 'export PUBSUBPLUS_CF_DEV_REPO=${PUBSUBPLUS_CF_DEV_REPO:-"https://github.com/SolaceLabs/pubsubplus-cf-dev.git"}' >> .profile
 fi
-echo 'echo "Will use solace-messaging-cf-dev from git repo $SOLACE_MESSAGING_CF_DEV_REPO"' >> .profile
+echo 'echo "Will use pubsubplus-cf-dev from git repo $PUBSUBPLUS_CF_DEV_REPO"' >> .profile
 
-if [ -n "$CF_SOLACE_MESSAGING_DEPLOYMENT" ]; then 
-	echo "export CF_SOLACE_MESSAGING_DEPLOYMENT_REPO=$CF_SOLACE_MESSAGING-DEPLOYMENT" >> .profile
+if [ -n "$CF_PUBSUBPLUS_DEPLOYMENT" ]; then 
+	echo "export CF_PUBSUBPLUS_DEPLOYMENT_REPO=$CF_PUBSUBPLUS-DEPLOYMENT" >> .profile
 fi
 
 
@@ -86,11 +86,11 @@ if [ -n "$BRANCH" ]; then
 	echo "export BRANCH=${BRANCH}" >> .profile
 fi
 
-echo 'if [ ! -d ~/solace-messaging-cf-dev ]; then' >> .profile
-echo ' echo "Fetching solace-messaging-cf-dev inside cli-tools"' >> .profile 
-echo ' git clone $SOLACE_MESSAGING_CF_DEV_REPO' >> .profile
+echo 'if [ ! -d ~/pubsubplus-cf-dev ]; then' >> .profile
+echo ' echo "Fetching pubsubplus-cf-dev inside cli-tools"' >> .profile 
+echo ' git clone $PUBSUBPLUS_CF_DEV_REPO' >> .profile
 echo ' if [ ! -z "$BRANCH" ]; then' >> .profile
-echo '    cd solace-messaging-cf-dev' >> .profile
+echo '    cd pubsubplus-cf-dev' >> .profile
 echo '    git checkout $BRANCH' >> .profile
 echo '    git submodule update --init --recursive' >> .profile
 # in older versions of git if you use --init option, already initialized submodules may not be updated. (this is why there are two git submodule updates) 
@@ -99,7 +99,7 @@ echo ' fi' >> .profile
 echo 'fi' >> .profile
 
 echo '' >> .profile
-echo '# Using solace-messaging-cf-dev/.profile' >> .profile
-echo '[[ -e ~/solace-messaging-cf-dev/.profile ]] && source ~/solace-messaging-cf-dev/.profile || echo "~/solace-messaging-cf-dev/.profile was not found"' >> .profile
+echo '# Using pubsubplus-cf-dev/.profile' >> .profile
+echo '[[ -e ~/pubsubplus-cf-dev/.profile ]] && source ~/pubsubplus-cf-dev/.profile || echo "~/pubsubplus-cf-dev/.profile was not found"' >> .profile
 echo '' >> .profile
 

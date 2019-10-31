@@ -2,16 +2,16 @@
 
 export MY_HOME="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-export SOLACE_MESSAGING_CF_DEV=${SOLACE_MESSAGING_CF_DEV:-$MY_HOME}
+export PUBSUBPLUS_CF_DEV=${PUBSUBPLUS_CF_DEV:-$MY_HOME}
 
-export PATH=$SOLACE_MESSAGING_CF_DEV/bin:$PATH
+export PATH=$PUBSUBPLUS_CF_DEV/bin:$PATH
 
 export WORKSPACE=${WORKSPACE:-$HOME/workspace}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 export CF_ADMIN_PASSWORD=${CF_ADMIN_PASSWORD:-"admin"}
 
-export BUCC_HOME=${BUCC_HOME:-$SOLACE_MESSAGING_CF_DEV/bucc}
+export BUCC_HOME=${BUCC_HOME:-$PUBSUBPLUS_CF_DEV/bucc}
 export BUCC_STATE_ROOT=${BUCC_STATE_ROOT:-$WORKSPACE/BOSH_LITE_VM/state}
 export BUCC_VARS_FILE=${BUCC_VARS_FILE:-$WORKSPACE/BOSH_LITE_VM/vars.yml}
 export BUCC_STATE_STORE=${BUCC_STATE_STORE:-$BUCC_STATE_ROOT/state.json}
@@ -51,18 +51,18 @@ if [ -f $WORKSPACE/deployment-vars.yml ]; then
    fi
 fi
 
-source $SOLACE_MESSAGING_CF_DEV/bin/bosh-common.sh
+source $PUBSUBPLUS_CF_DEV/bin/bosh-common.sh
 
 if [ -z $SEEN_BANNER ]; then
  echo
  echo
- cat $SOLACE_MESSAGING_CF_DEV/.banner
+ cat $PUBSUBPLUS_CF_DEV/.banner
  echo
  echo
  export SEEN_BANNER=1
 fi
 
-printf "SOLACE_MESSAGING_CF_DEV\t\t%s\n" "$SOLACE_MESSAGING_CF_DEV"
+printf "PUBSUBPLUS_CF_DEV\t\t%s\n" "$PUBSUBPLUS_CF_DEV"
 
 printf "WORKSPACE\t\t\t%s\n" "$WORKSPACE"
 

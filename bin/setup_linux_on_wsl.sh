@@ -42,21 +42,21 @@ function cloneRepo() {
     fi
     (
         cd $REPOS_DIR
-        if [ ! -d solace-messaging-cf-dev ]; then
+        if [ ! -d pubsubplus-cf-dev ]; then
         (
-            git clone $GIT_REPO_BASE/solace-messaging-cf-dev.git
-            cd solace-messaging-cf-dev
+            git clone $GIT_REPO_BASE/pubsubplus-cf-dev.git
+            cd pubsubplus-cf-dev
             if [ ! -z $BRANCH ]; then
                 git checkout $BRANCH
             fi
         )
         fi
 
-        if [ ! -f solace-messaging-cf-dev/cf-solace-messaging-deployment/README.md ]; then
+        if [ ! -f pubsubplus-cf-dev/cf-pubsubplus-deployment/README.md ]; then
         (
-            cd solace-messaging-cf-dev
-            git clone $GIT_REPO_BASE/cf-solace-messaging-deployment.git
-            cd cf-solace-messaging-deployment
+            cd pubsubplus-cf-dev
+            git clone $GIT_REPO_BASE/cf-pubsubplus-deployment.git
+            cd cf-pubsubplus-deployment
             if [ ! -z $BRANCH ]; then
                 git checkout $BRANCH
             fi
@@ -66,15 +66,15 @@ function cloneRepo() {
 }
 
 function installBosh() {
-    $REPOS_DIR/solace-messaging-cf-dev/bin/bosh_lite_vm.sh -c
+    $REPOS_DIR/pubsubplus-cf-dev/bin/bosh_lite_vm.sh -c
     if [ ! -e /usr/local/bin/bosh ]; then
-        sudo cp $REPOS_DIR/solace-messaging-cf-dev/bucc/bin/bosh /usr/local/bin
+        sudo cp $REPOS_DIR/pubsubplus-cf-dev/bucc/bin/bosh /usr/local/bin
     fi
 }
 
 function deployCf() {
     source $WORKSPACE/bosh_env.sh
-    $REPOS_DIR/solace-messaging-cf-dev/bin/cf_deploy.sh
+    $REPOS_DIR/pubsubplus-cf-dev/bin/cf_deploy.sh
 }
 
 function installPrograms() {
@@ -92,9 +92,9 @@ function installPrograms() {
 }
 
 function getSettingsEnv() {
-    echo "export SOLACE_MESSAGING_CF_DEV=$REPOS_DIR/solace-messaging-cf-dev"
+    echo "export PUBSUBPLUS_CF_DEV=$REPOS_DIR/pubsubplus-cf-dev"
     echo "export WORKSPACE=$WORKSPACE"
-    echo "export PATH=\$PATH:\$SOLACE_MESSAGING_CF_DEV/bucc/bin"
+    echo "export PATH=\$PATH:\$PUBSUBPLUS_CF_DEV/bucc/bin"
 }
 
 function createSettingsFile() {
@@ -113,7 +113,7 @@ function alterProfile() {
 
         if [[ $REPLY =~ ^[Yy] ]]; then
             echo "source $SETTINGS_FILE" >> ~/.profile
-            echo "source $REPOS_DIR/solace-messaging-cf-dev/.profile" >> ~/.profile
+            echo "source $REPOS_DIR/pubsubplus-cf-dev/.profile" >> ~/.profile
         fi
     fi
 }
