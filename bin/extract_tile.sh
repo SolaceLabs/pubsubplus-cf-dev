@@ -129,6 +129,8 @@ unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz
  ## Standard edition is always in there, use that to find the version.
  STANDARD_VERSION=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-standard" )
  SOLTR_VERSION=$( echo $STANDARD_VERSION | awk -F\: '{ print $2 }' )
+ EVALUATION_FOUND=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-evaludation" | wc -l )
+ ENTERPRISE_FOUND=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-enterprise" | wc -l )
  rm -rf packages
  rm -rf jobs
  cd $TEMP_DIR
@@ -141,5 +143,10 @@ unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz
  echo "solace_service_broker_jar: $SOLACE_SERVICE_BROKER_VERSION" > $WORKSPACE/releases/release-vars.yml
  echo "solace_service_broker_name: $SOLACE_SERVICE_BROKER_NAME" >> $WORKSPACE/releases/release-vars.yml
  echo "solace_load_version: soltr_${SOLTR_VERSION}" >> $WORKSPACE/releases/release-vars.yml
+ if [ "$ENTERPRISE_FOUND" -eq "1" ]; then
+	 echo 'export VMR_EDITION="enterprise"' >> $WORKSPACE/releases/settings.sh
+ else
+	 echo 'export VMR_EDITION="evaluation"' >> $WORKSPACE/releases/settings.sh
+ fi
 )
 
