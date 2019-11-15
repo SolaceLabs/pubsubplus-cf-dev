@@ -12,5 +12,5 @@ fi
 
 echo
 echo "Running Errand [ upgrade-all-service-instances ]"
-bosh -d solace_pubsub run-errand upgrade-all-service-instances --instance=management/first $@
+bosh -d solace_pubsub run-errand upgrade-all-service-instances-errand --instance=management/first $@
 
