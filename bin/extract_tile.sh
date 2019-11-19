@@ -90,7 +90,7 @@ fi
 
 ## Derived values
 
-export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-pubsub-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
+export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-pubsub-//g' | sed 's/-enterprise//g' | sed 's/-upgrade//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
 export TEMPLATE_VERSION=$( echo $TILE_VERSION | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
