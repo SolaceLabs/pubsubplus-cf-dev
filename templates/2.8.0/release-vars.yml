@@ -1,0 +1,5 @@
+bosh_stemcell: "ubuntu-xenial"
+bosh_stemcell_version: "456.27"
+cf_mysql_version: "36.19.0"
+route_registrar_version: "1.0.0"
+syslog_version: "11.6.0"
