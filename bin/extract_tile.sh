@@ -90,7 +90,7 @@ fi
 
 ## Derived values
 
-export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-pubsub-//g' | sed 's/-enterprise//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
+export TILE_VERSION=$( basename $TILE_FILE | sed 's/solace-pubsub-//g' | sed 's/-enterprise//g' | sed 's/-upgrade//g' | sed 's/\.pivotal//g' | sed 's/\[.*\]//' )
 export TEMPLATE_VERSION=$( echo $TILE_VERSION | awk -F\- '{ print $1 }' )
 export TEMPLATE_DIR=${TEMPLATE_DIR:-$SCRIPTPATH/../templates/$TEMPLATE_VERSION}
 
@@ -129,6 +129,8 @@ unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz
  ## Standard edition is always in there, use that to find the version.
  STANDARD_VERSION=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-standard" )
  SOLTR_VERSION=$( echo $STANDARD_VERSION | awk -F\: '{ print $2 }' )
+ EVALUATION_FOUND=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-evaludation" | wc -l )
+ ENTERPRISE_FOUND=$( jq -r '.[].RepoTags[0]' manifest.json | grep "solace-pubsub-enterprise" | wc -l )
  rm -rf packages
  rm -rf jobs
  cd $TEMP_DIR
@@ -137,9 +139,17 @@ unzip -o -d $WORKSPACE $TILE_FILE releases/*.tgz
  cd ./solace_pubsub_broker/ 
  SOLACE_SERVICE_BROKER_VERSION=$(ls *.jar)
  SOLACE_SERVICE_BROKER_NAME=$(echo $SOLACE_SERVICE_BROKER_VERSION | sed 's/.jar$//')
+ SYSLOG_FILE=$( cd $WORKSPACE/releases; ls syslog-*.tgz )
+ SYSLOG_VERSION=$( echo $SYSLOG_FILE | sed 's/\.tgz//g' | sed 's/syslog-//g' )
  echo " Found Solace Service Broker [ $SOLACE_SERVICE_BROKER_VERSION ]"
  echo "solace_service_broker_jar: $SOLACE_SERVICE_BROKER_VERSION" > $WORKSPACE/releases/release-vars.yml
  echo "solace_service_broker_name: $SOLACE_SERVICE_BROKER_NAME" >> $WORKSPACE/releases/release-vars.yml
  echo "solace_load_version: soltr_${SOLTR_VERSION}" >> $WORKSPACE/releases/release-vars.yml
+ echo "syslog_version: \"${SYSLOG_VERSION}\"" >> $WORKSPACE/releases/release-vars.yml
+ if [ "$ENTERPRISE_FOUND" -eq "1" ]; then
+	 echo 'export VMR_EDITION="enterprise"' >> $WORKSPACE/releases/settings.sh
+ else
+	 echo 'export VMR_EDITION="evaluation"' >> $WORKSPACE/releases/settings.sh
+ fi
 )
 

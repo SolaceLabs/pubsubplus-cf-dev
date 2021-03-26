@@ -36,7 +36,7 @@ if [ -f $DOT_BOSH_ENV_FILE ]; then
    exec 200>$LOCKFILE
    flock -x 200
    source $DOT_BOSH_ENV_FILE
-   export BOSH_IP=$BOSH_ENVIRONMENT
+   export BOSH_IP=$BOSH_GW_HOST
    flock -u 200
 fi
 

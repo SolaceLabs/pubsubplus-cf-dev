@@ -492,5 +492,11 @@ if [ -f "$WORKSPACE/releases/release-vars.yml" ]; then
    RELEASE_VARS="$RELEASE_VARS -l $WORKSPACE/releases/release-vars.yml"
 fi
 
+## Handle addiotnal bosh release detected settings as environment variables
+if [ -f "$WORKSPACE/releases/settings.sh" ]; then
+  source $WORKSPACE/releases/settings.sh
+fi
+
+
 BOSH_PARAMS=" $OPS_BASE $MYSQL_OPS $FEATURES_OPS -o $CF_PUBSUBPLUS_DEPLOYMENT_HOME/operations/is_${VMR_EDITION}.yml $SERVICE_PLAN_OPS $VARS_STORE $CMD_VARS -l $BOSH_ENV_VARS_FILE -l $VARS_FILE $FEATURES_VARS $RELEASE_VARS $MISC_VARS $EXTRA_BOSH_PARAMS"
 

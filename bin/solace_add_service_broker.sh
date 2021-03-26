@@ -10,6 +10,7 @@ if [ -f $WORKSPACE/bosh_env.sh ]; then
  source $WORKSPACE/bosh_env.sh
 fi
 
+echo
 echo "Running Errand [ deploy-all ]"
 bosh -d solace_pubsub run-errand deploy-all --instance=management/first $@
 

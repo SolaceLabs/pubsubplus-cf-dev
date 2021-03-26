@@ -8,5 +8,6 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 cd $SCRIPTPATH/..
 
+echo
 echo "Running Errand [ delete-all ]"
 bosh -d solace_pubsub run-errand delete-all --instance=management/first $@

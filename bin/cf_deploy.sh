@@ -8,12 +8,12 @@ export BOSH_NON_INTERACTIVE=${BOSH_NON_INTERACTIVE:-true}
 
 export SYSTEM_DOMAIN=${SYSTEM_DOMAIN:-"bosh-lite.com"}
 
-export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v12.0.0"}
+export CF_DEPLOYMENT_VERSION=${CF_DEPLOYMENT_VERSION:-"v13.21.0"}
 
 source $SCRIPTPATH/bosh-common.sh
 
 ## Add CF required stemcells for version $CF_DEPLOYMENT_VERSION
-export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:456.22"
+export REQUIRED_STEMCELLS="$REQUIRED_STEMCELLS ubuntu-xenial:621.87"
 
 if [ ! -d $WORKSPACE ]; then
   mkdir -p $WORKSPACE
