@@ -289,14 +289,14 @@ The goal of the deployment steps is to install Solace PubSub+ into the running C
 
 ### Deployment - Prerequisites
 
-#### The Solace Pivotal Tile
+#### The Solace Tanzu Tile
 
-* The Solace Pivotal Tile is available for download from [PivNet](https://network.pivotal.io/products/pubsubplus/).
-* [Solace Pivotal Tile Documentation](http://docs.pivotal.io/partners/solace-pubsub/)
+* The Solace Tanzu Tile is available for download from [Tanzu Network](https://network.pivotal.io/products/pubsubplus/).
+* [Solace Tanzu Tile Documentation](http://docs.pivotal.io/partners/solace-pubsub/)
   - _You may use Solace Tiles for which we have matching [templates](./templates), 
    Installation will not work without templates to match the tile version_
 
-Please download the Solace Pivotal Tile and keep it around for later use. 
+Please download the Solace Tanzu Tile and keep it around for later use. 
 
 For example, downloaded version 2.0.0 and placed it in:
 
@@ -315,9 +315,9 @@ cd cli-tools
 vagrant ssh
 ~~~~
 
-### Deployment Step 1 - Extract the bosh releases from the Solace Pivotal Tile
+### Deployment Step 1 - Extract the bosh releases from the Solace Tanzu Tile
 
-The pivotal file is a zip file. We need to extract the relevant bosh releases needed for this deployment.
+The downloaded file is a zip file. We need to extract the relevant bosh releases needed for this deployment.
 
 Do the following to extract the tile contents, adjusting the file name as appropritate:
 
